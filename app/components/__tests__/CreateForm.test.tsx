@@ -22,7 +22,7 @@ describe("CreateForm", () => {
     );
     render(<CreateForm />);
     fill();
-    fireEvent.click(screen.getByRole("button", { name: /create miniapp/i }));
+    fireEvent.click(screen.getByRole("button", { name: /crear miniapp/i }));
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent("acme/miniapp-payments"),
     );
@@ -35,7 +35,7 @@ describe("CreateForm", () => {
     );
     render(<CreateForm />);
     fill();
-    fireEvent.click(screen.getByRole("button", { name: /create miniapp/i }));
+    fireEvent.click(screen.getByRole("button", { name: /crear miniapp/i }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("ya existe"));
   });
 });

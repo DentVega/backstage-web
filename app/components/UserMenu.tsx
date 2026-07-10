@@ -10,7 +10,7 @@ export interface UserMenuProps {
 export function UserMenu({ user }: UserMenuProps) {
   if (!user) return null;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
       {user.image ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -18,11 +18,18 @@ export function UserMenu({ user }: UserMenuProps) {
           alt={user.name ?? "user"}
           width={24}
           height={24}
-          style={{ borderRadius: "50%" }}
+          style={{ borderRadius: "50%", border: "1px solid var(--line)" }}
         />
       ) : null}
-      <span>{user.name}</span>
-      <button type="button" onClick={() => signOut({ redirectTo: "/signin" })}>
+      <span style={{ fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--muted)" }}>
+        {user.name}
+      </span>
+      <button
+        type="button"
+        className="icon-btn"
+        style={{ fontSize: 12 }}
+        onClick={() => signOut({ redirectTo: "/signin" })}
+      >
         Sign out
       </button>
     </div>

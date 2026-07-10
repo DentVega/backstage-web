@@ -35,30 +35,30 @@ export function CreateForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: "grid", gap: 8, maxWidth: 420 }}>
-      <label>
+    <form onSubmit={onSubmit} style={{ display: "grid", gap: 16, maxWidth: 440 }}>
+      <label className="field">
         id
-        <input aria-label="id" value={id} onChange={(e) => setId(e.target.value)} required />
+        <input className="input" aria-label="id" value={id} onChange={(e) => setId(e.target.value)} required />
       </label>
-      <label>
+      <label className="field">
         name
-        <input aria-label="name" value={name} onChange={(e) => setName(e.target.value)} required />
+        <input className="input" aria-label="name" value={name} onChange={(e) => setName(e.target.value)} required />
       </label>
-      <label>
+      <label className="field">
         owner
-        <input aria-label="owner" value={owner} onChange={(e) => setOwner(e.target.value)} required />
+        <input className="input" aria-label="owner" value={owner} onChange={(e) => setOwner(e.target.value)} required />
       </label>
-      <button type="submit" disabled={state.status === "submitting"}>
-        {state.status === "submitting" ? "Creando…" : "Create miniapp"}
+      <button type="submit" className="btn btn-primary" disabled={state.status === "submitting"} style={{ justifySelf: "start" }}>
+        {state.status === "submitting" ? "Creando…" : "Crear miniapp"}
       </button>
 
       {state.status === "done" ? (
-        <p role="status">
-          Repo creado: <a href={state.repoUrl}>{state.repoUrl}</a>
+        <p role="status" className="status-line">
+          Repo creado: <a href={state.repoUrl} style={{ color: "var(--wire)" }}>{state.repoUrl}</a>
         </p>
       ) : null}
       {state.status === "error" ? (
-        <p role="alert" style={{ color: "crimson" }}>
+        <p role="alert" className="error-line">
           {state.message}
         </p>
       ) : null}

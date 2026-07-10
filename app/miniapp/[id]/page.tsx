@@ -36,21 +36,22 @@ export default async function MiniappDetailPage({
   }
 
   return (
-    <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
-      <p>
-        <a href="/catalog">← Catálogo</a>
-      </p>
-      <MiniappHeader detail={detail} />
+    <main className="page">
+      <a href="/catalog" className="back-link">← Catálogo</a>
 
-      <section style={{ marginTop: 16 }}>
+      <div style={{ marginTop: 18 }}>
+        <MiniappHeader detail={detail} />
+      </div>
+
+      <section className="detail-section">
         <h2>Estado de CI</h2>
         <CiBadge status={ciStatus} />
       </section>
 
-      <section style={{ marginTop: 16 }}>
+      <section className="detail-section">
         <h2>Capabilities</h2>
         {detail.capabilities.length > 0 ? (
-          <ul aria-label="Capabilities">
+          <ul aria-label="Capabilities" className="cap-list">
             {detail.capabilities.map((c) => (
               <li key={c}>
                 <code>{c}</code>
@@ -58,11 +59,11 @@ export default async function MiniappDetailPage({
             ))}
           </ul>
         ) : (
-          <p role="status">Sin capabilities declaradas.</p>
+          <p role="status" className="empty">Sin capabilities declaradas.</p>
         )}
       </section>
 
-      <section style={{ marginTop: 16 }}>
+      <section className="detail-section">
         <h2>Versiones</h2>
         <VersionList versions={detail.versions} />
       </section>

@@ -10,33 +10,39 @@ export function CatalogList({
   statusById?: Record<string, CiStatus>;
 }) {
   if (entries.length === 0) {
-    return <p role="status">No hay miniapps registradas todavía.</p>;
+    return <p role="status" className="empty">No hay miniapps registradas todavía.</p>;
   }
   return (
-    <ul aria-label="Catálogo de miniapps">
+    <ul aria-label="Catálogo de miniapps" className="catalog-list">
       {entries.map((e) => (
-        <li key={e.id} style={{ marginBottom: 8 }}>
-          <a href={`/miniapp/${e.id}`}>
-            <strong>{e.name}</strong>
-          </a>{" "}
-          <code>{e.id}</code>
-          {" — "}
-          <span>owner: {e.owner}</span>
-          {" · "}
-          <span>
-            {e.latestVersion !== null
-              ? `v${e.latestVersion} (${e.versionCount})`
-              : "sin versiones"}
+        <li key={e.id} className="miniapp-row">
+          <div className="mrow-main">
+            <a href={`/miniapp/${e.id}`} className="mrow-name">
+              <strong>{e.name}</strong>
+            </a>
+            <div className="mrow-meta">
+              <code>{e.id}</code>
+              <span className="sep">·</span>
+              <span>{e.owner}</span>
+              {e.createdAt ? (
+                <>
+                  <span className="sep">·</span>
+                  <time dateTime={e.createdAt}>
+                    {new Date(e.createdAt).toISOString().slice(0, 10)}
+                  </time>
+                </>
+              ) : null}
+            </div>
+          </div>
+          <span className="mrow-ver">
+            {e.latestVersion !== null ? (
+              <>
+                v{e.latestVersion} <span className="count">({e.versionCount})</span>
+              </>
+            ) : (
+              "sin versiones"
+            )}
           </span>
-          {e.createdAt ? (
-            <>
-              {" · "}
-              <time dateTime={e.createdAt}>
-                {new Date(e.createdAt).toISOString().slice(0, 10)}
-              </time>
-            </>
-          ) : null}
-          {" · "}
           <CiBadge status={statusById[e.id] ?? "unknown"} />
         </li>
       ))}

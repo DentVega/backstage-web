@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
 import { auth } from "@/auth";
 import { UserMenu } from "@/app/components/UserMenu";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,18 +30,22 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "8px 24px",
-            borderBottom: "1px solid #e2e4e9",
-            fontFamily: "system-ui, sans-serif",
-          }}
-        >
-          <strong>Backstage</strong>
-          <UserMenu user={session?.user} />
+        <header className="site-header">
+          <Link href="/catalog" className="brand">
+            <span className="brand-dot" aria-hidden="true" />
+            <span>Backstage</span>
+            <span className="brand-sub">/ miniapps</span>
+          </Link>
+          <span className="header-sp" />
+          <div className="header-actions">
+            {session?.user ? (
+              <Link href="/catalog" className="nav-link">
+                Catálogo
+              </Link>
+            ) : null}
+            <ThemeToggle />
+            <UserMenu user={session?.user} />
+          </div>
         </header>
         {children}
       </body>
