@@ -1,0 +1,33 @@
+{
+  "name": "@org/miniapp-contract",
+  "version": "0.1.0",
+  "description": "Shared contract between the mobile host and the Backstage registry: manifest, resolve shape, capabilities, and version-skew logic.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "prepack": "pnpm build"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "jest": "catalog:",
+    "ts-jest": "^29.2.5",
+    "@types/jest": "^29.5.14"
+  }
+}

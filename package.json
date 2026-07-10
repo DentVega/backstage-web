@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@org/miniapp-contract": "file:../backstagereactnative/packages/miniapp-contract",
+    "@org/miniapp-contract": "file:./vendor/miniapp-contract",
     "@upstash/redis": "^1.38.0",
     "@vercel/blob": "^2.6.1",
     "fflate": "^0.8.3",
