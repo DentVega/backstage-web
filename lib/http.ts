@@ -9,9 +9,11 @@ import {
 import { GitProviderError } from "./git/types";
 import { StorageError } from "./storage/types";
 import { AuthError } from "./auth";
+import { ScaffoldForbiddenError } from "./scaffold-authz";
 
 export function statusForError(err: unknown): number {
   if (err instanceof AuthError) return 401;
+  if (err instanceof ScaffoldForbiddenError) return 403;
   if (err instanceof MiniappNotFoundError) return 404;
   if (err instanceof NoCompatibleVersionError) return 404;
   if (err instanceof MiniappExistsError) return 409;

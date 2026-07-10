@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { getStore } from "@/lib/registry/store";
 import { scaffoldMiniapp } from "@/lib/scaffold";
 import { githubProvider } from "@/lib/git/github";
-import { TEMPLATE_REPO, githubToken } from "@/lib/config";
+import { TEMPLATE_REPO, githubToken, scaffoldAllowedLogins } from "@/lib/config";
+import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { errorBody, statusForError } from "@/lib/http";
 
 export const runtime = "nodejs";
@@ -10,6 +12,12 @@ export const runtime = "nodejs";
 /** POST /api/scaffold — create a miniapp repo from the template + register it. */
 export async function POST(req: Request): Promise<NextResponse> {
   try {
+    // Authorization gate — before touching GitHub or the registry (Bolt 06-2).
+    const session = await auth();
+    if (!canScaffold(session?.githubLogin, scaffoldAllowedLogins())) {
+      throw new ScaffoldForbiddenError();
+    }
+
     const body = (await req.json()) as {
       id?: string;
       name?: string;
