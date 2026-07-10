@@ -1,0 +1,55 @@
+{
+  "account_dashboard": {
+    "id": "account_dashboard",
+    "name": "Account Dashboard",
+    "owner": "payments-team",
+    "versions": [
+      {
+        "version": "0.1.0",
+        "url": "http://localhost:9000/account_dashboard.container.js.bundle",
+        "manifest": {
+          "id": "account_dashboard",
+          "version": "0.1.0",
+          "entry": "./Entry",
+          "shared": [
+            {
+              "name": "react",
+              "requiredRange": "^18.3.0",
+              "singleton": true
+            },
+            {
+              "name": "react-native",
+              "requiredRange": "^0.76.0",
+              "singleton": true
+            },
+            {
+              "name": "@tanstack/react-query",
+              "requiredRange": "^5.0.0",
+              "singleton": true
+            },
+            {
+              "name": "@shopify/flash-list",
+              "requiredRange": "^1.7.0",
+              "singleton": true
+            }
+          ],
+          "capabilities": [
+            "accounts:read"
+          ],
+          "integrity": "sha256-PLACEHOLDER-set-in-bolt-4"
+        },
+        "publishedAt": "2026-07-09T10:00:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-09T10:00:00.000Z",
+    "repoUrl": "https://github.com/acme/miniapp-account_dashboard"
+  },
+  "cards_wallet": {
+    "id": "cards_wallet",
+    "name": "Cards Wallet",
+    "owner": "cards-team",
+    "versions": [],
+    "createdAt": "2026-07-10T09:30:00.000Z",
+    "repoUrl": "https://github.com/acme/miniapp-cards_wallet"
+  }
+}
