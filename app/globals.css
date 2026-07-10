@@ -140,6 +140,11 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
   background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 11px 13px;
 }
 .input:focus { border-color: var(--accent); }
+.input[aria-invalid="true"] { border-color: var(--bad); }
+.field-hint { font-family: var(--mono); font-size: 11px; letter-spacing: 0; text-transform: none; }
+
+.page-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.page-head-row .page-lede { margin-top: 4px; }
 
 /* ---------- catalog ---------- */
 .console {
