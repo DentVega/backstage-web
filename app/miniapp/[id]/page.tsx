@@ -4,9 +4,12 @@ import { getMiniappDetail } from "@/lib/registry/registry";
 import { MiniappNotFoundError } from "@/lib/registry/types";
 import { getCiProvider, repoFullNameFor, type CiStatus } from "@/lib/ci";
 import { auth } from "@/auth";
+import { canScaffold } from "@/lib/scaffold-authz";
+import { scaffoldAllowedLogins } from "@/lib/config";
 import { MiniappHeader } from "@/app/components/MiniappHeader";
 import { VersionList } from "@/app/components/VersionList";
 import { CiBadge } from "@/app/components/CiBadge";
+import { PublishForm } from "@/app/components/PublishForm";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +30,7 @@ export default async function MiniappDetailPage({
   }
 
   const session = await auth();
+  const canPublish = canScaffold(session?.githubLogin, scaffoldAllowedLogins());
   const token = session?.githubAccessToken;
   let ciStatus: CiStatus = "unknown";
   if (token) {
@@ -67,6 +71,13 @@ export default async function MiniappDetailPage({
         <h2>Versiones</h2>
         <VersionList versions={detail.versions} />
       </section>
+
+      {canPublish ? (
+        <section className="detail-section">
+          <h2>Publicar versión</h2>
+          <PublishForm id={id} />
+        </section>
+      ) : null}
     </main>
   );
 }

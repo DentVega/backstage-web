@@ -1,25 +1,41 @@
 import { NextResponse } from "next/server";
 import { unzipSync } from "fflate";
+import { auth } from "@/auth";
 import { getStore } from "@/lib/registry/store";
 import { publishVersion } from "@/lib/registry/registry";
 import { getStorage } from "@/lib/storage";
 import { requirePublishToken } from "@/lib/auth";
+import { canScaffold } from "@/lib/scaffold-authz";
+import { scaffoldAllowedLogins } from "@/lib/config";
+import { defaultManifest, parseCapabilities } from "@/lib/manifest";
 import { errorBody, statusForError } from "@/lib/http";
 import type { StorageFile } from "@/lib/storage/types";
 
 export const runtime = "nodejs";
 
 /**
- * POST /api/miniapps/:id/upload — CI publishes a build (ADR-015).
- * Auth: Bearer PUBLISH_TOKEN. Body: multipart { file: zip(build/), version, manifest }.
- * Stores the chunks in Blob under `<id>/<version>/` and publishes the version.
+ * Authorize an upload: an allowlisted signed-in user (the UI flow) OR a valid
+ * `PUBLISH_TOKEN` bearer (the CI flow). Throws if neither applies.
+ */
+async function authorizeUpload(req: Request): Promise<void> {
+  const session = await auth();
+  if (canScaffold(session?.githubLogin, scaffoldAllowedLogins())) return;
+  requirePublishToken(req);
+}
+
+/**
+ * POST /api/miniapps/:id/upload — publish a build (ADR-015).
+ * Auth: an allowlisted session (UI) or Bearer PUBLISH_TOKEN (CI).
+ * Body: multipart { file: zip(build/), version, manifest?, capabilities? }.
+ * When `manifest` is omitted (UI flow) a default is built from id+version+capabilities.
+ * Stores the chunks in Blob/fs under `<id>/<version>/` and publishes the version.
  */
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
-    requirePublishToken(req);
+    await authorizeUpload(req);
     const { id } = await params;
 
     const form = await req.formData();
@@ -31,19 +47,26 @@ export async function POST(
       file !== null &&
       typeof file !== "string" &&
       typeof (file as { arrayBuffer?: unknown }).arrayBuffer === "function";
-    if (!isFile || typeof version !== "string" || typeof manifestRaw !== "string") {
+    if (!isFile || typeof version !== "string") {
       return NextResponse.json(
-        { error: "file (zip), version and manifest are required" },
+        { error: "file (zip) and version are required" },
         { status: 400 },
       );
     }
     const uploaded = file as { arrayBuffer(): Promise<ArrayBuffer> };
 
+    // Manifest: explicit JSON (CI) or built from simple fields (UI).
     let manifest: unknown;
-    try {
-      manifest = JSON.parse(manifestRaw);
-    } catch {
-      return NextResponse.json({ error: "manifest is not valid JSON" }, { status: 400 });
+    if (typeof manifestRaw === "string" && manifestRaw.length > 0) {
+      try {
+        manifest = JSON.parse(manifestRaw);
+      } catch {
+        return NextResponse.json({ error: "manifest is not valid JSON" }, { status: 400 });
+      }
+    } else {
+      const capsRaw = form.get("capabilities");
+      const caps = parseCapabilities(typeof capsRaw === "string" ? capsRaw : "");
+      manifest = defaultManifest(id, version, caps);
     }
 
     // Unzip the build output into individual files.
