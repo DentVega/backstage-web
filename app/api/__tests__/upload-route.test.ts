@@ -20,7 +20,12 @@ vi.mock("@/lib/storage", async () => {
   return { getStorage: () => mockStorage() };
 });
 
+vi.mock("@/auth", () => ({ auth: vi.fn() }));
+
 import { POST } from "@/app/api/miniapps/[id]/upload/route";
+import { auth } from "@/auth";
+
+const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 
 const manifest = {
   id: "account_dashboard",
@@ -37,13 +42,22 @@ function buildZip(): Uint8Array {
   });
 }
 
-function uploadReq(opts: { token?: string; version?: string; withFile?: boolean }): Request {
+function uploadReq(opts: {
+  token?: string;
+  version?: string;
+  withFile?: boolean;
+  manifest?: boolean;
+  capabilities?: string;
+}): Request {
   const form = new FormData();
   if (opts.withFile !== false) {
     form.set("file", new Blob([buildZip() as unknown as BlobPart]), "build.zip");
   }
   form.set("version", opts.version ?? "0.2.0");
-  form.set("manifest", JSON.stringify({ ...manifest, version: opts.version ?? "0.2.0" }));
+  if (opts.manifest !== false) {
+    form.set("manifest", JSON.stringify({ ...manifest, version: opts.version ?? "0.2.0" }));
+  }
+  if (opts.capabilities !== undefined) form.set("capabilities", opts.capabilities);
   const headers: Record<string, string> = {};
   if (opts.token) headers.authorization = `Bearer ${opts.token}`;
   return new Request("http://x/api/miniapps/account_dashboard/upload", {
@@ -57,6 +71,8 @@ const params = { params: Promise.resolve({ id: "account_dashboard" }) };
 
 beforeEach(() => {
   process.env.PUBLISH_TOKEN = "secret";
+  delete process.env.SCAFFOLD_ALLOWED_LOGINS;
+  authMock.mockResolvedValue(null); // default: no session → CI/token path
   // The miniapp must be registered before publishing a version.
   state.reg = {
     account_dashboard: {
@@ -93,5 +109,26 @@ describe("POST /api/miniapps/:id/upload", () => {
     await POST(uploadReq({ token: "secret" }), params);
     const res = await POST(uploadReq({ token: "secret" }), params);
     expect(res.status).toBe(409);
+  });
+
+  it("publishes via an allowlisted session, no token, default manifest (UI flow)", async () => {
+    process.env.SCAFFOLD_ALLOWED_LOGINS = "dentvega";
+    authMock.mockResolvedValue({ githubLogin: "DentVega" }); // case-insensitive match
+    const res = await POST(
+      uploadReq({ version: "0.3.0", manifest: false, capabilities: "accounts:read" }),
+      params,
+    );
+    expect(res.status).toBe(201);
+    const published = state.reg.account_dashboard.versions.find((v) => v.version === "0.3.0");
+    expect(published).toBeDefined();
+    expect(published?.manifest.entry).toBe("./Entry");
+    expect(published?.manifest.capabilities).toContain("accounts:read");
+  });
+
+  it("rejects an unauthorized session and no token (401)", async () => {
+    process.env.SCAFFOLD_ALLOWED_LOGINS = "someone_else";
+    authMock.mockResolvedValue({ githubLogin: "mallory" });
+    const res = await POST(uploadReq({ manifest: false }), params);
+    expect(res.status).toBe(401);
   });
 });
