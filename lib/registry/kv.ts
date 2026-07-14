@@ -31,10 +31,14 @@ export function upstashClient(): KvClient {
   if (!url || !token) {
     throw new Error("KV_REST_API_URL / KV_REST_API_TOKEN are not set");
   }
-  const redis = new Redis({ url, token });
+  // `automaticDeserialization: false` — @upstash/redis otherwise JSON.parses the
+  // stored value on `get`, returning an object; `kvStore` then double-parses and
+  // throws (`"[object Object]" is not valid JSON`). Keep raw strings so the
+  // JSON.stringify/parse in `kvStore` is the single encoding layer. (This only
+  // reproduces against real Upstash — the in-memory test client doesn't parse.)
+  const redis = new Redis({ url, token, automaticDeserialization: false });
   return {
     async get(key: string): Promise<string | null> {
-      // Upstash returns the parsed value; store as string for a stable contract.
       const v = await redis.get<string>(key);
       return v ?? null;
     },
