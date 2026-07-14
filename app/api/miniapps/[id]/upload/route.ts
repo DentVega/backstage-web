@@ -8,6 +8,7 @@ import { requirePublishToken } from "@/lib/auth";
 import { canScaffold } from "@/lib/scaffold-authz";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { defaultManifest, parseCapabilities } from "@/lib/manifest";
+import { sha256Integrity } from "@/lib/integrity";
 import { errorBody, statusForError } from "@/lib/http";
 import type { StorageFile } from "@/lib/storage/types";
 
@@ -77,8 +78,24 @@ export async function POST(
       return NextResponse.json({ error: "empty archive" }, { status: 400 });
     }
 
+    // The archive must contain the container; its bytes drive the integrity hash.
+    const containerName = `${id}.container.js.bundle`;
+    const container = files.find((f) => f.path === containerName);
+    if (container === undefined) {
+      return NextResponse.json(
+        { error: `archive is missing ${containerName}` },
+        { status: 400 },
+      );
+    }
+    // Integrity from the ACTUAL uploaded bytes (never a client-supplied value),
+    // so the host can verify the CDN download before executing it.
+    manifest = {
+      ...(manifest as Record<string, unknown>),
+      integrity: sha256Integrity(container.data),
+    };
+
     const { baseUrl } = await getStorage().putMany(`${id}/${version}`, files);
-    const url = `${baseUrl}/${id}.container.js.bundle`;
+    const url = `${baseUrl}/${containerName}`;
 
     const reg = await getStore().load();
     const next = publishVersion(reg, id, { version, url, manifest }, new Date().toISOString());

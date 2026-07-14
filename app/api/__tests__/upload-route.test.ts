@@ -123,6 +123,8 @@ describe("POST /api/miniapps/:id/upload", () => {
     expect(published).toBeDefined();
     expect(published?.manifest.entry).toBe("./Entry");
     expect(published?.manifest.capabilities).toContain("accounts:read");
+    // Integrity computed from the actual container bytes.
+    expect(published?.manifest.integrity).toMatch(/^sha256-[0-9a-f]{64}$/);
   });
 
   it("rejects an unauthorized session and no token (401)", async () => {
