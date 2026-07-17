@@ -9,9 +9,11 @@ This `backstage-web` repo was split out of that monorepo (Intent 01 Bolt 2). Its
 registry→KV, Blob upload, scaffolder, auth UI — is tracked there under Intents 02/03/04.
 **Do not plan new work here without checking the host memory bank first.** This file is a pointer.
 
-## Current Focus
-- **Unblock the native Android/iOS build** so a miniapp actually mounts on-device. This is the ONLY gap between "tests green" and "probar las miniapps" for real. Everything else in the loop (scaffold → CI build → publish → resolve → mount logic → fallback) is already built and tested.
-- Tracked authoritatively in the host repo's `memory-bank/operations/activation-checklist.md`.
+## Current Focus (2026-07-17)
+- **LIVE en producción:** `backstage-web-blond.vercel.app` (Next.js 16 en Vercel). Registry en **Upstash Redis**, chunks en **Vercel Blob** (CDN público), integridad **sha256** real. Validado end-to-end en dispositivo.
+- Esta sesión se cerró todo el loop: build nativo desbloqueado, mount on-device, login GitHub, crear miniapps (scaffolder), **publicar versión desde la UI** (nueva feature aquí), storage de prod, integridad, deploy.
+- **Único pendiente formal:** publicar el contrato `@org/miniapp-contract` → `@dentvega/miniapp-contract` a GitHub Packages (esperando PAT `write:packages`) + quitar el `file:`/vendor de este repo.
+- Detalle completo en el memory-bank autoritativo del host (`backstagereactnative/memory-bank/{activeContext,progress,audit}.md`).
 
 ## Recent Technical Decisions (2026-07-13)
 - Retired the redundant `miniapp-e2e-loop` Inception draft — the loop it described already exists (host Intents 01–03). Host memory bank is the single source of truth.
@@ -24,4 +26,5 @@ registry→KV, Blob upload, scaffolder, auth UI — is tracked there under Inten
 - Real Vercel deploy is manual (needs the user's account).
 
 ## Immediate Next Step
-- Point `JAVA_HOME` at Temurin 17 and re-run `./gradlew assembleDebug` in `apps/host`; if it compiles, `pnpm android` to mount the miniapp on the connected device (`29171FDH300ESL`).
+- Publicar el contrato a GitHub Packages como `@dentvega/miniapp-contract` (rename `@org`→`@dentvega` en los 4 repos + publish + backstage-web consume el publicado y borra `vendor/`). Requiere PAT con `write:packages`.
+- Follow-ons: Home dinámico del host (catálogo), `@dentvega/ui-kit` publicado, iOS en device.
