@@ -64,6 +64,7 @@ describe("scaffoldMiniapp", () => {
       createFromTemplate: async () => {
         throw new GitProviderError("boom");
       },
+      dispatchWorkflow: async () => {},
     };
     await expect(
       scaffoldMiniapp({}, provider, TEMPLATE, { id: "cards", name: "Cards", owner: "o" }, NOW),
