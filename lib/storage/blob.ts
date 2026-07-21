@@ -15,6 +15,9 @@ export function blobStorage(token = process.env.BLOB_READ_WRITE_TOKEN): ChunkSto
           const { url } = await put(`${prefix}/${file.path}`, Buffer.from(file.data), {
             access: "public",
             addRandomSuffix: false,
+            // Re-publishing the same <id>/<version> (static manifest version) must
+            // be idempotent — overwrite the prior build's chunks instead of 409ing.
+            allowOverwrite: true,
             token,
           });
           // Derive the prefix base URL from any file's URL (strip "/<path>").
