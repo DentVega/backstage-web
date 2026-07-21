@@ -18,10 +18,21 @@ export interface DispatchWorkflowInput {
   readonly ref: string;
 }
 
+export interface EnableActionsPullRequestsInput {
+  readonly owner: string;
+  readonly repo: string;
+}
+
 export interface GitProvider {
   createFromTemplate(input: CreateFromTemplateInput): Promise<{ repoUrl: string }>;
   /** Trigger a `workflow_dispatch` run (build + publish the miniapp). */
   dispatchWorkflow(input: DispatchWorkflowInput): Promise<void>;
+  /**
+   * Allow GitHub Actions to create pull requests in the repo, so the miniapp's
+   * `template-sync.yml` can open its sync PR with the automatic GITHUB_TOKEN
+   * (no extra secret). Off by default on new repos (ADR-016, Capa 2).
+   */
+  enableActionsPullRequests(input: EnableActionsPullRequestsInput): Promise<void>;
 }
 
 export class GitProviderError extends Error {

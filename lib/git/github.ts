@@ -2,6 +2,7 @@ import {
   GitProviderError,
   type CreateFromTemplateInput,
   type DispatchWorkflowInput,
+  type EnableActionsPullRequestsInput,
   type GitProvider,
 } from "./types";
 
@@ -60,6 +61,29 @@ export function githubProvider(token: string): GitProvider {
         const detail = await res.text().catch(() => "");
         throw new GitProviderError(
           `workflow dispatch failed: HTTP ${res.status} ${detail.slice(0, 200)}`,
+        );
+      }
+    },
+
+    async enableActionsPullRequests(input: EnableActionsPullRequestsInput): Promise<void> {
+      const res = await fetch(
+        `https://api.github.com/repos/${input.owner}/${input.repo}/actions/permissions/workflow`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+          // Only flip the create-PR toggle; leave default_workflow_permissions as-is.
+          body: JSON.stringify({ can_approve_pull_request_reviews: true }),
+        },
+      );
+      // GitHub returns 204 No Content on success.
+      if (!res.ok) {
+        const detail = await res.text().catch(() => "");
+        throw new GitProviderError(
+          `enable Actions PR creation failed: HTTP ${res.status} ${detail.slice(0, 200)}`,
         );
       }
     },

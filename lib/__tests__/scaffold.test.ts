@@ -65,9 +65,38 @@ describe("scaffoldMiniapp", () => {
         throw new GitProviderError("boom");
       },
       dispatchWorkflow: async () => {},
+      enableActionsPullRequests: async () => {},
     };
     await expect(
       scaffoldMiniapp({}, provider, TEMPLATE, { id: "cards", name: "Cards", owner: "o" }, NOW),
     ).rejects.toBeInstanceOf(GitProviderError);
+  });
+
+  it("enables Actions PR creation on the new repo (so template-sync can open PRs)", async () => {
+    const provider = mockProvider();
+    const spy = vi.spyOn(provider, "enableActionsPullRequests");
+    await scaffoldMiniapp(
+      {},
+      provider,
+      TEMPLATE,
+      { id: "payments", name: "Payments", owner: "acme" },
+      NOW,
+    );
+    expect(spy).toHaveBeenCalledWith({ owner: "acme", repo: "miniapp-payments" });
+  });
+
+  it("still succeeds if enabling Actions PR creation fails (best-effort, no orphan)", async () => {
+    const provider = mockProvider();
+    vi.spyOn(provider, "enableActionsPullRequests").mockRejectedValue(
+      new GitProviderError("no admin"),
+    );
+    const res = await scaffoldMiniapp(
+      {},
+      provider,
+      TEMPLATE,
+      { id: "payments", name: "Payments", owner: "acme" },
+      NOW,
+    );
+    expect(res.registry.payments).toMatchObject({ id: "payments", owner: "acme" });
   });
 });

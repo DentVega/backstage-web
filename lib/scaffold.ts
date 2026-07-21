@@ -40,11 +40,24 @@ export async function scaffoldMiniapp(
     throw new MiniappExistsError(id);
   }
 
+  const repo = `miniapp-${id}`;
   const { repoUrl } = await gitProvider.createFromTemplate({
     templateRepo,
-    name: `miniapp-${id}`,
+    name: repo,
     owner: input.owner,
   });
+
+  // Best-effort: let the miniapp's template-sync workflow open PRs (Capa 2). A
+  // failure here must not abort an otherwise-successful scaffold or leave the
+  // repo unregistered — the setting can be re-applied later.
+  try {
+    await gitProvider.enableActionsPullRequests({ owner: input.owner, repo });
+  } catch (err) {
+    console.warn(
+      `scaffold: could not enable Actions PR creation for ${input.owner}/${repo}:`,
+      err instanceof Error ? err.message : err,
+    );
+  }
 
   const registry = registerMiniapp(
     reg,

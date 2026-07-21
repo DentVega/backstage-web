@@ -9,5 +9,8 @@ export function mockProvider(): GitProvider {
     async dispatchWorkflow(): Promise<void> {
       // no-op
     },
+    async enableActionsPullRequests(): Promise<void> {
+      // no-op
+    },
   };
 }
