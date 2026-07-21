@@ -7,14 +7,10 @@ import { errorBody, statusForError } from "@/lib/http";
 
 export const runtime = "nodejs";
 
-// Re-exported for existing tests that import parseRepo from here.
-export { parseRepo } from "@/lib/git/miniapp-dispatch";
-
 /**
- * POST /api/miniapps/:id/deploy — trigger the miniapp's CI (`ci.yml`,
- * `workflow_dispatch`) to build the chunk and publish a new version. Auth: an
- * allowlisted session. The CI publishes back using the repo's BACKSTAGE_URL +
- * PUBLISH_TOKEN secrets.
+ * POST /api/miniapps/:id/sync-template — trigger the miniapp's `template-sync.yml`
+ * (`workflow_dispatch`) to 3-way merge the current template and open a PR. Auth: an
+ * allowlisted session (same as deploy). No secrets — the workflow uses GITHUB_TOKEN.
  */
 export async function POST(
   req: Request,
@@ -26,7 +22,7 @@ export async function POST(
       throw new ScaffoldForbiddenError();
     }
     const { id } = await params;
-    const { actionsUrl } = await dispatchMiniappWorkflow(id, "ci.yml");
+    const { actionsUrl } = await dispatchMiniappWorkflow(id, "template-sync.yml");
     return NextResponse.json({ dispatched: true, actionsUrl }, { status: 202 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });
