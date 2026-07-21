@@ -8,7 +8,7 @@ import {
   type MiniappId,
   type ResolveResponse,
   type SemVer,
-} from "@org/miniapp-contract";
+} from "@dentvega/miniapp-contract";
 import {
   InvalidManifestError,
   MiniappExistsError,

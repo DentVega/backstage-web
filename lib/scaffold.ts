@@ -1,5 +1,5 @@
 /** Pure scaffold orchestration — no Next.js, no network (GitProvider injected). */
-import { parseMiniappId } from "@org/miniapp-contract";
+import { parseMiniappId } from "@dentvega/miniapp-contract";
 import { registerMiniapp } from "./registry/registry";
 import {
   InvalidManifestError,
