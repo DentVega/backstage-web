@@ -1,6 +1,7 @@
 import {
   GitProviderError,
   type CreateFromTemplateInput,
+  type DispatchWorkflowInput,
   type GitProvider,
 } from "./types";
 
@@ -39,6 +40,28 @@ export function githubProvider(token: string): GitProvider {
         throw new GitProviderError("GitHub response missing html_url");
       }
       return { repoUrl: body.html_url };
+    },
+
+    async dispatchWorkflow(input: DispatchWorkflowInput): Promise<void> {
+      const res = await fetch(
+        `https://api.github.com/repos/${input.owner}/${input.repo}/actions/workflows/${input.workflow}/dispatches`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+          body: JSON.stringify({ ref: input.ref }),
+        },
+      );
+      // GitHub returns 204 No Content on a successful dispatch.
+      if (!res.ok) {
+        const detail = await res.text().catch(() => "");
+        throw new GitProviderError(
+          `workflow dispatch failed: HTTP ${res.status} ${detail.slice(0, 200)}`,
+        );
+      }
     },
   };
 }

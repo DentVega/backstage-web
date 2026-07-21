@@ -6,5 +6,8 @@ export function mockProvider(): GitProvider {
     async createFromTemplate(input: CreateFromTemplateInput): Promise<{ repoUrl: string }> {
       return { repoUrl: `https://github.com/${input.owner}/${input.name}` };
     },
+    async dispatchWorkflow(): Promise<void> {
+      // no-op
+    },
   };
 }

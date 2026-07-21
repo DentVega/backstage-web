@@ -10,6 +10,7 @@ import { MiniappHeader } from "@/app/components/MiniappHeader";
 import { VersionList } from "@/app/components/VersionList";
 import { CiBadge } from "@/app/components/CiBadge";
 import { PublishForm } from "@/app/components/PublishForm";
+import { DeployButton } from "@/app/components/DeployButton";
 
 export const dynamic = "force-dynamic";
 
@@ -73,10 +74,16 @@ export default async function MiniappDetailPage({
       </section>
 
       {canPublish ? (
-        <section className="detail-section">
-          <h2>Publicar versión</h2>
-          <PublishForm id={id} />
-        </section>
+        <>
+          <section className="detail-section">
+            <h2>Deploy</h2>
+            <DeployButton id={id} />
+          </section>
+          <section className="detail-section">
+            <h2>Publicar versión</h2>
+            <PublishForm id={id} />
+          </section>
+        </>
       ) : null}
     </main>
   );

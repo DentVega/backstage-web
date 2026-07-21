@@ -9,8 +9,19 @@ export interface CreateFromTemplateInput {
   readonly owner: string;
 }
 
+export interface DispatchWorkflowInput {
+  readonly owner: string;
+  readonly repo: string;
+  /** Workflow file name, e.g. "ci.yml". */
+  readonly workflow: string;
+  /** Git ref (branch/tag) to run on, e.g. "main". */
+  readonly ref: string;
+}
+
 export interface GitProvider {
   createFromTemplate(input: CreateFromTemplateInput): Promise<{ repoUrl: string }>;
+  /** Trigger a `workflow_dispatch` run (build + publish the miniapp). */
+  dispatchWorkflow(input: DispatchWorkflowInput): Promise<void>;
 }
 
 export class GitProviderError extends Error {
