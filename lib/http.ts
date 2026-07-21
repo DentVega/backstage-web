@@ -1,6 +1,7 @@
 /** Map typed domain errors to HTTP status codes. */
 import {
   InvalidManifestError,
+  InvalidRepoUrlError,
   MiniappExistsError,
   MiniappNotFoundError,
   NoCompatibleVersionError,
@@ -19,6 +20,7 @@ export function statusForError(err: unknown): number {
   if (err instanceof MiniappExistsError) return 409;
   if (err instanceof VersionExistsError) return 409;
   if (err instanceof InvalidManifestError) return 400;
+  if (err instanceof InvalidRepoUrlError) return 400;
   if (err instanceof GitProviderError) return 502;
   if (err instanceof StorageError) return 502;
   return 500;

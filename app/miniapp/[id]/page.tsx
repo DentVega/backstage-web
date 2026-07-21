@@ -11,6 +11,7 @@ import { VersionList } from "@/app/components/VersionList";
 import { CiBadge } from "@/app/components/CiBadge";
 import { PublishForm } from "@/app/components/PublishForm";
 import { DeployButton } from "@/app/components/DeployButton";
+import { SyncTemplateButton } from "@/app/components/SyncTemplateButton";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,10 @@ export default async function MiniappDetailPage({
           <section className="detail-section">
             <h2>Deploy</h2>
             <DeployButton id={id} />
+          </section>
+          <section className="detail-section">
+            <h2>Actualizar desde template</h2>
+            <SyncTemplateButton id={id} />
           </section>
           <section className="detail-section">
             <h2>Publicar versión</h2>

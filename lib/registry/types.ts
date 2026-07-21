@@ -88,6 +88,14 @@ export class InvalidManifestError extends Error {
   }
 }
 
+export class InvalidRepoUrlError extends Error {
+  readonly code = "INVALID_REPO_URL";
+  constructor(id: string) {
+    super(`Miniapp "${id}" has no valid GitHub repo URL.`);
+    this.name = "InvalidRepoUrlError";
+  }
+}
+
 export class NoCompatibleVersionError extends Error {
   readonly code = "NO_COMPATIBLE_VERSION";
   constructor(id: string, detail: string) {
