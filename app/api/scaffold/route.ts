@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { getStore } from "@/lib/registry/store";
 import { scaffoldMiniapp } from "@/lib/scaffold";
 import { githubProvider } from "@/lib/git/github";
-import { TEMPLATE_REPO, githubToken, scaffoldAllowedLogins } from "@/lib/config";
+import { TEMPLATE_REPO, githubToken, scaffoldAllowedLogins, scaffoldSecrets } from "@/lib/config";
 import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { errorBody, statusForError } from "@/lib/http";
 
@@ -38,6 +38,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       TEMPLATE_REPO,
       { id: body.id, name: body.name, owner: body.owner },
       new Date().toISOString(),
+      scaffoldSecrets(),
     );
     await getStore().save(registry);
 

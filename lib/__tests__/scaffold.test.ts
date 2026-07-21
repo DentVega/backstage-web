@@ -66,6 +66,7 @@ describe("scaffoldMiniapp", () => {
       },
       dispatchWorkflow: async () => {},
       enableActionsPullRequests: async () => {},
+      setSecret: async () => {},
     };
     await expect(
       scaffoldMiniapp({}, provider, TEMPLATE, { id: "cards", name: "Cards", owner: "o" }, NOW),
@@ -98,5 +99,44 @@ describe("scaffoldMiniapp", () => {
       NOW,
     );
     expect(res.registry.payments).toMatchObject({ id: "payments", owner: "acme" });
+  });
+
+  it("sets the provided Actions secrets on the new repo (CI publish ready)", async () => {
+    const provider = mockProvider();
+    const spy = vi.spyOn(provider, "setSecret");
+    await scaffoldMiniapp(
+      {},
+      provider,
+      TEMPLATE,
+      { id: "payments", name: "Payments", owner: "acme" },
+      NOW,
+      { BACKSTAGE_URL: "https://bs.example", PUBLISH_TOKEN: "tok" },
+    );
+    expect(spy).toHaveBeenCalledWith({
+      owner: "acme",
+      repo: "miniapp-payments",
+      name: "BACKSTAGE_URL",
+      value: "https://bs.example",
+    });
+    expect(spy).toHaveBeenCalledWith({
+      owner: "acme",
+      repo: "miniapp-payments",
+      name: "PUBLISH_TOKEN",
+      value: "tok",
+    });
+  });
+
+  it("still succeeds if setting a secret fails (best-effort)", async () => {
+    const provider = mockProvider();
+    vi.spyOn(provider, "setSecret").mockRejectedValue(new GitProviderError("no key"));
+    const res = await scaffoldMiniapp(
+      {},
+      provider,
+      TEMPLATE,
+      { id: "payments", name: "Payments", owner: "acme" },
+      NOW,
+      { PUBLISH_TOKEN: "tok" },
+    );
+    expect(res.registry.payments).toMatchObject({ id: "payments" });
   });
 });

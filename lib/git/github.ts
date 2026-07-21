@@ -1,9 +1,11 @@
+import _sodium from "libsodium-wrappers";
 import {
   GitProviderError,
   type CreateFromTemplateInput,
   type DispatchWorkflowInput,
   type EnableActionsPullRequestsInput,
   type GitProvider,
+  type SetSecretInput,
 } from "./types";
 
 /**
@@ -84,6 +86,56 @@ export function githubProvider(token: string): GitProvider {
         const detail = await res.text().catch(() => "");
         throw new GitProviderError(
           `enable Actions PR creation failed: HTTP ${res.status} ${detail.slice(0, 200)}`,
+        );
+      }
+    },
+
+    async setSecret(input: SetSecretInput): Promise<void> {
+      const ghHeaders = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      };
+      // 1) fetch the repo's public key.
+      const keyRes = await fetch(
+        `https://api.github.com/repos/${input.owner}/${input.repo}/actions/secrets/public-key`,
+        { headers: ghHeaders },
+      );
+      if (!keyRes.ok) {
+        const detail = await keyRes.text().catch(() => "");
+        throw new GitProviderError(
+          `fetch secret public-key failed: HTTP ${keyRes.status} ${detail.slice(0, 200)}`,
+        );
+      }
+      const { key, key_id } = (await keyRes.json()) as { key?: string; key_id?: string };
+      if (typeof key !== "string" || typeof key_id !== "string") {
+        throw new GitProviderError("secret public-key response missing key/key_id");
+      }
+      // 2) encrypt with a libsodium sealed box (GitHub's required scheme).
+      // Tolerate CJS/ESM interop: some loaders nest the module under `.default`.
+      const sodium = (_sodium as unknown as { default?: typeof _sodium }).default ?? _sodium;
+      await sodium.ready;
+      const encrypted_value = sodium.to_base64(
+        sodium.crypto_box_seal(
+          sodium.from_string(input.value),
+          sodium.from_base64(key, sodium.base64_variants.ORIGINAL),
+        ),
+        sodium.base64_variants.ORIGINAL,
+      );
+      // 3) create/update the secret.
+      const putRes = await fetch(
+        `https://api.github.com/repos/${input.owner}/${input.repo}/actions/secrets/${input.name}`,
+        {
+          method: "PUT",
+          headers: ghHeaders,
+          body: JSON.stringify({ encrypted_value, key_id }),
+        },
+      );
+      // 201 (created) or 204 (updated) on success.
+      if (!putRes.ok) {
+        const detail = await putRes.text().catch(() => "");
+        throw new GitProviderError(
+          `set secret "${input.name}" failed: HTTP ${putRes.status} ${detail.slice(0, 200)}`,
         );
       }
     },

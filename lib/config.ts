@@ -11,6 +11,21 @@ export function githubToken(): string {
 }
 
 /**
+ * Actions secrets to seed on a newly-scaffolded miniapp so its CI can publish on
+ * first push — `BACKSTAGE_URL` (this Backstage's prod URL) + `PUBLISH_TOKEN` (the
+ * upload service token Backstage validates). Only includes values that are set;
+ * a missing one is simply skipped (best-effort scaffolding).
+ */
+export function scaffoldSecrets(): Record<string, string> {
+  const secrets: Record<string, string> = {};
+  const url = process.env.BACKSTAGE_URL;
+  if (url) secrets.BACKSTAGE_URL = url;
+  const publishToken = process.env.PUBLISH_TOKEN;
+  if (publishToken) secrets.PUBLISH_TOKEN = publishToken;
+  return secrets;
+}
+
+/**
  * GitHub usernames allowed to scaffold, from `SCAFFOLD_ALLOWED_LOGINS` (CSV).
  * Empty when unset → fail-closed (nobody can create). Set it in production
  * (e.g. "DentVega") so a public demo can't spam repos into the account.

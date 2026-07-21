@@ -30,6 +30,7 @@ export async function scaffoldMiniapp(
   templateRepo: string,
   input: ScaffoldInput,
   now: string,
+  secrets: Record<string, string> = {},
 ): Promise<ScaffoldResult> {
   const id = parseMiniappId(input.id);
   if (id === null) {
@@ -57,6 +58,19 @@ export async function scaffoldMiniapp(
       `scaffold: could not enable Actions PR creation for ${input.owner}/${repo}:`,
       err instanceof Error ? err.message : err,
     );
+  }
+
+  // Best-effort: seed the CI secrets (BACKSTAGE_URL + PUBLISH_TOKEN) so the
+  // miniapp can publish on first push. A failure here must not abort the scaffold.
+  for (const [name, value] of Object.entries(secrets)) {
+    try {
+      await gitProvider.setSecret({ owner: input.owner, repo, name, value });
+    } catch (err) {
+      console.warn(
+        `scaffold: could not set secret ${name} for ${input.owner}/${repo}:`,
+        err instanceof Error ? err.message : err,
+      );
+    }
   }
 
   const registry = registerMiniapp(

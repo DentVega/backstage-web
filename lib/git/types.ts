@@ -23,6 +23,14 @@ export interface EnableActionsPullRequestsInput {
   readonly repo: string;
 }
 
+export interface SetSecretInput {
+  readonly owner: string;
+  readonly repo: string;
+  /** Actions secret name, e.g. "PUBLISH_TOKEN". */
+  readonly name: string;
+  readonly value: string;
+}
+
 export interface GitProvider {
   createFromTemplate(input: CreateFromTemplateInput): Promise<{ repoUrl: string }>;
   /** Trigger a `workflow_dispatch` run (build + publish the miniapp). */
@@ -33,6 +41,11 @@ export interface GitProvider {
    * (no extra secret). Off by default on new repos (ADR-016, Capa 2).
    */
   enableActionsPullRequests(input: EnableActionsPullRequestsInput): Promise<void>;
+  /**
+   * Create/update a repo Actions secret (libsodium sealed box). Used to seed the
+   * miniapp's `BACKSTAGE_URL` + `PUBLISH_TOKEN` so its CI can publish on first push.
+   */
+  setSecret(input: SetSecretInput): Promise<void>;
 }
 
 export class GitProviderError extends Error {

@@ -12,5 +12,8 @@ export function mockProvider(): GitProvider {
     async enableActionsPullRequests(): Promise<void> {
       // no-op
     },
+    async setSecret(): Promise<void> {
+      // no-op
+    },
   };
 }
