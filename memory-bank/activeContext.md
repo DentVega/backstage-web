@@ -12,7 +12,7 @@ registry→KV, Blob upload, scaffolder, auth UI — is tracked there under Inten
 ## Current Focus (2026-07-17)
 - **LIVE en producción:** `backstage-web-blond.vercel.app` (Next.js 16 en Vercel). Registry en **Upstash Redis**, chunks en **Vercel Blob** (CDN público), integridad **sha256** real. Validado end-to-end en dispositivo.
 - Esta sesión se cerró todo el loop: build nativo desbloqueado, mount on-device, login GitHub, crear miniapps (scaffolder), **publicar versión desde la UI** (nueva feature aquí), storage de prod, integridad, deploy.
-- **Único pendiente formal:** publicar el contrato `@org/miniapp-contract` → `@dentvega/miniapp-contract` a GitHub Packages (esperando PAT `write:packages`) + quitar el `file:`/vendor de este repo.
+- **Roadmap 5/5 completo.** Contrato publicado: este repo ya consume `@dentvega/miniapp-contract@^0.1.0` desde GitHub Packages (sin `vendor/`); Home dinámico del host hecho. `.npmrc` con el scope `@dentvega` — el build (local + Vercel) necesita `GITHUB_TOKEN` con `read:packages`.
 - Detalle completo en el memory-bank autoritativo del host (`backstagereactnative/memory-bank/{activeContext,progress,audit}.md`).
 
 ## Recent Technical Decisions (2026-07-13)
@@ -26,5 +26,4 @@ registry→KV, Blob upload, scaffolder, auth UI — is tracked there under Inten
 - Real Vercel deploy is manual (needs the user's account).
 
 ## Immediate Next Step
-- Publicar el contrato a GitHub Packages como `@dentvega/miniapp-contract` (rename `@org`→`@dentvega` en los 4 repos + publish + backstage-web consume el publicado y borra `vendor/`). Requiere PAT con `write:packages`.
-- Follow-ons: Home dinámico del host (catálogo), `@dentvega/ui-kit` publicado, iOS en device.
+- Roadmap cerrado (5/5). Housekeeping opcional: firma criptográfica del chunk (hoy = hash sha256), verificar iOS en device, arreglar el typecheck pre-existente de account-dashboard (`tsconfig.base.json`).
