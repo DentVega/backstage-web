@@ -1,4 +1,4 @@
-import type { Manifest, MiniappId, SemVer } from "@org/miniapp-contract";
+import type { Manifest, MiniappId, SemVer } from "@dentvega/miniapp-contract";
 
 export interface PublishedVersion {
   readonly version: SemVer;

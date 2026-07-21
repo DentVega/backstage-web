@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { parseMiniappId } from "@org/miniapp-contract";
+import { parseMiniappId } from "@dentvega/miniapp-contract";
 
 type State =
   | { status: "idle" }

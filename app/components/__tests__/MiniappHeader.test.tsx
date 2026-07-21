@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MiniappHeader } from "@/app/components/MiniappHeader";
 import type { MiniappDetail } from "@/lib/registry/types";
-import type { MiniappId, SemVer } from "@org/miniapp-contract";
+import type { MiniappId, SemVer } from "@dentvega/miniapp-contract";
 
 const base: MiniappDetail = {
   id: "account_dashboard" as MiniappId,

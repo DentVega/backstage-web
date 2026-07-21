@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@org/miniapp-contract':
-        specifier: file:./vendor/miniapp-contract
-        version: file:vendor/miniapp-contract
+      '@dentvega/miniapp-contract':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@upstash/redis':
         specifier: ^1.38.0
         version: 1.38.0
@@ -149,6 +149,9 @@ packages:
   '@csstools/css-tokenizer@4.0.0':
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
+
+  '@dentvega/miniapp-contract@0.1.0':
+    resolution: {integrity: sha512-IJ7Oue0RF58eXAJrX0d0pMkh16jObmMDEPjY+Yg7jbfZukelp69DlzVH9tIGnJG0S7WyISxVBJhpc1CL7qOfpA==, tarball: https://npm.pkg.github.com/download/@dentvega/miniapp-contract/0.1.0/752eccf8cd92b06819519f52080ce8ac4dae8879}
 
   '@emnapi/core@1.11.1':
     resolution: {integrity: sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==}
@@ -367,9 +370,6 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
-
-  '@org/miniapp-contract@file:vendor/miniapp-contract':
-    resolution: {directory: vendor/miniapp-contract, type: directory}
 
   '@oxc-project/types@0.139.0':
     resolution: {integrity: sha512-r9gHphtCs+1M7J0pw6Sn/hh/Wpa/iQrOOkrNAlVLF/gHq+/CJmHIWKKUUhdWjcD6CIa8idarspCsASiXCXvFUw==}
@@ -1292,6 +1292,8 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.0': {}
 
+  '@dentvega/miniapp-contract@0.1.0': {}
+
   '@emnapi/core@1.11.1':
     dependencies:
       '@emnapi/wasi-threads': 1.2.2
@@ -1446,8 +1448,6 @@ snapshots:
 
   '@next/swc-win32-x64-msvc@16.2.10':
     optional: true
-
-  '@org/miniapp-contract@file:vendor/miniapp-contract': {}
 
   '@oxc-project/types@0.139.0': {}
 

@@ -1,5 +1,5 @@
 /** Build a default version manifest so the UI publish flow doesn't need raw JSON. */
-import type { Capability, Manifest } from "@org/miniapp-contract";
+import type { Capability, Manifest } from "@dentvega/miniapp-contract";
 
 /**
  * Shared singletons the mobile host provides. A version's manifest declares the

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { VersionList } from "@/app/components/VersionList";
 import type { VersionView } from "@/lib/registry/types";
-import type { SemVer } from "@org/miniapp-contract";
+import type { SemVer } from "@dentvega/miniapp-contract";
 
 const v = (version: string, capabilities: string[] = []): VersionView => ({
   version: version as SemVer,
