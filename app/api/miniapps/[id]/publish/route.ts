@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/registry/store";
 import { publishVersion } from "@/lib/registry/registry";
+import { authorizeUpload } from "@/lib/auth";
 import { errorBody, statusForError } from "@/lib/http";
 
 export const runtime = "nodejs";
@@ -11,6 +12,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
+    await authorizeUpload(req);
     const { id } = await params;
     const body = (await req.json()) as {
       version?: string;

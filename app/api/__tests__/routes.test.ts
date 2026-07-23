@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Registry } from "@/lib/registry/types";
 
 const state = vi.hoisted(() => ({ reg: {} as Registry }));
@@ -12,9 +12,14 @@ vi.mock("@/lib/registry/store", () => ({
   }),
 }));
 
+vi.mock("@/auth", () => ({ auth: vi.fn() }));
+
 import { POST as registerPOST } from "@/app/api/miniapps/route";
 import { POST as publishPOST } from "@/app/api/miniapps/[id]/publish/route";
 import { GET as resolveGET } from "@/app/api/resolve/route";
+import { auth } from "@/auth";
+
+const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 
 const manifest = {
   id: "acc",
@@ -34,6 +39,13 @@ function jsonReq(url: string, body: unknown): Request {
 
 beforeEach(() => {
   state.reg = {};
+  process.env.SCAFFOLD_ALLOWED_LOGINS = "DentVega";
+  authMock.mockResolvedValue({ githubLogin: "DentVega" });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  delete process.env.SCAFFOLD_ALLOWED_LOGINS;
 });
 
 describe("POST /api/miniapps", () => {
