@@ -86,24 +86,33 @@ marcado como **Template repository**) con su CI reutilizable.
 ### 3.1 Elegir el scope y el owner
 
 El proyecto de referencia usa el scope npm `@dentvega` y el owner GitHub
-`DentVega`. Una empresa nueva **debe reemplazar ambos** en todo el código:
-
-| Placeholder a reemplazar | Por | Dónde aparece |
-|---|---|---|
-| `@dentvega` (scope npm) | tu scope, ej. `@acme` | `name` de cada `package.json` en `packages/*`, `apps/host`, `miniapp-template`; entradas `shared` en `rspack.config.mjs` (host y template); todos los `.npmrc` |
-| `DentVega` (owner GitHub) | tu usuario/org, ej. `Acme` | `MINIAPP_TEMPLATE_REPO`, `uses: DentVega/miniapp-template/...@main` en `miniapp-template/.github/workflows/ci.yml`, y `repos/DentVega/miniapp-template/commits/main` + el JSON `templateRepo` en `miniapp-template/.github/workflows/init-template.yml` |
+`DentVega`. Una empresa nueva **debe reemplazar ambos** — hay un script que lo
+hace en un comando, en cada repo (corre desde la raíz del repo copiado):
 
 ```bash
-# Ejemplo de rename masivo (ajusta rutas/scope real). Corre en cada repo.
-grep -rl "@dentvega" --include="*.json" --include="*.mjs" --include="*.md" . \
-  | xargs sed -i '' 's/@dentvega/@acme/g'          # macOS sed; en Linux: sed -i
-grep -rl "DentVega" --include="*.yml" . \
-  | xargs sed -i '' 's/DentVega/Acme/g'
+# 1) preview (dry-run — no escribe nada):
+node scripts/bootstrap.mjs --scope @acme --owner Acme
+
+# 2) aplicar:
+node scripts/bootstrap.mjs --scope @acme --owner Acme --yes
+
+# 3) regenerar el lockfile con los nuevos nombres de paquete:
+pnpm install
 ```
 
-> `docs/miniapps-guide.md` usa `@org/...` como placeholder genérico — no es
-> literal, ya está pensado para sustituirse. Lo que sí es **literal** en el
-> código y hay que renombrar es `@dentvega` y `DentVega`.
+- `--scope` es tu scope npm (debe empezar con `@`); `--owner` tu usuario/org de
+  GitHub. `--login` es opcional (default: el owner en minúscula) y solo afecta
+  fixtures de test.
+- Reemplaza `@dentvega`→tu scope, `DentVega`→tu owner y `dentvega`→tu login en
+  `package.json`, `.npmrc`, `rspack.config.mjs`, `.github/workflows/*`, `src`,
+  `docs`, etc. Excluye lockfiles (por eso el `pnpm install`) y sus propios
+  archivos.
+- Tiene un **guard**: se niega a escribir si detecta que corres sobre los repos
+  origen (`DentVega/*`); usá `--force` solo si sabés lo que hacés.
+
+> `docs/miniapps-guide.md` usa `@org/...` como placeholder genérico (ya pensado
+> para sustituirse). Lo **literal** que el bootstrap renombra es `@dentvega` /
+> `DentVega`.
 
 ### 3.2 Publicar `miniapp-contract` y `ui-kit` (repo `backstagereactnative`)
 
