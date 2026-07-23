@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { scaffoldMiniapp } from "@/lib/scaffold";
+import { scaffoldMiniapp, seedRepoSecrets } from "@/lib/scaffold";
 import { mockProvider } from "@/lib/git/mock";
 import { GitProviderError } from "@/lib/git/types";
 import {
@@ -138,5 +138,43 @@ describe("scaffoldMiniapp", () => {
       { PUBLISH_TOKEN: "tok" },
     );
     expect(res.registry.payments).toMatchObject({ id: "payments" });
+  });
+});
+
+describe("seedRepoSecrets", () => {
+  it("setea cada secret y los reporta en seeded", async () => {
+    const calls: { name: string; value: string }[] = [];
+    const provider = {
+      createFromTemplate: async () => ({ repoUrl: "x" }),
+      dispatchWorkflow: async () => {},
+      enableActionsPullRequests: async () => {},
+      setSecret: async (i: { name: string; value: string }) => {
+        calls.push({ name: i.name, value: i.value });
+      },
+    };
+    const res = await seedRepoSecrets(provider, "acme", "miniapp-x", {
+      BACKSTAGE_URL: "https://b",
+      PUBLISH_TOKEN: "new-strong",
+    });
+    expect(res.seeded.sort()).toEqual(["BACKSTAGE_URL", "PUBLISH_TOKEN"]);
+    expect(res.failed).toEqual([]);
+    expect(calls).toHaveLength(2);
+  });
+
+  it("un secret que falla no aborta los demás (best-effort)", async () => {
+    const provider = {
+      createFromTemplate: async () => ({ repoUrl: "x" }),
+      dispatchWorkflow: async () => {},
+      enableActionsPullRequests: async () => {},
+      setSecret: async (i: { name: string }) => {
+        if (i.name === "PUBLISH_TOKEN") throw new Error("boom");
+      },
+    };
+    const res = await seedRepoSecrets(provider, "acme", "miniapp-x", {
+      BACKSTAGE_URL: "https://b",
+      PUBLISH_TOKEN: "new-strong",
+    });
+    expect(res.seeded).toEqual(["BACKSTAGE_URL"]);
+    expect(res.failed).toEqual([{ name: "PUBLISH_TOKEN", error: "boom" }]);
   });
 });
