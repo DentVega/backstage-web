@@ -21,7 +21,9 @@ vercel link
 vercel env add PUBLISH_TOKEN           # token de servicio (mismo secret en la CI de cada miniapp)
 vercel env add GITHUB_TOKEN            # scaffolder: crear repos (scope repo)
 vercel env add MINIAPP_TEMPLATE_REPO   # p.ej. tu-org/miniapp-template
-vercel env add BACKSTAGE_PUBLIC_URL    # la URL del deploy (para fsStorage — no crítico en prod)
+vercel env add BACKSTAGE_URL           # URL prod de este Backstage — el scaffolder la SIEMBRA como secret en cada miniapp nueva (su CI publica de vuelta acá). Sin esto, las miniapps nuevas no reciben el secret y su CI falla al publicar.
+vercel env add BACKSTAGE_PUBLIC_URL    # solo el fallback de fsStorage (chunks servidos por Backstage en modo fs) — no crítico en prod con Blob real
+vercel env add SCAFFOLD_ALLOWED_LOGINS # CSV de logins de GitHub autorizados a crear/deployar (vacío = nadie, fail-closed)
 
 # 5. Deploy
 vercel deploy --prod                   # → https://<tu-proyecto>.vercel.app
