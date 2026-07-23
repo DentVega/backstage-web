@@ -85,4 +85,11 @@ describe("POST /api/admin/reseed-secrets", () => {
     expect(body.reseeded).toEqual(["a"]);
     expect(body.failed.map((f) => f.id)).toEqual(["b"]);
   });
+
+  it("no reporta éxito si PUBLISH_TOKEN no está seteado (no toca ningún repo)", async () => {
+    delete process.env.PUBLISH_TOKEN;
+    const res = await POST(post());
+    expect(res.status).not.toBe(200);
+    expect(state.setSecretCalls).toHaveLength(0);
+  });
 });

@@ -44,7 +44,10 @@ La comparación es timing-safe (no filtra el token por tiempo ni por longitud).
 4. **Verificar** que un publish real anda con el token nuevo: disparar el CI de una
    miniapp (o el botón Deploy) → debe dar 200/201.
 
-5. **Quitar el token viejo:** borrar `PUBLISH_TOKENS_OLD` del env y redeployar.
+5. **Quitar el token viejo** — solo cuando el paso 3 haya devuelto `failed: []`.
+   ⚠️ Si algún repo quedó en `failed`, todavía tiene el token viejo: sacar
+   `PUBLISH_TOKENS_OLD` ahora lo dejaría sin poder publicar. Resolvé esos repos
+   (reintentá el reseed) antes de seguir. Con `failed` vacío:
    ```bash
    vercel env rm PUBLISH_TOKENS_OLD production
    vercel --prod

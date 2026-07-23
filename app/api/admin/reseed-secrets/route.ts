@@ -25,9 +25,16 @@ export async function POST(_req: Request): Promise<NextResponse> {
       throw new ScaffoldForbiddenError();
     }
 
+    const secrets = scaffoldSecrets();
+    // Guard against a misleading "success": without PUBLISH_TOKEN in the env,
+    // scaffoldSecrets() has no token to seed, so the loop would report every repo
+    // as reseeded while flipping nothing. The rotation runbook sets it first.
+    if (!secrets.PUBLISH_TOKEN) {
+      throw new Error("PUBLISH_TOKEN is not set — set it before reseeding");
+    }
+
     const reg = await getStore().load();
     const provider = githubProvider(githubToken());
-    const secrets = scaffoldSecrets();
 
     const reseeded: string[] = [];
     const failed: { id: string; error: string }[] = [];
