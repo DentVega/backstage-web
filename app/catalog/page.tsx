@@ -3,6 +3,7 @@ import { getStore } from "@/lib/registry/store";
 import { listCatalog } from "@/lib/registry/registry";
 import { CatalogList } from "@/app/components/CatalogList";
 import { resolveCiStatuses } from "@/lib/ci/resolve";
+import { resolveDriftStatuses } from "@/lib/drift/resolve";
 import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +13,7 @@ export default async function CatalogPage() {
   const entries = listCatalog(reg);
   const session = await auth();
   const statusById = await resolveCiStatuses(entries, session?.githubAccessToken);
+  const driftById = await resolveDriftStatuses(entries);
   return (
     <main className="page">
       <div className="page-head-row">
@@ -33,7 +35,7 @@ export default async function CatalogPage() {
           <span className="path">backstage · registry / catalog</span>
         </div>
         <div style={{ padding: "6px 0" }}>
-          <CatalogList entries={entries} statusById={statusById} />
+          <CatalogList entries={entries} statusById={statusById} driftById={driftById} />
         </div>
       </div>
     </main>

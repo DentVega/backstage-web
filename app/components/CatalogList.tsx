@@ -1,13 +1,17 @@
 import type { CatalogEntry } from "@/lib/registry/types";
 import type { CiStatus } from "@/lib/ci";
+import type { DriftStatus } from "@/lib/drift";
 import { CiBadge } from "./CiBadge";
+import { DriftBadge } from "./DriftBadge";
 
 export function CatalogList({
   entries,
   statusById = {},
+  driftById = {},
 }: {
   entries: CatalogEntry[];
   statusById?: Record<string, CiStatus>;
+  driftById?: Record<string, DriftStatus>;
 }) {
   if (entries.length === 0) {
     return <p role="status" className="empty">No hay miniapps registradas todavía.</p>;
@@ -44,6 +48,7 @@ export function CatalogList({
             )}
           </span>
           <CiBadge status={statusById[e.id] ?? "unknown"} />
+          <DriftBadge status={driftById[e.id] ?? "unknown"} />
         </li>
       ))}
     </ul>

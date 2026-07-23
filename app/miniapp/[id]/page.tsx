@@ -3,12 +3,14 @@ import { getStore } from "@/lib/registry/store";
 import { getMiniappDetail } from "@/lib/registry/registry";
 import { MiniappNotFoundError } from "@/lib/registry/types";
 import { getCiProvider, repoFullNameFor, type CiStatus } from "@/lib/ci";
+import { resolveDriftStatuses } from "@/lib/drift/resolve";
 import { auth } from "@/auth";
 import { canScaffold } from "@/lib/scaffold-authz";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { MiniappHeader } from "@/app/components/MiniappHeader";
 import { VersionList } from "@/app/components/VersionList";
 import { CiBadge } from "@/app/components/CiBadge";
+import { DriftBadge } from "@/app/components/DriftBadge";
 import { PublishForm } from "@/app/components/PublishForm";
 import { DeployButton } from "@/app/components/DeployButton";
 import { SyncTemplateButton } from "@/app/components/SyncTemplateButton";
@@ -40,6 +42,7 @@ export default async function MiniappDetailPage({
       await getCiProvider().getStatus(repoFullNameFor(detail), token)
     ).status;
   }
+  const driftStatus = (await resolveDriftStatuses([detail]))[detail.id] ?? "unknown";
 
   return (
     <main className="page">
@@ -52,6 +55,7 @@ export default async function MiniappDetailPage({
       <section className="detail-section">
         <h2>Estado de CI</h2>
         <CiBadge status={ciStatus} />
+        <DriftBadge status={driftStatus} />
       </section>
 
       <section className="detail-section">

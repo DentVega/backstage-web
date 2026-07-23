@@ -24,12 +24,18 @@ describe("CatalogList", () => {
       "href",
       "/miniapp/account_dashboard",
     );
-    expect(screen.getByRole("status")).toHaveAttribute("aria-label", "CI: success");
+    expect(screen.getByRole("status", { name: "CI: success" })).toHaveAttribute(
+      "aria-label",
+      "CI: success",
+    );
   });
 
   it("falls back to an unknown badge when no status is provided", () => {
     render(<CatalogList entries={[entry]} />);
-    expect(screen.getByRole("status")).toHaveAttribute("aria-label", "CI: unknown");
+    expect(screen.getByRole("status", { name: "CI: unknown" })).toHaveAttribute(
+      "aria-label",
+      "CI: unknown",
+    );
   });
 
   it("shows an empty state when there are no miniapps", () => {
