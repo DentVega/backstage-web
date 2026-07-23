@@ -1,28 +1,15 @@
 import { NextResponse } from "next/server";
 import { unzipSync } from "fflate";
-import { auth } from "@/auth";
 import { getStore } from "@/lib/registry/store";
 import { publishVersion } from "@/lib/registry/registry";
 import { getStorage } from "@/lib/storage";
-import { requirePublishToken } from "@/lib/auth";
-import { canScaffold } from "@/lib/scaffold-authz";
-import { scaffoldAllowedLogins } from "@/lib/config";
+import { authorizeUpload } from "@/lib/auth";
 import { defaultManifest, parseCapabilities } from "@/lib/manifest";
 import { sha256Integrity } from "@/lib/integrity";
 import { errorBody, statusForError } from "@/lib/http";
 import type { StorageFile } from "@/lib/storage/types";
 
 export const runtime = "nodejs";
-
-/**
- * Authorize an upload: an allowlisted signed-in user (the UI flow) OR a valid
- * `PUBLISH_TOKEN` bearer (the CI flow). Throws if neither applies.
- */
-async function authorizeUpload(req: Request): Promise<void> {
-  const session = await auth();
-  if (canScaffold(session?.githubLogin, scaffoldAllowedLogins())) return;
-  requirePublishToken(req);
-}
 
 /**
  * POST /api/miniapps/:id/upload — publish a build (ADR-015).
