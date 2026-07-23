@@ -1,6 +1,15 @@
-// lib/drift/index.ts (Task 1 stub — Task 2 replaces getDriftProvider with the real one)
+import { githubDriftProvider } from "./github";
+import { withCache } from "./cache";
+import type { DriftProvider } from "./types";
+
 export type { DriftStatus, DriftProvider } from "./types";
 export { DriftProviderError } from "./types";
-export function getDriftProvider(): never {
-  throw new Error("getDriftProvider not wired (Task 2)");
+
+let cached: DriftProvider | null = null;
+
+/** The GitHub drift provider wrapped in a ~60s cache (singleton). */
+export function getDriftProvider(): DriftProvider {
+  if (cached) return cached;
+  cached = withCache(githubDriftProvider());
+  return cached;
 }
