@@ -281,6 +281,63 @@ troubleshooting del lado host): `backstagereactnative/docs/mounting-miniapps.md`
 
 ---
 
+## 6b. Hot reload — dev-loop rápido (Modo 1 y 2)
+
+El inner loop de §4 (build → publish → reabrir) no tiene hot reload del remoto
+federado (el host carga por URL resuelta). Para iterar más rápido hay **dos modos
+de dev, `__DEV__`-only** (no afectan release):
+
+### Modo 1 — dev-mount (Fast Refresh real, sin federación)
+
+El host importa **directo** el `Entry` de un miniapp clonado al lado y lo renderiza
+con un grant mock (de las capabilities de su `manifest.json`). Al ser código del
+bundle del host, editar el miniapp da **Fast Refresh instantáneo**.
+
+```bash
+# host, apuntando a tu miniapp clonado al lado:
+DEV_MINIAPP_PATH=../miniapp-cards_wallet pnpm --filter @app/host start
+pnpm --filter @app/host android
+# → en el Home tocá "▶ Dev Mount" → editá miniapp-cards_wallet/src/Screen.tsx
+#   → refresco instantáneo
+```
+
+- Sin `DEV_MINIAPP_PATH`, "Dev Mount" muestra un placeholder (y en release ni se
+  registra).
+- **Límite:** no prueba la federación (boundary MF, resolve, integridad). Y solo
+  funciona limpio si el miniapp usa deps **compartidas** (ui-kit, RN, react); si
+  agregó deps propias, instalalas también en el host o usá el Modo 2.
+
+### Modo 2 — dev server (:9000, reload federado rápido, sin publish)
+
+El host consume el container **vivo** del `webpack-start` del miniapp. Editás →
+rebuildea → **RR** (recargar) en el host trae el container fresco. Prueba la
+federación real; sin build+zip+publish.
+
+```bash
+# terminal A — miniapp:
+cd miniapp-cards_wallet && pnpm start            # dev server :9000
+
+# terminal B — host:
+DEV_REMOTES="cards_wallet=http://localhost:9000" pnpm --filter @app/host start
+adb reverse tcp:9000 tcp:9000                    # (+ tcp:3999 si además usás Backstage)
+pnpm --filter @app/host android
+# → abrí cards_wallet desde el Home → carga el remoto vivo → editá → RR para refrescar
+```
+
+- `DEV_REMOTES` es un mapa `"id=url,id2=url2"`. Solo esos ids saltan Backstage y van
+  al dev server (con integridad desactivada **solo** para ellos, bajo `__DEV__`).
+- En release, `DEV_REMOTES` no se setea → el host resuelve/verifica normal.
+
+### Qué modo para qué tarea
+
+| Tarea | Modo |
+|---|---|
+| Construir/ajustar la UI de la pantalla (lo más frecuente) | **1** (Fast Refresh) |
+| Verificar que monta como remoto federado, capabilities, boundary MF | **2** (reload) |
+| Release / integridad / versionado | build→publish (§4) |
+
+---
+
 ## 7. Troubleshooting
 
 | Síntoma | Causa / fix |
