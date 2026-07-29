@@ -57,7 +57,39 @@ el problema se parte en dos fallas:
 3. **Gate simétrico de gobernanza del host:** todo cambio de deps en el host se gatea
    en su propio CI contra la flota de miniapps publicadas (blast-radius), con branch
    protection para que no se pueda saltear — ni a mano ni por un agente de IA.
-4. **Construcción en 4 fases** (cada una entrega valor sola).
+
+### Refinamientos (review de completitud, 2026-07-29)
+
+4. **Semver real:** el gate usa la lib `semver` (`satisfies()`), no el `satisfiesRange`
+   mínimo actual (que solo entiende `exact/^/~/*` y daría falsos incompatibles con
+   rangos reales `>=x <y`, `||`, `1.x`). El mínimo se queda para el badge; el GATE usa
+   semver real.
+5. **Auth del contract = admin, no el token compartido.** `PUT /api/host-contract` se
+   valida con un `HOST_CONTRACT_TOKEN` **dedicado**, sembrado SOLO en el CI del host —
+   nunca distribuido a las miniapps. Un contract equivocado bloquea/habilita todo, así
+   que su publicación no puede depender del `PUBLISH_TOKEN` que tiene cada repo.
+6. **Política de derivación del manifest, explícita:** `requiredRange` se deriva del
+   **lockfile** (versión resuelta real, no el rango de `package.json`) como
+   `^<versión>`. Para deps `0.x` (react-native) el caret bloquea el minor (semántica
+   npm: `^0.76.6` ⇒ `>=0.76.6 <0.77.0`) — exactamente lo que querés para RN.
+7. **Backfill de la flota (prerequisito real).** Los manifests publicados hoy tienen
+   `shared` vacío → los gates y el blast-radius serían vacíos hasta re-publicar. El
+   rollout incluye re-publicar todas las miniapps (vía el Deploy/dispatch existente)
+   para que carguen su `shared` derivado. **Regla dura:** un manifest **sin `shared`
+   se trata como "at-risk" (no provable-compatible)**, nunca como compatible vacuo.
+8. **Módulos nativos versionados.** Los natives que exponen API JS
+   (`react-native-screens`, `safe-area-context`, `reanimated`) pasan a ser
+   **shared singletons con versión** (hoy faltan en el `shared` del host) → chequeo de
+   skew. `nativeModules` (name-only) queda solo para natives sin API JS.
+9. **Versión del host en el mundo real — límite conocido con red.** El resolve NO usa
+   `hostVersion` hoy; los usuarios corren binarios de host viejos. Se hace lo mínimo
+   correcto: el manifest declara `minHostContract` (RN/contractVersion mínimo que
+   necesita) y el **runtime guard del host viejo lo frena** (muestra "necesitás
+   actualizar", no crashea). El **resolve-por-hostVersion** (servir la última versión
+   de la miniapp compatible con el host del usuario) se difiere y se ata a
+   rollback/pinning (roadmap #10) — documentado, no olvidado.
+
+10. **Construcción en 4 fases** (cada una entrega valor sola).
 
 ## 3. Arquitectura
 
@@ -93,18 +125,29 @@ Un `host-contract.json`, **auto-generado desde el build del host**:
 - **`contractVersion`**: SemVer que bumpea cuando cambia la plataforma (bump de RN,
   módulo nativo agregado/quitado).
 
+- **`shared`** incluye ahora los natives con API JS (`react-native-screens`,
+  `safe-area-context`, `reanimated`) — hoy faltan en el `shared` del host; se agregan
+  para que tengan chequeo de versión (decisión §2.8). `nativeModules` queda para
+  natives sin API JS (presencia only).
+
 **Publicación:** el **CI del host** genera el contract en cada release y lo sube a
-Backstage vía `PUT /api/host-contract` (auth: `PUBLISH_TOKEN` — reusa el guard
-`requirePublishToken` ya existente). Backstage lo guarda en KV y lo sirve en
-`GET /api/host-contract`.
+Backstage vía `PUT /api/host-contract`, validado con un **`HOST_CONTRACT_TOKEN`
+dedicado** (sembrado solo en el CI del host, nunca en las miniapps — decisión §2.5).
+Backstage lo guarda en KV y lo sirve en `GET /api/host-contract`.
 
 ### 3.2 Manifest que no puede mentir
 
-El publish CI de la miniapp **deriva `manifest.shared` de las deps reales**
-(`package.json` + lockfile), intersectando con `host.shared`: para cada dep de la
-miniapp que el host comparte, emite `{ name, requiredRange: <versión instalada>,
-singleton: true }`. Si el autor sube RN a 0.77, el manifest generado dice
-`react-native ^0.77` → el gate lo compara contra el host 0.76 → incompatible.
+El publish CI de la miniapp **deriva `manifest.shared` de las deps reales**,
+intersectando con `host.shared`: para cada dep de la miniapp que el host comparte,
+emite `{ name, requiredRange: "^" + <versión resuelta del LOCKFILE>, singleton: true }`
+(política §2.6 — del lockfile, no del rango de package.json). Si el autor sube RN a
+0.77, el manifest generado dice `react-native ^0.77.0` → el gate lo compara contra el
+host 0.76 con semver real → incompatible.
+
+El manifest también declara **`minHostContract`** (el `contractVersion`/`reactNative`
+mínimo contra el que se construyó, §2.9) para que un host viejo pueda rechazar con
+gracia. **Regla dura (§2.7):** un manifest **sin `shared`** se trata como *at-risk*
+(no provable-compatible) en todo chequeo — nunca como compatible vacuo.
 
 ### 3.3 Cuatro puntos de enforcement (defensa en capas)
 
@@ -171,6 +214,11 @@ export function checkCompatibility(
 `checkCompatibility` compone `satisfiesShared(contract.shared, miniappShared)` +
 `checkNativeModules(contract.nativeModules, miniappNativeModules)`.
 
+El chequeo de rangos dentro de `satisfiesShared` pasa a usar la lib **`semver`**
+(`satisfies()`) en vez del `satisfiesRange` mínimo (§2.4). El mínimo se mantiene solo
+para el badge de drift (no-gate). Esto suma `semver` como dep del contract package
+(justificado: es EL estándar, y el package deja de ser "cero deps" solo por esto).
+
 ### 3.5 Gate de gobernanza del host (protege el eje)
 
 Los 4 puntos de §3.3 validan **miniapp → host**. Pero el host es el eje: un cambio
@@ -219,31 +267,41 @@ los manifests que ya viven en el registry.
 ### Fase 1 — Contract + manifest truthful + gate de skew (cierra Falla A)
 
 **Contract package** (`backstagereactnative/packages/miniapp-contract`):
-- Agregar `HostContract` type + tests.
+- Agregar `HostContract` type + `minHostContract` al `Manifest` + tests.
+- **`satisfiesShared` pasa a usar `semver.satisfies`** (§2.4); el `satisfiesRange`
+  mínimo se conserva solo para el badge de drift.
 - (El `checkNativeModules`/`checkCompatibility` se agregan en Fase 2; en Fase 1 el
   gate usa `satisfiesShared` directo.)
 
 **Host** (`backstagereactnative/apps/host`):
 - `scripts/gen-host-contract.mjs`: lee la config MF `shared` + versiones instaladas
-  → escribe `host-contract.json` (sin `nativeModules` aún; campo `[]` o ausente).
+  → escribe `host-contract.json` (sin `nativeModules` aún; campo `[]`).
+- Agregar los natives con API JS (`screens`, `safe-area-context`, `reanimated`) al
+  `shared` del host (§2.8) para que entren al contract con versión.
 
 **Backstage** (`backstage-web`):
-- `PUT /api/host-contract` (auth `requirePublishToken`) → guarda el contract en KV.
+- `PUT /api/host-contract` (auth **`HOST_CONTRACT_TOKEN` dedicado**, §2.5) → guarda el
+  contract en KV.
 - `GET /api/host-contract` → lo sirve (o 404 si no hay).
 - `lib/host-contract/` (store + tipos), reusa el patrón de `lib/registry`.
 - `lib/manifest.ts`: `DEFAULT_SHARED` deja de estar hardcodeado — deriva del
   contract guardado (fallback al valor actual si no hay contract).
 
 **Template CI** (`miniapp-template`):
-- `scripts/gen-manifest-shared.mjs`: deriva `manifest.shared` de package.json ∩
-  contract.shared antes de publicar (manifest truthful).
+- `scripts/gen-manifest-shared.mjs`: deriva `manifest.shared` del **lockfile** ∩
+  contract.shared como `^<versión resuelta>` (§2.6), + `minHostContract`.
 - `scripts/check-compat.mjs` (skew only en Fase 1): fetch contract + `satisfiesShared`
-  → exit 1 si incompatible.
+  (semver) → exit 1 si incompatible. Fail-closed si no hay contract (§5).
 - Cablear ambos en el workflow reutilizable de publish.
 
 **Backstage upload** (`backstage-web`):
 - `/upload`: correr `satisfiesShared(contract.shared, manifest.shared)` → 422 si
-  incompatible.
+  incompatible. Un manifest **sin `shared` → at-risk**, se rechaza (§2.7), no pasa vacuo.
+
+**Backfill de la flota (§2.7):** re-publicar todas las miniapps existentes (vía el
+Deploy/dispatch ya existente) para que sus manifests carguen el `shared` derivado —
+sin esto los gates y el blast-radius (Fase 4) están vacíos. Se hace en el rollout
+(§8), en modo warn primero.
 
 ### Fase 2 — Detección de libs nativas + bloqueo (cierra Falla B core)
 
@@ -305,7 +363,13 @@ branch protection de `main` (paso manual documentado, como el permiso de Actions
 
 - **Contract package:** `checkNativeModules` (missing/ok), `checkCompatibility`
   (skew ok + native missing → incompatible; ambos ok → compatible). `HostContract`
-  type guard.
+  type guard. **`satisfiesShared` con semver real:** rangos `>=x <y`, `||`, `1.x`
+  ahora resuelven bien (regresión del `satisfiesRange` mínimo).
+- **At-risk / auth (§2.5, §2.7):** manifest sin `shared` → tratado como incompatible en
+  `/upload` y blast-radius, nunca compatible vacuo; `PUT /api/host-contract` → 401 sin
+  `HOST_CONTRACT_TOKEN`, 200 con él (y el `PUBLISH_TOKEN` de miniapp NO alcanza).
+- **Derivación (§2.6):** `gen-manifest-shared` con un lockfile fixture → `^<resuelta>`;
+  bump de RN en el lockfile se refleja en el rango + `minHostContract`.
 - **gen-host-contract.mjs:** dado un config MF fixture + versiones → emite el JSON
   esperado; con un `react-native config` fixture → popula `nativeModules`.
 - **gen-manifest-shared.mjs:** package.json fixture ∩ contract → manifest.shared
@@ -346,17 +410,38 @@ workflow reutilizable de publish (cablear los pasos).
    a Backstage.
 2. Deploy de Backstage con los endpoints + gate en `/upload` **en modo warn** (loguea
    pero no rechaza) — validación en sombra.
-3. Cablear el gate en el CI del template (fail-closed).
-4. Cuando todo esté verde en sombra, `/upload` pasa a rechazar (422).
+3. **Backfill de la flota (§2.7):** re-publicar todas las miniapps existentes para que
+   carguen su `shared` derivado. Verificar en sombra que cada una queda compatible
+   (o migrarla si no). Hasta acá el blast-radius y los gates están vacíos.
+4. Cablear el gate en el CI del template (fail-closed).
+5. Cuando todo esté verde en sombra, `/upload` pasa a rechazar (422).
+6. (Fase 4) Marcar `host-compat` como required en la branch protection del host.
 
 ## 9. Fuera de alcance (YAGNI)
 
-- **Múltiples versiones de host / contracts por-versión.** Se asume un host vivo (el
-  `hostVersion` del resolve ya existe para pinning futuro).
 - **Release automática del host.** Es decisión humana (agregar código nativo + QA).
 - **Dedup/optimización de deps pure-JS.** El bundling actual alcanza.
 - **Análisis de compatibilidad transitiva profunda** (deps de deps nativas). Se
   chequea el set autolinkeado, que es la superficie real.
+
+### Diferidos "con los ojos abiertos" (review de completitud — verlos después)
+
+Documentados para no olvidarlos; NO se construyen en estas 4 fases:
+
+- **Resolve por `hostVersion`** (servir la última versión de la miniapp compatible con
+  el binario de host del usuario). Mitigado por `minHostContract` + runtime guard
+  (§2.9); la solución completa se ata a rollback/pinning (roadmap #10).
+- **Trust boundary de `/upload`:** si se evade el CI y se POStea un manifest que miente
+  sobre su `shared`, el server no puede re-derivar sin el fuente. Protección real =
+  manifest derivado-en-CI + integridad. (Review #7)
+- **Natives requeridos dinámicamente** (require por nombre sin ser paquete
+  autolinkeado) — el autolinking no los ve. (Review #8)
+- **Rollback/versionado del contract guardado** si el host publica uno con bug.
+  (Review #9)
+- **Feedback local (`pnpm check-compat` / pre-push)** antes de pushear. (Review #10)
+- **Métricas de decisiones del gate** (ata con roadmap #12); **badge de contract-drift**
+  en Backstage (distinto del template-drift #7); **integración con el bootstrap** de
+  adopción (el `gen-host-contract` en el flujo de la empresa nueva). (Review #12-14)
 
 ## 10. Riesgos / dependencias
 
