@@ -54,7 +54,10 @@ el problema se parte en dos fallas:
 2. **Libs nativas:** el host declara su capability set nativo; el gate detecta libs
    fuera del set vía autolinking de RN, **bloquea**, y **abre un pedido automatizado**
    (issue/PR contra el host). La release del host es el único paso humano.
-3. **Construcción en 3 fases** (cada una entrega valor sola).
+3. **Gate simétrico de gobernanza del host:** todo cambio de deps en el host se gatea
+   en su propio CI contra la flota de miniapps publicadas (blast-radius), con branch
+   protection para que no se pueda saltear — ni a mano ni por un agente de IA.
+4. **Construcción en 4 fases** (cada una entrega valor sola).
 
 ## 3. Arquitectura
 
@@ -168,6 +171,49 @@ export function checkCompatibility(
 `checkCompatibility` compone `satisfiesShared(contract.shared, miniappShared)` +
 `checkNativeModules(contract.nativeModules, miniappNativeModules)`.
 
+### 3.5 Gate de gobernanza del host (protege el eje)
+
+Los 4 puntos de §3.3 validan **miniapp → host**. Pero el host es el eje: un cambio
+de sus deps (bump de un singleton, quitar una lib nativa) puede **romper TODAS las
+miniapps publicadas de una**. Este gate valida la dirección inversa: **host → flota**.
+
+Corre en el **CI del repo del host**, en **todo PR que toque deps**
+(`package.json` / lockfile / la config `shared` de MF):
+```
+1. regenera el host-contract CANDIDATO (del PR) con gen-host-contract.mjs
+2. fetch el contract PUBLICADO (GET /api/host-contract)
+3. fetch los manifests de la flota (GET /api/manifests — latest de cada miniapp)
+4. BLAST-RADIUS: para cada manifest, checkCompatibility(candidato, manifest)
+5. "breaking" ≡ ∃ miniapp que pasa de compatible → incompatible con el candidato
+6. breaking → falla el CI del PR con la lista de miniapps afectadas y por qué
+              (ej. "react-native 0.76→0.77 rompe: hello_widget (^0.76), cards_wallet (^0.76)")
+   safe     → pasa; el diff sugiere el bump de contractVersion (major si breaking-aceptado)
+```
+
+**Clasificación (para el reporte humano):**
+
+| Cambio en el contract | Veredicto |
+|---|---|
+| Agregar shared dep / módulo nativo nuevo | **safe** (solo expande capability) |
+| Bump de versión dentro de los rangos declarados por la flota | **safe** |
+| Bump de singleton fuera del rango de ≥1 miniapp | **breaking** |
+| Remover un módulo nativo que ≥1 miniapp usa | **breaking** |
+| Remover / bajar major-minor de un shared | **breaking** |
+
+La definición operativa es el **blast-radius**: breaking ⇔ el candidato vuelve
+incompatible a alguna miniapp hoy compatible. La tabla es solo para explicar el
+porqué en el reporte.
+
+**Por qué controla "con o sin IA":** el check es **automático en cada PR** de deps y,
+con **branch protection** (el check obligatorio para mergear), **no se puede saltear**
+— ni un humano apurado ni un agente. Un breaking change exige una **decisión
+consciente** (migrar las miniapps afectadas, o aprobar el break con un label
+explícito tipo `accept-breaking-contract` que el gate reconoce y deja pasar dejando
+registro).
+
+Reusa todo lo ya diseñado: el mismo `checkCompatibility`, `gen-host-contract.mjs`, y
+los manifests que ya viven en el registry.
+
 ## 4. Fases
 
 ### Fase 1 — Contract + manifest truthful + gate de skew (cierra Falla A)
@@ -222,6 +268,24 @@ que el server pueda validar sin re-ejecutar autolinking.
 **Backstage (opcional, YAGNI-check):** una vista de "pedidos de capability
 pendientes" en la UI. Se evalúa al llegar a la fase; si agrega mucho, se difiere.
 
+### Fase 4 — Gate de gobernanza del host (protege el eje, §3.5)
+
+**Backstage** (`backstage-web`):
+- `GET /api/manifests` → devuelve el manifest de la última versión de cada miniapp
+  del registry (para el blast-radius). Reusa `getStore().load()` + el `latestVersion`
+  que ya existe.
+
+**Host** (`backstagereactnative/apps/host`):
+- `scripts/check-host-compat.mjs`: regenera el contract candidato
+  (`gen-host-contract.mjs`), fetch el contract publicado + `GET /api/manifests`, corre
+  `checkCompatibility` por miniapp → exit 1 con la lista si hay breaking; respeta el
+  label/flag `accept-breaking-contract` como override explícito (con log).
+- `.github/workflows/host-compat.yml`: corre `check-host-compat.mjs` en PRs que toquen
+  `package.json`/lockfile/`rspack.config.mjs`.
+
+**Governance (repo del host):** marcar el check `host-compat` como **required** en la
+branch protection de `main` (paso manual documentado, como el permiso de Actions PRs).
+
 ## 5. Manejo de errores (invariantes)
 
 - **Fail-closed en el gate de CI:** si no se puede fetchear el contract (Backstage
@@ -253,6 +317,11 @@ pendientes" en la UI. Se evalúa al llegar a la fase; si agrega mucho, se difier
   compatible; `DEFAULT_SHARED` deriva del contract guardado con fallback.
 - **Fase 3:** el pedido se abre con el contexto correcto (mock `GitProvider`); no se
   duplica si ya existe uno abierto para la misma lib.
+- **Fase 4:** `GET /api/manifests` devuelve el latest de cada miniapp;
+  `check-host-compat.mjs` con fixtures: contract candidato safe → exit 0; candidato
+  que baja RN con una miniapp en `^0.76` → exit 1 con esa miniapp en la lista;
+  candidato safe (agrega nativo) → exit 0; override `accept-breaking-contract` →
+  exit 0 con warning y registro.
 
 ## 7. Estructura de archivos (resumen por repo)
 
@@ -260,11 +329,13 @@ pendientes" en la UI. Se evalúa al llegar a la fase; si agrega mucho, se difier
 (tipos + `checkNativeModules` + `checkCompatibility`), tests. Re-publicar el paquete.
 
 **`backstagereactnative/apps/host`:** `scripts/gen-host-contract.mjs`, `host-contract.json`
-(generado), alinear `evaluate.ts` para leer del contract.
+(generado), alinear `evaluate.ts` para leer del contract; `scripts/check-host-compat.mjs`
++ `.github/workflows/host-compat.yml` (Fase 4).
 
 **`backstage-web`:** `lib/host-contract/{types,store}.ts`,
-`app/api/host-contract/route.ts` (GET+PUT), `lib/manifest.ts` (DEFAULT_SHARED del
-contract), `app/api/miniapps/[id]/upload/route.ts` (gate).
+`app/api/host-contract/route.ts` (GET+PUT), `app/api/manifests/route.ts` (GET, Fase 4),
+`lib/manifest.ts` (DEFAULT_SHARED del contract),
+`app/api/miniapps/[id]/upload/route.ts` (gate).
 
 **`miniapp-template`:** `scripts/gen-manifest-shared.mjs`, `scripts/check-compat.mjs`,
 workflow reutilizable de publish (cablear los pasos).
