@@ -4,9 +4,11 @@ import { getStore } from "@/lib/registry/store";
 import { publishVersion } from "@/lib/registry/registry";
 import { getStorage } from "@/lib/storage";
 import { authorizeUpload } from "@/lib/auth";
-import { defaultManifest, parseCapabilities } from "@/lib/manifest";
+import { defaultManifest, parseCapabilities, resolveDefaultShared } from "@/lib/manifest";
+import { getHostContractStore } from "@/lib/host-contract/store";
 import { sha256Integrity } from "@/lib/integrity";
 import { errorBody, statusForError } from "@/lib/http";
+import { satisfiesShared, type SemVer } from "@dentvega/miniapp-contract";
 import type { StorageFile } from "@/lib/storage/types";
 
 export const runtime = "nodejs";
@@ -54,7 +56,7 @@ export async function POST(
     } else {
       const capsRaw = form.get("capabilities");
       const caps = parseCapabilities(typeof capsRaw === "string" ? capsRaw : "");
-      manifest = defaultManifest(id, version, caps);
+      manifest = defaultManifest(id, version, caps, await resolveDefaultShared());
     }
 
     // Unzip the build output into individual files.
@@ -80,6 +82,29 @@ export async function POST(
       ...(manifest as Record<string, unknown>),
       integrity: sha256Integrity(container.data),
     };
+
+    // Gate de compatibilidad (MODO WARN — loguea, no rechaza; el 422 se activa después).
+    try {
+      const contract = await getHostContractStore().load();
+      const m = manifest as { shared?: { name: string; requiredRange: string; singleton: boolean }[] };
+      if (contract === null) {
+        console.warn(`compat[${id}@${version}]: no host contract published — skipping check`);
+      } else if (!m.shared || m.shared.length === 0) {
+        console.warn(`compat[${id}@${version}]: manifest has empty 'shared' — treated as at-risk`);
+      } else {
+        // HostContract.shared is a plain Record<string, string>; satisfiesShared
+        // wants the branded SemVer type — the store validates the shape (isHostContract)
+        // but doesn't brand the values, so this cast is safe (not a runtime change).
+        const skew = satisfiesShared(contract.shared as Readonly<Record<string, SemVer>>, m.shared);
+        if (!skew.compatible) {
+          const bad = skew.entries.filter((e) => e.status !== "ok")
+            .map((e) => `${e.name} (${e.status}, needs ${e.requiredRange})`).join(", ");
+          console.warn(`compat[${id}@${version}]: INCOMPATIBLE with host — ${bad} [warn mode, not blocking]`);
+        }
+      }
+    } catch (err) {
+      console.warn(`compat[${id}@${version}]: check errored (ignored in warn mode):`, err);
+    }
 
     const { baseUrl } = await getStorage().putMany(`${id}/${version}`, files);
     const url = `${baseUrl}/${containerName}`;

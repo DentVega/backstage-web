@@ -3,8 +3,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { zipSync } from "fflate";
 import type { Registry } from "@/lib/registry/types";
+import type { HostContract } from "@/lib/host-contract/types";
 
-const state = vi.hoisted(() => ({ reg: {} as Registry }));
+const state = vi.hoisted(() => ({ reg: {} as Registry, contract: null as HostContract | null }));
 
 vi.mock("@/lib/registry/store", () => ({
   getStore: () => ({
@@ -12,6 +13,13 @@ vi.mock("@/lib/registry/store", () => ({
     save: async (r: Registry) => {
       state.reg = r;
     },
+  }),
+}));
+
+vi.mock("@/lib/host-contract/store", () => ({
+  getHostContractStore: () => ({
+    load: async () => state.contract,
+    save: async () => {},
   }),
 }));
 
@@ -82,6 +90,7 @@ beforeEach(() => {
       versions: [],
     },
   };
+  state.contract = null; // no host contract published by default
 });
 
 describe("POST /api/miniapps/:id/upload", () => {
@@ -132,5 +141,34 @@ describe("POST /api/miniapps/:id/upload", () => {
     authMock.mockResolvedValue({ githubLogin: "mallory" });
     const res = await POST(uploadReq({ manifest: false }), params);
     expect(res.status).toBe(401);
+  });
+
+  it("modo warn: loguea incompatibilidad pero NO rechaza (201)", async () => {
+    state.contract = {
+      contractVersion: "1.0.0",
+      reactNative: "0.76.6",
+      shared: { react: "18.3.1", "react-native": "0.76.6" },
+      nativeModules: [],
+    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const incompatibleManifest = {
+      ...manifest,
+      shared: [{ name: "react-native", requiredRange: "^0.99.0", singleton: true }],
+    };
+    const form = new FormData();
+    form.set("file", new Blob([buildZip() as unknown as BlobPart]), "build.zip");
+    form.set("version", "0.2.0");
+    form.set("manifest", JSON.stringify(incompatibleManifest));
+    const req = new Request("http://x/api/miniapps/account_dashboard/upload", {
+      method: "POST",
+      headers: { authorization: "Bearer secret" },
+      body: form,
+    });
+
+    const res = await POST(req, params);
+
+    expect(res.status).toBe(201);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
