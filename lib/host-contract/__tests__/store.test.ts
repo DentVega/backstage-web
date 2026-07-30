@@ -15,6 +15,7 @@ describe("isHostContract", () => {
   it("rechaza objetos incompletos / mal tipados", () => {
     expect(isHostContract(null)).toBe(false);
     expect(isHostContract({ ...VALID, shared: "x" })).toBe(false);
+    expect(isHostContract({ ...VALID, shared: { react: 123 } })).toBe(false);
     expect(isHostContract({ ...VALID, nativeModules: "x" })).toBe(false);
     expect(isHostContract({ contractVersion: "1.0.0" })).toBe(false);
   });

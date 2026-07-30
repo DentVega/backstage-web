@@ -13,11 +13,17 @@ export interface HostContract {
 export function isHostContract(v: unknown): v is HostContract {
   if (typeof v !== "object" || v === null) return false;
   const c = v as Record<string, unknown>;
-  return (
-    typeof c.contractVersion === "string" &&
-    typeof c.reactNative === "string" &&
-    typeof c.shared === "object" && c.shared !== null && !Array.isArray(c.shared) &&
-    Array.isArray(c.nativeModules) &&
-    c.nativeModules.every((n) => typeof n === "string")
+  if (
+    typeof c.contractVersion !== "string" ||
+    typeof c.reactNative !== "string" ||
+    typeof c.shared !== "object" || c.shared === null || Array.isArray(c.shared) ||
+    !Array.isArray(c.nativeModules) ||
+    !c.nativeModules.every((n) => typeof n === "string")
+  ) {
+    return false;
+  }
+  // Every shared value must be a concrete version string.
+  return Object.values(c.shared as Record<string, unknown>).every(
+    (version) => typeof version === "string",
   );
 }

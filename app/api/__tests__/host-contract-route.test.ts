@@ -57,6 +57,17 @@ describe("PUT /api/host-contract", () => {
     expect(res.status).toBe(400);
     expect(state.contract).toBeNull();
   });
+
+  it("400 con JSON malformado (no 500)", async () => {
+    const req = new Request("http://x/api/host-contract", {
+      method: "PUT",
+      headers: { "content-type": "application/json", authorization: "Bearer contract-secret" },
+      body: "{ not json",
+    });
+    const res = await PUT(req);
+    expect(res.status).toBe(400);
+    expect(state.contract).toBeNull();
+  });
   it("200 y persiste con token + body válido", async () => {
     const res = await PUT(putReq(VALID, "Bearer contract-secret"));
     expect(res.status).toBe(200);

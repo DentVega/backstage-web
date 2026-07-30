@@ -19,7 +19,12 @@ export async function GET(): Promise<NextResponse> {
 export async function PUT(req: Request): Promise<NextResponse> {
   try {
     requireHostContractToken(req);
-    const body = (await req.json()) as unknown;
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "invalid JSON" }, { status: 400 });
+    }
     if (!isHostContract(body)) {
       return NextResponse.json({ error: "invalid host contract" }, { status: 400 });
     }
