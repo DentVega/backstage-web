@@ -1,5 +1,6 @@
 /** Build a default version manifest so the UI publish flow doesn't need raw JSON. */
-import type { Capability, Manifest } from "@dentvega/miniapp-contract";
+import type { Capability, Manifest, SharedDepSpec } from "@dentvega/miniapp-contract";
+import { getHostContractStore } from "@/lib/host-contract/store";
 
 /**
  * Shared singletons the mobile host provides. A version's manifest declares the
@@ -12,6 +13,21 @@ const DEFAULT_SHARED = [
   { name: "@tanstack/react-query", requiredRange: "^5.0.0", singleton: true },
   { name: "@shopify/flash-list", requiredRange: "^1.7.0", singleton: true },
 ] as const;
+
+/**
+ * El `shared` por defecto: derivado del Host Contract guardado (fuente de verdad),
+ * con fallback al hardcodeado si todavía no se publicó ninguno. Cada singleton del
+ * host se vuelve `{ name, requiredRange: "^"+version, singleton: true }`.
+ */
+export async function resolveDefaultShared(): Promise<readonly SharedDepSpec[]> {
+  const contract = await getHostContractStore().load();
+  if (contract === null) return DEFAULT_SHARED;
+  return Object.entries(contract.shared).map(([name, version]) => ({
+    name,
+    requiredRange: `^${version}`,
+    singleton: true,
+  }));
+}
 
 const KNOWN_CAPABILITIES: readonly Capability[] = ["accounts:read", "session:whoami"];
 
@@ -33,12 +49,13 @@ export function defaultManifest(
   id: string,
   version: string,
   capabilities: readonly Capability[],
+  shared: readonly SharedDepSpec[] = DEFAULT_SHARED,
 ): Manifest {
   return {
     id: id as Manifest["id"],
     version: version as Manifest["version"],
     entry: "./Entry",
-    shared: DEFAULT_SHARED,
+    shared,
     capabilities,
   };
 }
