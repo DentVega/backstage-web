@@ -40,6 +40,16 @@ export function requirePublishToken(req: Request): void {
   if (!valid.some((v) => safeEqual(token, v))) throw new AuthError();
 }
 
+/** Lanza AuthError salvo que el request traiga el HOST_CONTRACT_TOKEN como Bearer.
+ * Token dedicado (solo el CI del host lo tiene) — separado del PUBLISH_TOKEN. */
+export function requireHostContractToken(req: Request): void {
+  const expected = process.env.HOST_CONTRACT_TOKEN ?? "";
+  if (expected.length === 0) throw new AuthError("HOST_CONTRACT_TOKEN not configured");
+  const header = req.headers.get("authorization") ?? "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  if (!safeEqual(token, expected)) throw new AuthError();
+}
+
 /**
  * Autoriza un upload/publish: un usuario logueado allowlisted (flujo UI) O un
  * Bearer `PUBLISH_TOKEN` válido (flujo CI). Lanza AuthError si ninguna aplica.
