@@ -31,6 +31,14 @@ export interface SetSecretInput {
   readonly value: string;
 }
 
+export interface EnsureIssueInput {
+  readonly owner: string;
+  readonly repo: string;
+  readonly title: string;
+  readonly body: string;
+  readonly labels?: readonly string[];
+}
+
 export interface GitProvider {
   createFromTemplate(input: CreateFromTemplateInput): Promise<{ repoUrl: string }>;
   /** Trigger a `workflow_dispatch` run (build + publish the miniapp). */
@@ -46,6 +54,11 @@ export interface GitProvider {
    * miniapp's `BACKSTAGE_URL` + `PUBLISH_TOKEN` so its CI can publish on first push.
    */
   setSecret(input: SetSecretInput): Promise<void>;
+  /**
+   * Crea un issue en el repo, SOLO si no hay uno abierto con el mismo título
+   * (dedup). Usado para pedir que se agregue un módulo nativo al host.
+   */
+  ensureIssue(input: EnsureIssueInput): Promise<{ created: boolean; url: string }>;
 }
 
 export class GitProviderError extends Error {

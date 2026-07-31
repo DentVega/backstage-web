@@ -4,6 +4,7 @@ import {
   type CreateFromTemplateInput,
   type DispatchWorkflowInput,
   type EnableActionsPullRequestsInput,
+  type EnsureIssueInput,
   type GitProvider,
   type SetSecretInput,
 } from "./types";
@@ -138,6 +139,37 @@ export function githubProvider(token: string): GitProvider {
           `set secret "${input.name}" failed: HTTP ${putRes.status} ${detail.slice(0, 200)}`,
         );
       }
+    },
+
+    async ensureIssue(input: EnsureIssueInput): Promise<{ created: boolean; url: string }> {
+      const base = `https://api.github.com/repos/${input.owner}/${input.repo}`;
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      };
+      // Dedup: buscar un issue ABIERTO con el mismo título (excluyendo PRs).
+      const listRes = await fetch(`${base}/issues?state=open&per_page=100`, { headers });
+      if (!listRes.ok) {
+        const detail = await listRes.text().catch(() => "");
+        throw new GitProviderError(`GitHub list issues failed: HTTP ${listRes.status} ${detail.slice(0, 200)}`);
+      }
+      const issues = (await listRes.json()) as { title?: string; html_url?: string; pull_request?: unknown }[];
+      const existing = issues.find((i) => i.pull_request === undefined && i.title === input.title);
+      if (existing?.html_url) return { created: false, url: existing.html_url };
+
+      const createRes = await fetch(`${base}/issues`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ title: input.title, body: input.body, labels: input.labels ?? [] }),
+      });
+      if (!createRes.ok) {
+        const detail = await createRes.text().catch(() => "");
+        throw new GitProviderError(`GitHub create issue failed: HTTP ${createRes.status} ${detail.slice(0, 200)}`);
+      }
+      const created = (await createRes.json()) as { html_url?: string };
+      if (typeof created.html_url !== "string") throw new GitProviderError("GitHub issue response missing html_url");
+      return { created: true, url: created.html_url };
     },
   };
 }

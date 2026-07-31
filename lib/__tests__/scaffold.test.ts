@@ -67,6 +67,7 @@ describe("scaffoldMiniapp", () => {
       dispatchWorkflow: async () => {},
       enableActionsPullRequests: async () => {},
       setSecret: async () => {},
+      ensureIssue: async () => ({ created: true, url: "x" }),
     };
     await expect(
       scaffoldMiniapp({}, provider, TEMPLATE, { id: "cards", name: "Cards", owner: "o" }, NOW),
@@ -151,6 +152,7 @@ describe("seedRepoSecrets", () => {
       setSecret: async (i: { name: string; value: string }) => {
         calls.push({ name: i.name, value: i.value });
       },
+      ensureIssue: async () => ({ created: true, url: "x" }),
     };
     const res = await seedRepoSecrets(provider, "acme", "miniapp-x", {
       BACKSTAGE_URL: "https://b",
@@ -169,6 +171,7 @@ describe("seedRepoSecrets", () => {
       setSecret: async (i: { name: string }) => {
         if (i.name === "PUBLISH_TOKEN") throw new Error("boom");
       },
+      ensureIssue: async () => ({ created: true, url: "x" }),
     };
     const res = await seedRepoSecrets(provider, "acme", "miniapp-x", {
       BACKSTAGE_URL: "https://b",

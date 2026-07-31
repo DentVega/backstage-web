@@ -15,5 +15,8 @@ export function mockProvider(): GitProvider {
     async setSecret(): Promise<void> {
       // no-op
     },
+    async ensureIssue(input) {
+      return { created: true, url: `https://github.com/${input.owner}/${input.repo}/issues/1` };
+    },
   };
 }

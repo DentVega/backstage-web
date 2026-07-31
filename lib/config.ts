@@ -3,6 +3,9 @@
 /** Template repo the scaffolder generates from. Replace `org` with your GitHub org. */
 export const TEMPLATE_REPO = process.env.MINIAPP_TEMPLATE_REPO ?? "org/miniapp-template";
 
+/** Repo del host (donde se agregan los módulos nativos). "owner/repo". */
+export const HOST_REPO = process.env.HOST_REPO ?? "org/backstagereactnative";
+
 /** GitHub token with `repo` scope (create repos). */
 export function githubToken(): string {
   const t = process.env.GITHUB_TOKEN;
