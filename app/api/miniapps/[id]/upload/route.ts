@@ -8,6 +8,9 @@ import { defaultManifest, parseCapabilities, resolveDefaultShared } from "@/lib/
 import { getHostContractStore } from "@/lib/host-contract/store";
 import { sha256Integrity } from "@/lib/integrity";
 import { errorBody, statusForError } from "@/lib/http";
+import { githubProvider } from "@/lib/git/github";
+import { githubToken, HOST_REPO } from "@/lib/config";
+import { openCapabilityRequests } from "@/lib/capability-request";
 import { satisfiesShared, type SemVer } from "@dentvega/miniapp-contract";
 import type { StorageFile } from "@/lib/storage/types";
 
@@ -112,11 +115,25 @@ export async function POST(
         }
         // Módulos nativos: los que la miniapp declara y el host NO tiene en su binario.
         const hostNatives = new Set(contract.nativeModules);
-        for (const n of m.nativeModules ?? []) {
-          if (!hostNatives.has(n)) problems.push(`${n} (native module not in host)`);
+        const missingNatives = (m.nativeModules ?? []).filter((n) => !hostNatives.has(n));
+        for (const n of missingNatives) {
+          problems.push(`${n} (native module not in host)`);
         }
         if (problems.length > 0) {
           console.warn(`compat[${id}@${version}]: INCOMPATIBLE with host — ${problems.join(", ")} [warn mode, not blocking]`);
+        }
+        // Pedido automatizado de capability por cada nativo faltante (best-effort).
+        if (missingNatives.length > 0) {
+          try {
+            const result = await openCapabilityRequests(
+              githubProvider(githubToken()), HOST_REPO, missingNatives, { miniappId: id, version },
+            );
+            if (result.requested.length > 0) {
+              console.warn(`compat[${id}@${version}]: opened/ensured capability request(s) for ${result.requested.join(", ")}`);
+            }
+          } catch (err) {
+            console.warn(`compat[${id}@${version}]: capability request failed (ignored):`, err);
+          }
         }
       }
     } catch (err) {

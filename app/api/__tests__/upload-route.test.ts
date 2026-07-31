@@ -4,8 +4,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { zipSync } from "fflate";
 import type { Registry } from "@/lib/registry/types";
 import type { HostContract } from "@/lib/host-contract/types";
+import type { EnsureIssueInput } from "@/lib/git/types";
 
 const state = vi.hoisted(() => ({ reg: {} as Registry, contract: null as HostContract | null }));
+const ensureIssueSpy = vi.hoisted(() =>
+  vi.fn(async (_input: EnsureIssueInput) => ({ created: true, url: "https://github.com/o/r/issues/1" })),
+);
+
+vi.mock("@/lib/git/github", () => ({
+  githubProvider: () => ({
+    createFromTemplate: vi.fn(),
+    dispatchWorkflow: vi.fn(),
+    enableActionsPullRequests: vi.fn(),
+    setSecret: vi.fn(),
+    ensureIssue: ensureIssueSpy,
+  }),
+}));
 
 vi.mock("@/lib/registry/store", () => ({
   getStore: () => ({
@@ -91,6 +105,7 @@ beforeEach(() => {
     },
   };
   state.contract = null; // no host contract published by default
+  ensureIssueSpy.mockClear();
 });
 
 describe("POST /api/miniapps/:id/upload", () => {
@@ -202,5 +217,40 @@ describe("POST /api/miniapps/:id/upload", () => {
       expect.stringContaining("react-native-svg (native module not in host)"),
     );
     warn.mockRestore();
+  });
+
+  it("modo warn: un nativo faltante dispara un capability request (best-effort) y sigue en 201", async () => {
+    process.env.GITHUB_TOKEN = "gh-token";
+    state.contract = {
+      contractVersion: "1.0.0",
+      reactNative: "0.76.6",
+      shared: { react: "18.3.1", "react-native": "0.76.6" },
+      nativeModules: ["react-native-screens"],
+    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const nativeManifest = {
+      ...manifest,
+      shared: [{ name: "react-native", requiredRange: "^0.76.0", singleton: true }],
+      nativeModules: ["react-native-svg"], // no está en el host → dispara capability request
+    };
+    const form = new FormData();
+    form.set("file", new Blob([buildZip() as unknown as BlobPart]), "build.zip");
+    form.set("version", "0.2.0");
+    form.set("manifest", JSON.stringify(nativeManifest));
+    const req = new Request("http://x/api/miniapps/account_dashboard/upload", {
+      method: "POST",
+      headers: { authorization: "Bearer secret" },
+      body: form,
+    });
+
+    const res = await POST(req, params);
+
+    expect(res.status).toBe(201);
+    expect(ensureIssueSpy).toHaveBeenCalledTimes(1);
+    const call = ensureIssueSpy.mock.calls[0][0];
+    expect(call.title).toContain("react-native-svg");
+    expect(call.body).toContain("account_dashboard");
+    warn.mockRestore();
+    delete process.env.GITHUB_TOKEN;
   });
 });
