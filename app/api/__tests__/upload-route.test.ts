@@ -171,4 +171,36 @@ describe("POST /api/miniapps/:id/upload", () => {
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });
+
+  it("modo warn: loguea un módulo nativo faltante pero NO rechaza (201)", async () => {
+    state.contract = {
+      contractVersion: "1.0.0",
+      reactNative: "0.76.6",
+      shared: { react: "18.3.1", "react-native": "0.76.6" },
+      nativeModules: ["react-native-screens"],
+    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const nativeManifest = {
+      ...manifest,
+      shared: [{ name: "react-native", requiredRange: "^0.76.0", singleton: true }],
+      nativeModules: ["react-native-svg"], // no está en el host → warn (no rechaza)
+    };
+    const form = new FormData();
+    form.set("file", new Blob([buildZip() as unknown as BlobPart]), "build.zip");
+    form.set("version", "0.2.0"); // debe coincidir con nativeManifest.version (publishVersion lo exige)
+    form.set("manifest", JSON.stringify(nativeManifest));
+    const req = new Request("http://x/api/miniapps/account_dashboard/upload", {
+      method: "POST",
+      headers: { authorization: "Bearer secret" },
+      body: form,
+    });
+
+    const res = await POST(req, params);
+
+    expect(res.status).toBe(201);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("react-native-svg (native module not in host)"),
+    );
+    warn.mockRestore();
+  });
 });

@@ -84,22 +84,39 @@ export async function POST(
     };
 
     // Gate de compatibilidad (MODO WARN — loguea, no rechaza; el 422 se activa después).
+    // Chequea skew de shared + módulos nativos que el host no provee (Fase 2).
     try {
       const contract = await getHostContractStore().load();
-      const m = manifest as { shared?: { name: string; requiredRange: string; singleton: boolean }[] };
+      const m = manifest as {
+        shared?: { name: string; requiredRange: string; singleton: boolean }[];
+        nativeModules?: string[];
+      };
       if (contract === null) {
         console.warn(`compat[${id}@${version}]: no host contract published — skipping check`);
-      } else if (!m.shared || m.shared.length === 0) {
-        console.warn(`compat[${id}@${version}]: manifest has empty 'shared' — treated as at-risk`);
       } else {
-        // HostContract.shared is a plain Record<string, string>; satisfiesShared
-        // wants the branded SemVer type — the store validates the shape (isHostContract)
-        // but doesn't brand the values, so this cast is safe (not a runtime change).
-        const skew = satisfiesShared(contract.shared as Readonly<Record<string, SemVer>>, m.shared);
-        if (!skew.compatible) {
-          const bad = skew.entries.filter((e) => e.status !== "ok")
-            .map((e) => `${e.name} (${e.status}, needs ${e.requiredRange})`).join(", ");
-          console.warn(`compat[${id}@${version}]: INCOMPATIBLE with host — ${bad} [warn mode, not blocking]`);
+        const problems: string[] = [];
+        // Skew de shared.
+        if (!m.shared || m.shared.length === 0) {
+          problems.push("empty 'shared' (at-risk)");
+        } else {
+          // HostContract.shared is a plain Record<string, string>; satisfiesShared
+          // wants the branded SemVer type — the store validates the shape (isHostContract)
+          // but doesn't brand the values, so this cast is safe (not a runtime change).
+          const skew = satisfiesShared(contract.shared as Readonly<Record<string, SemVer>>, m.shared);
+          if (!skew.compatible) {
+            problems.push(
+              ...skew.entries.filter((e) => e.status !== "ok")
+                .map((e) => `${e.name} (${e.status}, needs ${e.requiredRange})`),
+            );
+          }
+        }
+        // Módulos nativos: los que la miniapp declara y el host NO tiene en su binario.
+        const hostNatives = new Set(contract.nativeModules);
+        for (const n of m.nativeModules ?? []) {
+          if (!hostNatives.has(n)) problems.push(`${n} (native module not in host)`);
+        }
+        if (problems.length > 0) {
+          console.warn(`compat[${id}@${version}]: INCOMPATIBLE with host — ${problems.join(", ")} [warn mode, not blocking]`);
         }
       }
     } catch (err) {
