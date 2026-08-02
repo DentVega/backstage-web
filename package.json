@@ -13,6 +13,7 @@
     "@dentvega/miniapp-contract": "^0.1.0",
     "@upstash/redis": "^1.38.0",
     "@vercel/blob": "^2.6.1",
+    "aws4fetch": "^1.0.20",
     "fflate": "^0.8.3",
     "libsodium-wrappers": "^0.8.4",
     "next": "16.2.10",
