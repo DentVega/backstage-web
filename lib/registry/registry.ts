@@ -64,6 +64,16 @@ export function registerMiniapp(
   return { ...reg, [id]: record };
 }
 
+/** Remove a miniapp from the registry (admin cleanup). Throws if it doesn't exist. */
+export function removeMiniapp(reg: Registry, rawId: string): Registry {
+  const id = parseMiniappId(rawId);
+  if (id === null) throw new InvalidManifestError(`bad miniapp id "${rawId}"`);
+  if (reg[id] === undefined) throw new MiniappNotFoundError(id);
+  const next = { ...reg };
+  delete next[id];
+  return next;
+}
+
 export function publishVersion(
   reg: Registry,
   rawId: string,
