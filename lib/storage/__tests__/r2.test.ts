@@ -41,9 +41,9 @@ describe("r2ConfigFromEnv", () => {
 
 describe("r2Storage.putMany", () => {
   it("PUTea cada file al endpoint S3 y devuelve la URL pública como baseUrl", async () => {
-    const calls: { url: string; method: string }[] = [];
+    const calls: { url: string; method: string; headers?: Record<string, string> }[] = [];
     const fake: SignedFetch = async (url, init) => {
-      calls.push({ url, method: init.method });
+      calls.push({ url, method: init.method, headers: init.headers });
       return { ok: true, status: 200 };
     };
     const r = await r2Storage(config, fake).putMany("cards_wallet/0.1.5", [
@@ -51,10 +51,13 @@ describe("r2Storage.putMany", () => {
       { path: "vendors.chunk.bundle", data: new Uint8Array([3]) },
     ]);
     expect(calls).toHaveLength(2);
-    expect(calls[0]).toEqual({
-      url: "https://acct123.r2.cloudflarestorage.com/chunks/cards_wallet/0.1.5/cards_wallet.container.js.bundle",
-      method: "PUT",
-    });
+    expect(calls[0].url).toBe(
+      "https://acct123.r2.cloudflarestorage.com/chunks/cards_wallet/0.1.5/cards_wallet.container.js.bundle",
+    );
+    expect(calls[0].method).toBe("PUT");
+    // Content-Length must be pinned so R2 doesn't 411 on a chunked upload.
+    expect(calls[0].headers?.["content-length"]).toBe("2");
+    expect(calls[1].headers?.["content-length"]).toBe("1");
     // publicBaseUrl con barra final → limpiada
     expect(r.baseUrl).toBe("https://pub-abc.r2.dev/cards_wallet/0.1.5");
   });

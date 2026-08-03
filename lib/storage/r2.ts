@@ -62,7 +62,13 @@ export function r2Storage(config: R2Config, fetchImpl?: SignedFetch): ChunkStora
           const res = await doFetch(`${s3}/${prefix}/${file.path}`, {
             method: "PUT",
             body: file.data,
-            headers: { "content-type": contentType(file.path) },
+            // R2 rejects chunked uploads (HTTP 411). Next.js's patched fetch can turn a
+            // buffer body into a stream (→ chunked), so pin Content-Length explicitly to
+            // force fixed-length framing.
+            headers: {
+              "content-type": contentType(file.path),
+              "content-length": String(file.data.byteLength),
+            },
           });
           if (!res.ok) throw new StorageError(`R2 PUT failed: HTTP ${res.status}`);
         }
