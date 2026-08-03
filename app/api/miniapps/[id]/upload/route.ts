@@ -140,7 +140,8 @@ export async function POST(
       console.warn(`compat[${id}@${version}]: check errored (ignored in warn mode):`, err);
     }
 
-    const { baseUrl } = await getStorage().putMany(`${id}/${version}`, files);
+    const storage = await getStorage();
+    const { baseUrl } = await storage.putMany(`${id}/${version}`, files);
     const url = `${baseUrl}/${containerName}`;
 
     const reg = await getStore().load();
