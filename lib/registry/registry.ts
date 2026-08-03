@@ -9,6 +9,7 @@ import {
   type ResolveResponse,
   type SemVer,
 } from "@dentvega/miniapp-contract";
+import type { StorageProvider } from "@/lib/storage/provider";
 import {
   InvalidManifestError,
   MiniappExistsError,
@@ -72,6 +73,24 @@ export function removeMiniapp(reg: Registry, rawId: string): Registry {
   const next = { ...reg };
   delete next[id];
   return next;
+}
+
+/** Set (or clear, with null) the per-miniapp storage provider override. Throws if it doesn't exist. */
+export function setMiniappStorageProvider(
+  reg: Registry,
+  rawId: string,
+  provider: StorageProvider | null,
+): Registry {
+  const id = parseMiniappId(rawId);
+  if (id === null) throw new InvalidManifestError(`bad miniapp id "${rawId}"`);
+  const record = reg[id];
+  if (record === undefined) throw new MiniappNotFoundError(id);
+  if (provider === null) {
+    const next = { ...record };
+    delete (next as { storageProvider?: StorageProvider }).storageProvider;
+    return { ...reg, [id]: next };
+  }
+  return { ...reg, [id]: { ...record, storageProvider: provider } };
 }
 
 export function publishVersion(
@@ -209,6 +228,7 @@ export function getMiniappDetail(reg: Registry, rawId: string): MiniappDetail {
     owner: record.owner,
     ...(record.createdAt !== undefined ? { createdAt: record.createdAt } : {}),
     ...(record.repoUrl !== undefined ? { repoUrl: record.repoUrl } : {}),
+    ...(record.storageProvider !== undefined ? { storageProvider: record.storageProvider } : {}),
     latestVersion: latest?.version ?? null,
     versionCount: record.versions.length,
     versions,

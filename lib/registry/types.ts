@@ -1,4 +1,5 @@
 import type { Manifest, MiniappId, SemVer } from "@dentvega/miniapp-contract";
+import type { StorageProvider } from "@/lib/storage/provider";
 
 export interface PublishedVersion {
   readonly version: SemVer;
@@ -17,6 +18,8 @@ export interface MiniappRecord {
   readonly createdAt?: string;
   /** URL of the miniapp's git repo (set by the scaffolder). */
   readonly repoUrl?: string;
+  /** Provider de storage pinneado para esta miniapp; undefined = usa el default global. */
+  readonly storageProvider?: StorageProvider;
 }
 
 export type Registry = Readonly<Record<string, MiniappRecord>>;
@@ -52,6 +55,8 @@ export interface MiniappDetail {
   readonly versions: readonly VersionView[];
   /** Capabilities of the latest version (or [] when none published). */
   readonly capabilities: readonly string[];
+  /** Per-miniapp storage override (undefined = global default). */
+  readonly storageProvider?: StorageProvider;
 }
 
 // --- Typed domain errors (mapped to HTTP status by the route handlers) ---
