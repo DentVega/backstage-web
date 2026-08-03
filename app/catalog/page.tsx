@@ -42,7 +42,7 @@ export default async function CatalogPage() {
         </div>
         <div style={{ padding: "6px 0" }}>
           {storageState !== null && (
-            <div style={{ padding: "0 0 10px" }}>
+            <div className="catalog-storage-bar">
               <StorageProviderControl {...storageState} />
             </div>
           )}

@@ -160,6 +160,10 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
 .tl.a { background: var(--accent); }
 .console-top .path { margin-left: 6px; }
 
+.catalog-storage-bar {
+  padding: 10px 16px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+}
 .catalog-list { list-style: none; }
 .miniapp-row {
   display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px;
