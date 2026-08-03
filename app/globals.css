@@ -269,3 +269,29 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
 }
 .storage-saved { color: var(--ok); font-weight: 600; }
 .storage-source { opacity: .7; font-size: 11px; }
+
+/* Danger zone — eliminar miniapp */
+.danger-section h2 { color: #dc4c4c; }
+.danger-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid color-mix(in srgb, #dc4c4c 40%, transparent);
+  border-radius: 12px;
+  padding: 16px;
+}
+.danger-hint { font-size: 13px; color: var(--muted); margin: 0; }
+.danger-input {
+  font-family: var(--mono);
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  min-width: 240px;
+}
+.danger-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.btn-danger { background: #dc4c4c; color: #fff; padding: 8px 16px; }
+.btn-danger:disabled { opacity: .5; cursor: default; }
+.danger-error { color: #dc4c4c; font-size: 13px; margin: 0; }

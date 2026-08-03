@@ -16,6 +16,7 @@ import { DeployButton } from "@/app/components/DeployButton";
 import { SyncTemplateButton } from "@/app/components/SyncTemplateButton";
 import { getMiniappStorageState } from "@/lib/storage";
 import { MiniappStorageControl } from "@/app/components/MiniappStorageControl";
+import { MiniappDeleteControl } from "@/app/components/MiniappDeleteControl";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,10 @@ export default async function MiniappDetailPage({
           <section className="detail-section">
             <h2>Publicar versión</h2>
             <PublishForm id={id} />
+          </section>
+          <section className="detail-section danger-section">
+            <h2>Zona de peligro</h2>
+            <MiniappDeleteControl id={id} hasRepo={detail.repoUrl !== undefined} />
           </section>
         </>
       ) : null}
