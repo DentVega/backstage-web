@@ -7,7 +7,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // Required for non-Vercel/self-hosted (localhost) — Vercel auto-detects the host.
   trustHost: true,
   providers: [
-    GitHub({ authorization: { params: { scope: "read:user" } } }),
+    // `repo` habilita leer los workflow runs (badge de CI) de los repos de
+    // miniapp, incluidos los privados. `read:user` solo para el login.
+    GitHub({ authorization: { params: { scope: "read:user repo" } } }),
   ],
   pages: { signIn: "/signin" },
   callbacks: {
