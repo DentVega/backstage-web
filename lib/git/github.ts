@@ -171,5 +171,25 @@ export function githubProvider(token: string): GitProvider {
       if (typeof created.html_url !== "string") throw new GitProviderError("GitHub issue response missing html_url");
       return { created: true, url: created.html_url };
     },
+
+    async deleteRepo(input: { owner: string; repo: string }): Promise<{ deleted: boolean }> {
+      const res = await fetch(`https://api.github.com/repos/${input.owner}/${input.repo}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      });
+      if (res.status === 204) return { deleted: true };
+      if (res.status === 404) return { deleted: false }; // ya no existe → idempotente
+      if (res.status === 403) {
+        throw new GitProviderError(
+          "repo delete forbidden: el token del server no tiene el scope delete_repo",
+        );
+      }
+      const detail = await res.text().catch(() => "");
+      throw new GitProviderError(`repo delete failed: HTTP ${res.status} ${detail.slice(0, 200)}`);
+    },
   };
 }

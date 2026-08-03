@@ -59,6 +59,8 @@ export interface GitProvider {
    * (dedup). Usado para pedir que se agregue un módulo nativo al host.
    */
   ensureIssue(input: EnsureIssueInput): Promise<{ created: boolean; url: string }>;
+  /** Delete a GitHub repo. 404 → { deleted: false } (idempotent); 403 (no scope) throws. */
+  deleteRepo(input: { owner: string; repo: string }): Promise<{ deleted: boolean }>;
 }
 
 export class GitProviderError extends Error {

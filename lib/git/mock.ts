@@ -18,5 +18,8 @@ export function mockProvider(): GitProvider {
     async ensureIssue(input) {
       return { created: true, url: `https://github.com/${input.owner}/${input.repo}/issues/1` };
     },
+    async deleteRepo(): Promise<{ deleted: boolean }> {
+      return { deleted: true };
+    },
   };
 }
