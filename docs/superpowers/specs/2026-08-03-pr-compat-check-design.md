@@ -161,10 +161,14 @@ jobs:
 
 ## Distribución / Rollout
 
-1. Crear `check-compat.yml` en `miniapp-template` (llega a la flota `@main` al instante cuando el caller lo invoque).
-2. Actualizar `ci.yml` en `miniapp-template` (el caller con el trigger `pull_request`).
-3. El caller nuevo llega a cada miniapp por **template-sync** (con lag). Hasta que una miniapp sincronice su `ci.yml`, no tendrá PR check — rollout-safe, no rompe nada.
-4. Verificación e2e (ver abajo) sobre una miniapp ya sincronizada.
+> **⚠️ Corrección post-implementación:** el mecanismo real es distinto al que se asumió acá. **Template-sync NO puede entregar cambios de workflows** — el `GITHUB_TOKEN` de la Action tiene prohibido crear/modificar `.github/workflows/*` sin el permiso `workflows`, que **no** se puede otorgar en el bloque `permissions:` del YAML (solo existe a nivel PAT / GitHub App). Además, `.templatesyncignore` ya excluía **todos** los `.github/workflows/*` a propósito (modelo thin-caller). Ver [[template-sync-no-propaga-workflows]].
+
+Rollout real:
+
+1. **`check-compat.yml` (reusable) → template-only.** Vive solo en `miniapp-template`, referenciado `@main`. Se agregó a `.templatesyncignore` (igual que `publish.yml`) para que el sync no intente copiarlo (y choque con el muro de `workflows`). **La lógica del gate llega a la flota gratis** vía `check-compat.yml@main`.
+2. **`ci.yml` (el trigger `pull_request` + job `compat`) → entrega out-of-band, una sola vez por miniapp.** `ci.yml` está en `.templatesyncignore` y de todos modos el sync no podría pushearlo. Se entrega con un token con scope `workflow` (push directo a `main` de cada miniapp, decisión del owner). Es un cambio **estructural único**: una vez que la miniapp tiene el trigger + el caller `compat`, todos los cambios futuros de lógica del PR-check viven en el reusable → nunca hay que volver a tocar la miniapp.
+3. **Rollout-safe se mantiene:** una miniapp sin el `ci.yml` nuevo simplemente no tiene PR check todavía (no rompe nada); cuando se le aplica el push out-of-band, lo gana.
+4. Verificación e2e (ver abajo) sobre `hellow_widget`.
 
 ## Verificación (e2e — es un workflow, no lógica nueva)
 
@@ -190,7 +194,8 @@ La lógica del gate ya está cubierta por los tests `node:test` de `check-compat
 
 ## Archivos afectados
 
-- **Crear:** `miniapp-template/.github/workflows/check-compat.yml`
+- **Crear:** `miniapp-template/.github/workflows/check-compat.yml` (reusable, template-only)
 - **Modificar:** `miniapp-template/.github/workflows/ci.yml` (trigger `pull_request` + job `compat` + guard `if` en `publish`)
-- **Propagación:** template-sync lleva el `ci.yml` nuevo a cada repo de miniapp.
+- **Modificar:** `miniapp-template/.templatesyncignore` (agregar `check-compat.yml` — reusable que no se sincroniza)
+- **Entrega out-of-band:** el `ci.yml` de cada miniapp se actualiza con un token con scope `workflow` (NO por template-sync).
 - **Sin cambios:** `publish.yml`, `scripts/*.mjs`.

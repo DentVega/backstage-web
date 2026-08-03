@@ -279,6 +279,16 @@ Expected: PR compatible en Draft. Reportar al usuario los dos PRs (rojo #4 + ver
 
 ---
 
+## ⚠️ Corrección durante la ejecución (Task 3)
+
+El plan asumía que template-sync entregaría el `ci.yml` a la flota. **No puede:** el `GITHUB_TOKEN` del sync no puede pushear `.github/workflows/*` (falta el permiso `workflows`, no otorgable en YAML), y `.templatesyncignore` ya excluía todos los workflows a propósito. Ajustes reales aplicados:
+
+1. **`check-compat.yml` agregado a `.templatesyncignore`** (commit `b01a352` en el template) — es un reusable template-only, no debe copiarse a las miniapps. Sin esto, el sync intenta copiarlo y choca con el muro de `workflows`.
+2. **El `ci.yml` se entrega out-of-band** con un token con scope `workflow` (push directo a `main` de la miniapp). Para `hellow_widget`: commit `e90e5df`.
+3. **Trigger de un PR pre-existente:** un PR abierto antes de que su rama tuviera el trigger no dispara el check (GitHub usa el `ci.yml` de la **rama del PR** en eventos `pull_request`). Se resolvió mergeando `main` en la rama del PR (evento `synchronize`).
+
+Evidencia e2e (`hellow_widget`): PR #4 (nativo `react-native-mmkv`) → `compat: failure` + `publish: skipped`; PR #5 (cambio trivial) → `compat: success` + `publish: skipped`. Ambos en Draft, sin mergear. Ver [[template-sync-no-propaga-workflows]].
+
 ## Notas de ejecución
 
 - **No hay TDD clásico:** el entregable es YAML de CI, y la lógica del gate ya está cubierta por los `node:test` de `check-compat.mjs`/`gen-manifest-shared.mjs`. Por eso cada task de código valida con parse de YAML + grep de invariantes, y la verificación real es el e2e de Task 3.
