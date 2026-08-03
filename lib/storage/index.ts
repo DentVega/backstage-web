@@ -31,8 +31,29 @@ export async function getStorageProviderState(): Promise<{
   };
 }
 
-/** Storage selected by saved preference (if valid) else env-order (R2 → Blob → fs). */
-export async function getStorage(): Promise<ChunkStorage> {
-  const { active } = await getStorageProviderState();
-  return buildStorage(active);
+/** Per-miniapp storage state: override vs global default, with the effective provider. */
+export async function getMiniappStorageState(miniappOverride: StorageProvider | null): Promise<{
+  available: StorageProvider[];
+  override: StorageProvider | null;
+  defaultProvider: StorageProvider;
+  effective: StorageProvider;
+  source: "miniapp" | "preference" | "env";
+}> {
+  const global = await getStorageProviderState();
+  const useOverride = miniappOverride !== null && global.available.includes(miniappOverride);
+  return {
+    available: global.available,
+    override: miniappOverride,
+    defaultProvider: global.active,
+    effective: useOverride ? miniappOverride : global.active,
+    source: useOverride ? "miniapp" : global.source,
+  };
+}
+
+/** Storage for a publish: miniapp override (if valid) → global default → env-order. */
+export async function getStorage(
+  miniappOverride: StorageProvider | null = null,
+): Promise<ChunkStorage> {
+  const { effective } = await getMiniappStorageState(miniappOverride);
+  return buildStorage(effective);
 }

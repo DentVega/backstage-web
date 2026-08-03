@@ -140,11 +140,11 @@ export async function POST(
       console.warn(`compat[${id}@${version}]: check errored (ignored in warn mode):`, err);
     }
 
-    const storage = await getStorage();
+    const reg = await getStore().load();
+    const storage = await getStorage(reg[id]?.storageProvider ?? null);
     const { baseUrl } = await storage.putMany(`${id}/${version}`, files);
     const url = `${baseUrl}/${containerName}`;
 
-    const reg = await getStore().load();
     const next = publishVersion(reg, id, { version, url, manifest }, new Date().toISOString());
     await getStore().save(next);
 

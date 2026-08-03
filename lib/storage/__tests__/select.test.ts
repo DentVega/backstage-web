@@ -12,7 +12,7 @@ vi.mock("@/lib/storage/preference", () => ({
   getStoragePreferenceStore: () => ({ load: async () => state.pref }),
 }));
 
-import { getStorage, getStorageProviderState } from "@/lib/storage";
+import { getStorage, getStorageProviderState, getMiniappStorageState } from "@/lib/storage";
 
 const kind = (s: unknown) => (s as { __kind: string }).__kind;
 
@@ -69,6 +69,42 @@ describe("getStorageProviderState", () => {
     expect(await getStorageProviderState()).toEqual({
       available: ["r2", "fs"],
       active: "r2",
+      source: "env",
+    });
+  });
+});
+
+describe("getStorage — override por miniapp", () => {
+  it("el override gana si está disponible", async () => {
+    process.env.R2_ACCOUNT_ID = "a";
+    process.env.BLOB_READ_WRITE_TOKEN = "t";
+    expect(kind(await getStorage("blob"))).toBe("blob");
+  });
+  it("override no disponible → cae al default global", async () => {
+    process.env.R2_ACCOUNT_ID = "a"; // blob NO configurado
+    expect(kind(await getStorage("blob"))).toBe("r2");
+  });
+});
+
+describe("getMiniappStorageState", () => {
+  it("override aplica → effective=override, source=miniapp", async () => {
+    process.env.R2_ACCOUNT_ID = "a";
+    process.env.BLOB_READ_WRITE_TOKEN = "t";
+    expect(await getMiniappStorageState("blob")).toEqual({
+      available: ["r2", "blob", "fs"],
+      override: "blob",
+      defaultProvider: "r2",
+      effective: "blob",
+      source: "miniapp",
+    });
+  });
+  it("sin override → effective=default global, source=env", async () => {
+    process.env.R2_ACCOUNT_ID = "a";
+    expect(await getMiniappStorageState(null)).toEqual({
+      available: ["r2", "fs"],
+      override: null,
+      defaultProvider: "r2",
+      effective: "r2",
       source: "env",
     });
   });
