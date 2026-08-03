@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@dentvega/miniapp-contract": "^0.1.0",
+    "@dentvega/miniapp-contract": "^0.3.0",
     "@upstash/redis": "^1.38.0",
     "@vercel/blob": "^2.6.1",
     "aws4fetch": "^1.0.20",
