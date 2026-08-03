@@ -4,6 +4,10 @@ import { listCatalog } from "@/lib/registry/registry";
 import { CatalogList } from "@/app/components/CatalogList";
 import { resolveCiStatuses } from "@/lib/ci/resolve";
 import { resolveDriftStatuses } from "@/lib/drift/resolve";
+import { canScaffold } from "@/lib/scaffold-authz";
+import { scaffoldAllowedLogins } from "@/lib/config";
+import { getStorageProviderState } from "@/lib/storage";
+import { StorageProviderControl } from "@/app/components/StorageProviderControl";
 import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +18,8 @@ export default async function CatalogPage() {
   const session = await auth();
   const statusById = await resolveCiStatuses(entries, session?.githubAccessToken);
   const driftById = await resolveDriftStatuses(entries);
+  const canAdmin = canScaffold(session?.githubLogin, scaffoldAllowedLogins());
+  const storageState = canAdmin ? await getStorageProviderState() : null;
   return (
     <main className="page">
       <div className="page-head-row">
@@ -35,6 +41,11 @@ export default async function CatalogPage() {
           <span className="path">backstage · registry / catalog</span>
         </div>
         <div style={{ padding: "6px 0" }}>
+          {storageState !== null && (
+            <div style={{ padding: "0 0 10px" }}>
+              <StorageProviderControl {...storageState} />
+            </div>
+          )}
           <CatalogList entries={entries} statusById={statusById} driftById={driftById} />
         </div>
       </div>

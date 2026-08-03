@@ -240,3 +240,32 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
 
 .status-line { margin-top: 14px; font-family: var(--mono); font-size: 13px; color: var(--ok); }
 .error-line { margin-top: 14px; font-family: var(--mono); font-size: 13px; color: var(--bad); }
+
+/* Storage provider selector (admin, catalog) */
+.storage-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+.storage-control-label {
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.storage-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.storage-saved { color: var(--ok); font-weight: 600; }
+.storage-source { opacity: .7; font-size: 11px; }
