@@ -8,9 +8,18 @@
 >
 > - [`DEPLOY.md`](../DEPLOY.md) — deploy de Backstage a Vercel.
 > - [`docs/miniapps-guide.md`](./miniapps-guide.md) — ciclo de vida completo de una miniapp (crear → publicar → montar).
+> - [`docs/activar-compat-gates.md`](./activar-compat-gates.md) — encender los gates de compatibilidad de dependencias (warn → enforce). Ver **Parte E**.
+> - [`docs/rotar-publish-token.md`](./rotar-publish-token.md) — rotar el `PUBLISH_TOKEN` sin downtime. Ver **Parte E**.
 > - [`README.md`](../README.md) (este repo) y el `README.md` de `backstagereactnative` — arquitectura y stack.
 > - `backstagereactnative/packages/PUBLISHING.md` — publicar los paquetes `@scope/*` a GitHub Packages.
 > - `backstagereactnative/docs/mounting-miniapps.md` — montar una miniapp en cualquier punto del host.
+>
+> **Novedades desde la v1 de esta guía** (todo cubierto abajo): storage en
+> **Cloudflare R2** (además de Vercel Blob) con selección de provider **desde la
+> UI** y override **por miniapp** (§4.3, Parte E); **gates de compatibilidad de
+> dependencias** en enforce (Parte E); **contract package** con semver real
+> (§3.2); **borrar miniapp + repo** desde Backstage (Parte E); **rotación del
+> `PUBLISH_TOKEN`** (Parte E).
 >
 > Esta guía asume un ingeniero competente que es nuevo **en esta plataforma**,
 > no en su stack (Next.js, React Native, GitHub Actions, Vercel).
@@ -61,11 +70,11 @@ node -v     # Node 20+
 corepack enable && corepack prepare pnpm@10 --activate   # pnpm 10 (pinneado como packageManager)
 gh --version        # GitHub CLI (crear/repos, secrets, permisos)
 npm i -g vercel && vercel --version   # Vercel CLI
-java -version        # ver §7 — necesitas OpenJDK 17 para Android, NO Zulu
+java -version        # ver §9 — necesitas OpenJDK 17 para Android, NO Zulu
 ```
 - **Android**: Android Studio + SDK, un emulador o dispositivo físico
   (`adb devices` debe listarlo), y **OpenJDK 17** (no Zulu — ver
-  [Gotchas](#7-gotchas-conocidos)).
+  [Gotchas](#9-gotchas-conocidos)).
 - **iOS** (opcional, solo macOS): Xcode + CocoaPods (`pod install` necesita un
   Ruby con CocoaPods 2.7.6 o 3.3.5 instalado).
 
@@ -211,36 +220,75 @@ GitHub → Settings → Developer settings → **OAuth Apps** → New OAuth App:
 - **Authorization callback URL**: `http://localhost:3999/api/auth/callback/github` (dev) — nota: el repo usa el puerto **3999** en dev, no el 3000 por defecto de Next, porque el host móvil espera Backstage en `:3999`. Corre el dev server con `PORT=3999 pnpm dev` (o `pnpm exec next dev -p 3999`).
 - Para prod: `https://<tu-proyecto>.vercel.app/api/auth/callback/github`.
 
-### 4.3 Provisionar servicios en Vercel
+### 4.3 Provisionar servicios (registro + storage de chunks)
 
 ```bash
 vercel link                # desde backstage-web/
 ```
-Desde el Dashboard de Vercel → Storage, añade (Marketplace):
-- **Vercel Blob** → setea `BLOB_READ_WRITE_TOKEN` automáticamente.
-- **Upstash Redis** (Marketplace) → setea `KV_REST_API_URL` + `KV_REST_API_TOKEN` automáticamente.
 
-La selección de storage es **automática por env** — no hay flag manual:
-- `getStore()` (registro/catálogo): **Upstash KV** si están `KV_REST_API_URL` +
-  `KV_REST_API_TOKEN`; si no, `jsonStore` (fs, dev) sobre `data/registry.json`.
-- `getStorage()` (chunks): **Vercel Blob** si está `BLOB_READ_WRITE_TOKEN`; si
-  no, `fsStorage` (fs, dev) sirviendo desde `public/chunks/`.
+**Registro/catálogo (`getStore()`)** — Upstash Redis (KV):
+- Vercel Dashboard → Storage → **Upstash Redis** (Marketplace) → setea
+  `KV_REST_API_URL` + `KV_REST_API_TOKEN` automáticamente.
+- Selección automática por env: KV si están esas dos vars; si no, `jsonStore`
+  (fs, dev) sobre `data/registry.json`.
+
+**Storage de chunks (`getStorage()`)** — soporta **tres backends**, elegidos por
+env en este orden de precedencia: **R2 → Blob → fs**.
+
+- **Cloudflare R2 (recomendado, primario):** S3-compatible, sin el límite de
+  operaciones del free tier de Blob. Setup en Cloudflare:
+  1. Crear un bucket R2 (ej. `miniapp-chunks`).
+  2. **Habilitar acceso público** → te da la URL `https://pub-xxxxx.r2.dev`.
+  3. Crear un token **S3 API** (Object Read & Write) → Access Key + Secret.
+  4. Anotar el **Account ID**.
+
+  Setear las 5 vars en Vercel: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+  `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL`. Con las 5 presentes,
+  R2 es el activo.
+- **Vercel Blob (fallback):** Marketplace → setea `BLOB_READ_WRITE_TOKEN`. Se usa
+  si R2 no está configurado. (Ojo: su free tier se agota — 2000 ops/mes — y el
+  store se **suspende**; por eso R2 es el primario.)
+- **fs (dev):** si no hay R2 ni Blob, sirve desde `public/chunks/`
+  (`BACKSTAGE_PUBLIC_URL` como origen). Solo para local.
+
+**Selección desde la UI (opcional):** un admin puede fijar el provider activo
+desde el **catálogo** (strip "Storage") y **por miniapp** desde el detalle
+("Almacenamiento") — la preferencia vive en KV y `getStorage()` la respeta, con
+fallback seguro al orden por env si el provider elegido no tiene creds. Ver
+Parte E. Sin preferencia guardada, manda el orden por env (R2 → Blob → fs).
+
+> **R2 y el 411:** el PUT a R2 fija `Content-Length` explícito. R2 rechaza
+> uploads *chunked* (HTTP 411) y el `fetch` parcheado de Next.js puede streamear
+> el body; el adapter lo evita. (Solo relevante si tocás `lib/storage/r2.ts`.)
 
 ### 4.4 Variables de entorno de Backstage
 
 ```bash
+# --- login + scaffolding (mínimo para arrancar) ---
 vercel env add AUTH_SECRET
 vercel env add AUTH_GITHUB_ID
 vercel env add AUTH_GITHUB_SECRET
 vercel env add SCAFFOLD_ALLOWED_LOGINS
 vercel env add MINIAPP_TEMPLATE_REPO
-vercel env add GITHUB_TOKEN
+vercel env add GITHUB_TOKEN            # scopes: repo, workflow, delete_repo, read:packages (ver tabla §8)
 vercel env add PUBLISH_TOKEN
 vercel env add BACKSTAGE_URL
-vercel env add BACKSTAGE_PUBLIC_URL   # opcional en prod — ver tabla de referencia (§6)
-vercel env add CI_STATUS_ENABLED      # opcional
+vercel env add BACKSTAGE_PUBLIC_URL
+
+# --- storage R2 (recomendado; si no, Blob por Marketplace) ---
+vercel env add R2_ACCOUNT_ID
+vercel env add R2_ACCESS_KEY_ID
+vercel env add R2_SECRET_ACCESS_KEY
+vercel env add R2_BUCKET
+vercel env add R2_PUBLIC_BASE_URL
+
+# --- gates de compatibilidad (Parte E; se pueden dejar para después) ---
+vercel env add HOST_CONTRACT_TOKEN    # token dedicado para publicar el host contract
+vercel env add HOST_REPO              # ej. Acme/backstagereactnative (capability requests)
+# COMPAT_ENFORCE se agrega recién al pasar a enforce (Parte E)
+# CI_STATUS_ENABLED — opcional (badge de CI)
 ```
-Ver la tabla completa (nombre, propósito, notas) en **§6 — Referencia de
+Ver la tabla completa (nombre, propósito, notas) en **§8 — Referencia de
 variables de entorno**.
 
 ### 4.5 Deploy
@@ -309,7 +357,7 @@ En dev, sin setear `BACKSTAGE_URL`, cae a `http://localhost:3999`.
 ### 5.3 Correr en Android
 
 ```bash
-# JDK 17 — ver Gotchas (§7): usa OpenJDK, NO Azul Zulu
+# JDK 17 — ver Gotchas (§9): usa OpenJDK, NO Azul Zulu
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 
 adb devices   # confirma un emulador/dispositivo conectado
@@ -439,7 +487,80 @@ Backstage local; en prod, el chunk vive en una URL pública (Blob/CDN), sin
 
 ---
 
-## 7. Referencia de variables de entorno
+## 7. Parte E — Endurecimiento de producción y operación
+
+Todo lo de arriba te deja la plataforma **funcionando**. Esta parte la endurece
+y cubre las operaciones de día a día. Cada ítem es independiente — hacelos cuando
+los necesites.
+
+### 7.1 Gates de compatibilidad de dependencias (anti-drift)
+
+Impide que un cambio de deps de una miniapp (bump de React Native, lib nueva o
+nativa) rompa el host o a otras miniapps. Es un sistema de 4 fases (host contract
++ gate al publicar + detección nativa + pedido automatizado + gobernanza del
+host) que arranca en **modo warn** (loguea, no bloquea) y se pasa a **enforce**
+cuando validás que nadie queda incompatible.
+
+- Requisitos: `HOST_CONTRACT_TOKEN` + `HOST_REPO` en Vercel; el repo del host con
+  los secrets `BACKSTAGE_URL` + `HOST_CONTRACT_TOKEN`.
+- Runbook completo (los 6 pasos, warn → enforce, con rollback): **[`docs/activar-compat-gates.md`](./activar-compat-gates.md)**.
+- **Enforce** = 3 capas: `COMPAT_ENFORCE=1` como repo var en cada miniapp (gate
+  del CI) + branch protection del check `blast-radius` en el host + `COMPAT_ENFORCE=1`
+  en Vercel (backstop server-side del `/upload` → 422). Todo reversible.
+- Diseño: `docs/superpowers/specs/2026-07-29-dependency-compatibility-design.md`.
+
+### 7.2 Selector de storage provider (UI)
+
+Con R2 y Blob ambos configurados, un admin elige el provider activo **sin tocar
+env ni redeploy**:
+- **Default global:** strip "Storage" arriba del catálogo (solo admin).
+- **Override por miniapp:** sección "Almacenamiento" en el detalle de cada
+  miniapp — pinnea un provider distinto al default para esa miniapp.
+- Precedencia al publicar: override de la miniapp → default global → orden por
+  env (R2 → Blob → fs), con fallback seguro en cada nivel.
+- Endpoints admin: `GET/PUT /api/storage-provider`, `PUT /api/miniapps/:id/storage-provider`.
+- No migra chunks ya publicados; cada re-publish usa el provider activo.
+
+### 7.3 Borrar una miniapp (+ su repo) desde Backstage
+
+En el detalle de la miniapp → sección **"Zona de peligro"** (solo admin):
+- Tipear el id exacto para confirmar (irreversible).
+- Checkbox "también borrar el repositorio de GitHub" (default ON).
+- Endpoint: `DELETE /api/miniapps/:id?repo=true` (orden repo→registry, fail-safe:
+  si el borrado del repo falla, no toca el registry).
+- **Requiere** que el `GITHUB_TOKEN` de Vercel tenga el scope **`delete_repo`**
+  (ojo: `delete_repo`, NO `delete:packages`). Sin él, el borrado del registry
+  anda pero el del repo devuelve 403 con mensaje claro. No borra los chunks del
+  CDN (quedan huérfanos).
+
+### 7.4 Rotar el `PUBLISH_TOKEN`
+
+El token de servicio que cada miniapp usa para publicar. El server soporta
+**dual-token** (`PUBLISH_TOKEN` + `PUBLISH_TOKENS_OLD` CSV) para rotar sin
+downtime; el endpoint `POST /api/admin/reseed-secrets` (sesión admin) resiembra
+el token nuevo en todos los repos del registry.
+- Runbook: **[`docs/rotar-publish-token.md`](./rotar-publish-token.md)**.
+- Reseed rápido (logueado en Backstage, consola del browser):
+  ```js
+  await fetch('/api/admin/reseed-secrets', { method: 'POST' }).then(r => r.json())
+  ```
+  Espera `{ reseeded: [...], failed: [...] }`. Verificá con un publish real antes
+  de sacar el token viejo.
+- Si el `PUBLISH_TOKEN` está marcado **Sensitive** en Vercel, su valor es
+  irrecuperable → hacé la rotación directa (pisar + reseed sin publishes en el
+  medio) en vez del dual-token.
+
+### 7.5 Contract package con semver real (deuda a saldar)
+
+El gate de `/upload` usa `satisfiesShared`/`checkCompatibility` de
+`@scope/miniapp-contract`. Publicá el package (§3.2) y mantené la dep de
+`backstage-web` apuntando a la última (`^0.3.0`+) para que use el semver real —
+si no, cae a una copia local. El build de Vercel instala el package privado, así
+que el `GITHUB_TOKEN` de Vercel necesita `read:packages`.
+
+---
+
+## 8. Referencia de variables de entorno
 
 ### Backstage (`backstage-web`, en Vercel)
 
@@ -449,12 +570,17 @@ Backstage local; en prod, el chunk vive en una URL pública (Blob/CDN), sin
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth App (login) | Callback `/api/auth/callback/github` |
 | `SCAFFOLD_ALLOWED_LOGINS` | CSV de logins de GitHub autorizados a crear miniapps y a disparar deploy/sync-template | Vacío = nadie puede (**fail-closed**). Case-insensitive |
 | `MINIAPP_TEMPLATE_REPO` | Repo template a clonar, ej. `Acme/miniapp-template` | Debe estar marcado **"Template repository"** en GitHub |
-| `GITHUB_TOKEN` | PAT para crear repos desde el template + admin de Actions (permisos y secrets) del repo generado | Scope `repo` (classic PAT); si el mismo token también instala `@scope/miniapp-contract` en el build, súmale `read:packages` |
-| `PUBLISH_TOKEN` | Token de servicio que validan los endpoints `/publish` y `/upload` | Mismo valor se siembra como secret `PUBLISH_TOKEN` en cada miniapp scaffoldeada |
+| `GITHUB_TOKEN` | PAT del server: crear repos desde el template, admin de Actions (permisos+secrets), leer contenidos (drift), crear issues (capability requests), **borrar repos**, e instalar `@scope/miniapp-contract` en el build | Scopes (classic PAT): **`repo`** + **`workflow`** + **`delete_repo`** + **`read:packages`**. `delete_repo` habilita "borrar miniapp+repo" (Parte E). `read:packages` es obligatorio o el build de Vercel se cae al instalar el package privado |
+| `PUBLISH_TOKEN` | Token de servicio que validan los endpoints `/publish` y `/upload` | Mismo valor se siembra como secret `PUBLISH_TOKEN` en cada miniapp scaffoldeada. Rotación: Parte E |
+| `PUBLISH_TOKENS_OLD` | CSV de tokens de publish viejos aún aceptados durante una rotación (dual-token, cero-downtime) | Opcional; solo durante una rotación. Ver `docs/rotar-publish-token.md` |
 | `BACKSTAGE_URL` | URL prod de este Backstage | Se siembra como secret en las miniapps nuevas (su CI publica de vuelta acá); también es el valor que debes pasar como `BACKSTAGE_URL` al buildear el host (§5.2) |
-| `BACKSTAGE_PUBLIC_URL` | Origen base para `fsStorage` (chunks servidos por Backstage mismo, modo dev/fs) | Solo relevante si NO hay `BLOB_READ_WRITE_TOKEN` (fs, no crítico en prod con Blob real) — ver discrepancia abajo |
-| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Upstash Redis — registro/catálogo en prod | Provisionado vía Vercel Marketplace |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob — CDN de chunks en prod | Provisionado vía Vercel Marketplace |
+| `BACKSTAGE_PUBLIC_URL` | Origen base para `fsStorage` (chunks servidos por Backstage mismo, modo dev/fs) | Solo relevante si NO hay R2 ni Blob (fs, no crítico en prod) |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Upstash Redis — registro/catálogo + preferencia de storage provider | Provisionado vía Vercel Marketplace |
+| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` / `R2_PUBLIC_BASE_URL` | Cloudflare R2 — CDN de chunks (primario, recomendado) | Las 5 juntas activan R2. `R2_PUBLIC_BASE_URL` = `https://pub-xxxxx.r2.dev` (sin barra final). Ver §4.3 |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob — CDN de chunks (fallback si no hay R2) | Provisionado vía Vercel Marketplace. Free tier se suspende al agotarse |
+| `HOST_CONTRACT_TOKEN` | Token dedicado que valida `PUT /api/host-contract` (publicar el contrato del host) | Separado del `PUBLISH_TOKEN`. `openssl rand -hex 32`. Parte E / compat gates |
+| `HOST_REPO` | Repo del host, ej. `Acme/backstagereactnative` | Destino de los capability requests (issues) cuando una miniapp pide un nativo |
+| `COMPAT_ENFORCE` | `"1"` → el gate de `/upload` rechaza (422) publishes incompatibles | Ausente/`"0"` = warn (default). Solo al pasar a enforce (Parte E) |
 | `CI_STATUS_ENABLED` | Habilita el badge de estado de CI por miniapp (consulta GitHub Actions) | Opcional; `"false"` fuerza `unknown` sin llamar a GitHub |
 
 > **Discrepancia detectada entre las fuentes:** `DEPLOY.md` solo menciona
@@ -485,13 +611,16 @@ Backstage local; en prod, el chunk vive en una URL pública (Blob/CDN), sin
 
 ---
 
-## 8. Gotchas conocidos
+## 9. Gotchas conocidos
 
 | Gotcha | Detalle / fix |
 |---|---|
 | **JDK de Android** | Usa **OpenJDK 17** (`brew install openjdk@17`, `JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home`). **Azul Zulu 17** causa un `MissingValueException` en `assembleDebug` que no es de este proyecto — persiste incluso en un RN 0.76 vanilla (ver `memory-bank/operations/activation-checklist.md` en el repo móvil). |
 | **`@module-federation/enhanced` pinneado a `0.9.0`** | No lo subas de versión junto con Re.Pack 5.2.5 (Module Federation v2) — combinación verificada; una versión distinta puede romper la carga de remotes. |
-| **Selección de storage por env, sin flag manual** | KV/Blob se activan solo por la **presencia** de sus env vars; en local sin esas vars cae a `jsonStore`/`fsStorage` automáticamente — no necesitas "modo dev" explícito. |
+| **Selección de storage: R2 → Blob → fs** | El storage de chunks se elige por **presencia** de env vars, en ese orden (R2 primero si están sus 5 vars, si no Blob, si no fs local). Un admin puede overridear el default y por-miniapp desde la UI (Parte E), con fallback seguro al orden por env. KV (registro) se activa igual por presencia de `KV_REST_API_*`. |
+| **R2 rechaza uploads chunked (HTTP 411)** | El adapter R2 fija `Content-Length` explícito porque el `fetch` parcheado de Next.js puede streamear el body (→ `Transfer-Encoding: chunked`) y R2 lo rechaza con 411. Ya resuelto en `lib/storage/r2.ts`; tenelo en cuenta si escribís otro adapter S3. |
+| **`GITHUB_TOKEN` de Vercel: 4 scopes** | `repo` + `workflow` + `delete_repo` + `read:packages`. Faltar `read:packages` **rompe el build** (no instala el package privado); faltar `delete_repo` rompe solo "borrar repo" (403 claro). Ojo de no marcar `delete:packages` por error (no sirve). |
+| **Rotar un `PUBLISH_TOKEN` marcado "Sensitive"** | Vercel no deja leer los env vars Sensitive → no podés recuperar el token viejo para el dual-token. Hacé la rotación directa (pisar + reseed, sin publishes en el medio). Ver `docs/rotar-publish-token.md`. |
 | **Scope de paquetes debe ser público** | `@scope/miniapp-contract` y `@scope/ui-kit` deben quedar **públicos** en GitHub Packages; si no, el `GITHUB_TOKEN` automático de Actions en la CI de cada miniapp no podrá leerlos (fallaría el `pnpm install`). |
 | **Template repo debe estar marcado "Template repository"** | Sin eso, `POST /repos/{template}/generate` del scaffolder devuelve error (`GITHUB generate failed`). |
 | **`SCAFFOLD_ALLOWED_LOGINS` vacío = fail-closed** | Nadie puede crear miniapps ni disparar `deploy`/`sync-template` hasta que agregues logins. Intencional para no dejar un demo público abierto a crear repos. |
@@ -502,7 +631,7 @@ Backstage local; en prod, el chunk vive en una URL pública (Blob/CDN), sin
 
 ---
 
-## 9. Checklist final — "todo levantado"
+## 10. Checklist final — "todo levantado"
 
 - [ ] `@scope/miniapp-contract` y `@scope/ui-kit` publicados en GitHub
       Packages, visibilidad **pública**.
@@ -510,10 +639,13 @@ Backstage local; en prod, el chunk vive en una URL pública (Blob/CDN), sin
       repository"**, con el rename de scope/owner aplicado en `package.json`,
       `rspack.config.mjs`, `.npmrc`, `ci.yml` e `init-template.yml`.
 - [ ] GitHub OAuth App creada (dev y/o prod) con el callback correcto.
-- [ ] Backstage enlazado a Vercel (`vercel link`), con Blob + Upstash Redis
-      provisionados desde Marketplace.
-- [ ] Todas las env vars de la tabla de Backstage (§6) seteadas en Vercel —
-      incluyendo **ambas** `BACKSTAGE_URL` y `BACKSTAGE_PUBLIC_URL`.
+- [ ] Backstage enlazado a Vercel (`vercel link`), con **Cloudflare R2**
+      (bucket + acceso público + token S3) y **Upstash Redis** provisionados.
+      Blob opcional como fallback.
+- [ ] `GITHUB_TOKEN` de Vercel con los 4 scopes: `repo`, `workflow`,
+      `delete_repo`, `read:packages`.
+- [ ] Todas las env vars de la tabla de Backstage (§8) seteadas en Vercel —
+      incluyendo `BACKSTAGE_URL` + `BACKSTAGE_PUBLIC_URL` y las 5 `R2_*`.
 - [ ] `vercel deploy --prod` exitoso; `/api/seed` corrido una vez.
 - [ ] Smoke test OK: `/catalog`, `/api/resolve?id=account_dashboard`,
       `/api/miniapps/x/upload` → 401 sin token.
@@ -526,3 +658,13 @@ Backstage local; en prod, el chunk vive en una URL pública (Blob/CDN), sin
       automáticamente.
 - [ ] Esa miniapp publicó una versión (CI o manual) y `resolve` la devuelve.
 - [ ] La miniapp se ve montada en el host (`<MiniappHost id=.../>`).
+
+### Endurecimiento (Parte E — opcional, cuando lo necesites)
+- [ ] Contract package publicado y `backstage-web` apuntando a `^0.3.0`+ (semver real).
+- [ ] Gates de compatibilidad: host contract publicado, flota sincronizada +
+      backfilleada, validado en sombra, y pasado a **enforce** (los 3 puntos).
+      Ver [`docs/activar-compat-gates.md`](./activar-compat-gates.md).
+- [ ] Selector de storage por UI verificado (default global + override por miniapp).
+- [ ] Borrado de miniapp+repo verificado (con `delete_repo` en el token).
+- [ ] `PUBLISH_TOKEN` rotado desde el `dev-publish-secret`/valor inicial a uno
+      fuerte (`openssl rand -hex 32`). Ver [`docs/rotar-publish-token.md`](./rotar-publish-token.md).
