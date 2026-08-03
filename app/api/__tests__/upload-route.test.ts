@@ -94,6 +94,7 @@ const params = { params: Promise.resolve({ id: "account_dashboard" }) };
 beforeEach(() => {
   process.env.PUBLISH_TOKEN = "secret";
   delete process.env.SCAFFOLD_ALLOWED_LOGINS;
+  delete process.env.COMPAT_ENFORCE;
   authMock.mockResolvedValue(null); // default: no session → CI/token path
   // The miniapp must be registered before publishing a version.
   state.reg = {
@@ -185,6 +186,51 @@ describe("POST /api/miniapps/:id/upload", () => {
     expect(res.status).toBe(201);
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+
+  it("enforce: rechaza la incompatibilidad con 422 y NO publica (COMPAT_ENFORCE=1)", async () => {
+    process.env.COMPAT_ENFORCE = "1";
+    state.contract = {
+      contractVersion: "1.0.0",
+      reactNative: "0.76.6",
+      shared: { react: "18.3.1", "react-native": "0.76.6" },
+      nativeModules: [],
+    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const incompatibleManifest = {
+      ...manifest,
+      shared: [{ name: "react-native", requiredRange: "^0.99.0", singleton: true }],
+    };
+    const form = new FormData();
+    form.set("file", new Blob([buildZip() as unknown as BlobPart]), "build.zip");
+    form.set("version", "0.2.0");
+    form.set("manifest", JSON.stringify(incompatibleManifest));
+    const req = new Request("http://x/api/miniapps/account_dashboard/upload", {
+      method: "POST",
+      headers: { authorization: "Bearer secret" },
+      body: form,
+    });
+
+    const res = await POST(req, params);
+
+    expect(res.status).toBe(422);
+    expect((await res.json()).code).toBe("COMPAT_INCOMPATIBLE");
+    expect(state.reg.account_dashboard.versions).toHaveLength(0); // no se publicó nada
+    warn.mockRestore();
+  });
+
+  it("enforce: un manifest compatible se publica igual (201)", async () => {
+    process.env.COMPAT_ENFORCE = "1";
+    state.contract = {
+      contractVersion: "1.0.0",
+      reactNative: "0.76.6",
+      shared: { react: "18.3.1", "react-native": "0.76.6" },
+      nativeModules: [],
+    };
+    // manifest default: react-native ^0.76.0 → satisfecho por host 0.76.6.
+    const res = await POST(uploadReq({ token: "secret" }), params);
+    expect(res.status).toBe(201);
+    expect(state.reg.account_dashboard.versions).toHaveLength(1);
   });
 
   it("modo warn: loguea un módulo nativo faltante pero NO rechaza (201)", async () => {

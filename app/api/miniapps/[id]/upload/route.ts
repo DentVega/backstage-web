@@ -86,8 +86,11 @@ export async function POST(
       integrity: sha256Integrity(container.data),
     };
 
-    // Gate de compatibilidad (MODO WARN — loguea, no rechaza; el 422 se activa después).
-    // Chequea skew de shared + módulos nativos que el host no provee (Fase 2).
+    // Gate de compatibilidad. Default WARN (loguea, no rechaza); con COMPAT_ENFORCE=1
+    // rechaza el publish con 422. Chequea skew de shared + módulos nativos del host (Fase 2).
+    // El check en sí es rollout-safe: si crashea, se loguea y NO bloquea (no rompemos por
+    // un bug nuestro); solo bloquea una incompatibilidad real detectada.
+    const compatProblems: string[] = [];
     try {
       const contract = await getHostContractStore().load();
       const m = manifest as {
@@ -97,17 +100,16 @@ export async function POST(
       if (contract === null) {
         console.warn(`compat[${id}@${version}]: no host contract published — skipping check`);
       } else {
-        const problems: string[] = [];
         // Skew de shared.
         if (!m.shared || m.shared.length === 0) {
-          problems.push("empty 'shared' (at-risk)");
+          compatProblems.push("empty 'shared' (at-risk)");
         } else {
           // HostContract.shared is a plain Record<string, string>; satisfiesShared
           // wants the branded SemVer type — the store validates the shape (isHostContract)
           // but doesn't brand the values, so this cast is safe (not a runtime change).
           const skew = satisfiesShared(contract.shared as Readonly<Record<string, SemVer>>, m.shared);
           if (!skew.compatible) {
-            problems.push(
+            compatProblems.push(
               ...skew.entries.filter((e) => e.status !== "ok")
                 .map((e) => `${e.name} (${e.status}, needs ${e.requiredRange})`),
             );
@@ -117,10 +119,7 @@ export async function POST(
         const hostNatives = new Set(contract.nativeModules);
         const missingNatives = (m.nativeModules ?? []).filter((n) => !hostNatives.has(n));
         for (const n of missingNatives) {
-          problems.push(`${n} (native module not in host)`);
-        }
-        if (problems.length > 0) {
-          console.warn(`compat[${id}@${version}]: INCOMPATIBLE with host — ${problems.join(", ")} [warn mode, not blocking]`);
+          compatProblems.push(`${n} (native module not in host)`);
         }
         // Pedido automatizado de capability por cada nativo faltante (best-effort).
         if (missingNatives.length > 0) {
@@ -137,7 +136,22 @@ export async function POST(
         }
       }
     } catch (err) {
-      console.warn(`compat[${id}@${version}]: check errored (ignored in warn mode):`, err);
+      console.warn(`compat[${id}@${version}]: check errored (ignored):`, err);
+    }
+
+    const compatEnforce = process.env.COMPAT_ENFORCE === "1";
+    if (compatProblems.length > 0) {
+      const mode = compatEnforce ? "ENFORCE → rechazando (422)" : "warn mode, not blocking";
+      console.warn(`compat[${id}@${version}]: INCOMPATIBLE with host — ${compatProblems.join(", ")} [${mode}]`);
+      if (compatEnforce) {
+        return NextResponse.json(
+          {
+            error: `incompatible with host contract — ${compatProblems.join(", ")}`,
+            code: "COMPAT_INCOMPATIBLE",
+          },
+          { status: 422 },
+        );
+      }
     }
 
     const reg = await getStore().load();
