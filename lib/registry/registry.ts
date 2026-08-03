@@ -75,6 +75,24 @@ export function removeMiniapp(reg: Registry, rawId: string): Registry {
   return next;
 }
 
+/** Update a miniapp's mutable metadata (repoUrl / owner). Throws if it doesn't exist. */
+export function updateMiniappMeta(
+  reg: Registry,
+  rawId: string,
+  patch: { repoUrl?: string; owner?: string },
+): Registry {
+  const id = parseMiniappId(rawId);
+  if (id === null) throw new InvalidManifestError(`bad miniapp id "${rawId}"`);
+  const record = reg[id];
+  if (record === undefined) throw new MiniappNotFoundError(id);
+  const next = {
+    ...record,
+    ...(patch.repoUrl !== undefined ? { repoUrl: patch.repoUrl } : {}),
+    ...(patch.owner !== undefined ? { owner: patch.owner } : {}),
+  };
+  return { ...reg, [id]: next };
+}
+
 /** Set (or clear, with null) the per-miniapp storage provider override. Throws if it doesn't exist. */
 export function setMiniappStorageProvider(
   reg: Registry,

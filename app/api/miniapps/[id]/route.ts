@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/registry/store";
-import { removeMiniapp } from "@/lib/registry/registry";
+import { removeMiniapp, updateMiniappMeta } from "@/lib/registry/registry";
 import { MiniappNotFoundError } from "@/lib/registry/types";
 import { scaffoldAllowedLogins, githubToken } from "@/lib/config";
 import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
@@ -66,6 +66,50 @@ export async function DELETE(
       alsoRepo ? { id, deleted: true, repoDeleted } : { id, deleted: true },
       { status: 200 },
     );
+  } catch (err) {
+    return NextResponse.json(errorBody(err), { status: statusForError(err) });
+  }
+}
+
+/**
+ * PATCH /api/miniapps/:id — update a miniapp's mutable metadata (admin, canScaffold).
+ * Body `{ repoUrl?, owner? }`. `repoUrl` debe ser una URL de repo de GitHub válida.
+ * Sirve para re-apuntar o corregir la metadata de una entrada (ej. repos migrados).
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  try {
+    const { auth } = await import("@/auth");
+    const session = await auth();
+    if (!canScaffold(session?.githubLogin, scaffoldAllowedLogins())) {
+      throw new ScaffoldForbiddenError();
+    }
+    const { id } = await params;
+    const body = (await req.json().catch(() => null)) as { repoUrl?: unknown; owner?: unknown } | null;
+    const patch: { repoUrl?: string; owner?: string } = {};
+    if (typeof body?.repoUrl === "string") {
+      if (parseRepo(body.repoUrl) === null) {
+        return NextResponse.json(
+          { error: "repoUrl is not a valid GitHub repo URL" },
+          { status: 400 },
+        );
+      }
+      patch.repoUrl = body.repoUrl;
+    }
+    if (typeof body?.owner === "string" && body.owner.length > 0) patch.owner = body.owner;
+    if (patch.repoUrl === undefined && patch.owner === undefined) {
+      return NextResponse.json(
+        { error: "nothing to update (repoUrl or owner required)" },
+        { status: 400 },
+      );
+    }
+    const reg = await getStore().load();
+    const next = updateMiniappMeta(reg, id, patch); // MiniappNotFoundError → 404
+    await getStore().save(next);
+    const rec = next[id];
+    return NextResponse.json({ id, repoUrl: rec?.repoUrl, owner: rec?.owner }, { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });
   }
