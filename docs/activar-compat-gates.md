@@ -130,6 +130,26 @@ Antes de enforce, confirmar que **nadie queda incompatible** con el contract act
 
 Cuando los warn logs estén limpios (0 incompatibles), estás listo para enforce.
 
+### Resultado shadow validation — 2026-08-03 ✅
+
+Calculado contra el host contract live (`contractVersion 0.0.1`, RN 0.76.6):
+
+| Miniapp | Veredicto vs contract |
+|---|---|
+| `cards_wallet` 0.1.5 | ✅ compatible (react ^18.3.1, RN ^0.76.6; nativo `@callstack/repack` provisto) |
+| `hellow_widget` 0.1.5 | ✅ compatible (react ^18.3.0, RN ^0.76.0) |
+| `account_dashboard` 0.7.0 | ✅ compatible (react/RN/react-query/flash-list, todos satisfechos) |
+
+**Cero incompatibles → cero falsos positivos.** Enforce es seguro para los 3.
+
+### Excepción conocida: `account_dashboard`
+
+Repo **migrado** (no del template), NO enrolado en template-sync, publica por un
+`publish.mjs` legacy que **saltea el gate del CI** (no tiene `publish.yml` reusable ni los
+scripts). Decisión: **NO enrolarlo** (alto esfuerzo / bajo valor: tsconfig roto, repoUrl
+falso). Su backstop es el **enforce server-side (5.3)** — y como hoy es compatible, ni
+siquiera lo bloquearía. Si en el futuro se republica incompatible, el `/upload` lo frena.
+
 ---
 
 ## Paso 5 — ENFORCE (acá sí bloquea) 🔒
@@ -145,8 +165,20 @@ Branches → Branch protection rule para `main` → marcar el check **`Host comp
 Desde ahora, un cambio de deps del host que rompa la flota **no se puede mergear** (salvo
 que se agregue el label `accept-breaking-contract`, que deja registro).
 
+**5.3 — Backstop server-side** (`/upload` → 422): en **Vercel env (production)** setear
+`COMPAT_ENFORCE=1` + redeploy. Desde ahora, el `/upload` **rechaza con 422** un manifest
+incompatible (skew de shared o nativo faltante) — cubre repos que saltean el CI (ej.
+`account_dashboard`) y cualquier POST directo al endpoint. Construido 2026-08-03 (commit
+del server enforce). Rollout-safe: si el propio check crashea, loguea y NO bloquea; solo
+frena una incompatibilidad real. Default (sin la var) sigue siendo warn.
+```bash
+vercel env add COMPAT_ENFORCE production   # valor: 1
+vercel --prod
+```
+
 **Verificación:** un PR de prueba con un bump incompatible debe quedar con CI ❌ / merge
-bloqueado.
+bloqueado (5.1/5.2); un POST directo a `/upload` con un manifest incompatible → HTTP 422
+(5.3).
 
 ---
 
@@ -158,9 +190,7 @@ No hace falta para enforce, pero mejora:
   warn de `/upload` pasa a usar el `satisfiesShared` con **semver real** (hoy usa el
   mínimo de 0.1.0, que puede dar falsos incompatibles en warn logs con rangos raros).
   El host y las miniapps ya usan la lógica correcta (workspace / self-contained).
-- **`/upload` → 422** (belt server-side): hoy el `/upload` es warn-only; para que rechace
-  server-side (además del gate de CI) hace falta un cambio chico de código (gatear un 422
-  por `COMPAT_ENFORCE`). El gate de CI (5.1) ya bloquea, así que es redundante — opcional.
+  _(El backstop server-side `/upload` → 422 ya está construido — ver Paso 5.3.)_
 
 ---
 
