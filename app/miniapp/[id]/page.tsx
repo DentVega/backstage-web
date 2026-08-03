@@ -14,6 +14,8 @@ import { DriftBadge } from "@/app/components/DriftBadge";
 import { PublishForm } from "@/app/components/PublishForm";
 import { DeployButton } from "@/app/components/DeployButton";
 import { SyncTemplateButton } from "@/app/components/SyncTemplateButton";
+import { getMiniappStorageState } from "@/lib/storage";
+import { MiniappStorageControl } from "@/app/components/MiniappStorageControl";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,9 @@ export default async function MiniappDetailPage({
 
   const session = await auth();
   const canPublish = canScaffold(session?.githubLogin, scaffoldAllowedLogins());
+  const storageState = canPublish
+    ? await getMiniappStorageState(detail.storageProvider ?? null)
+    : null;
   const token = session?.githubAccessToken;
   let ciStatus: CiStatus = "unknown";
   if (token) {
@@ -83,6 +88,10 @@ export default async function MiniappDetailPage({
           <section className="detail-section">
             <h2>Deploy</h2>
             <DeployButton id={id} />
+          </section>
+          <section className="detail-section">
+            <h2>Almacenamiento</h2>
+            {storageState !== null && <MiniappStorageControl id={id} {...storageState} />}
           </section>
           <section className="detail-section">
             <h2>Actualizar desde template</h2>
