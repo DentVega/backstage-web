@@ -178,10 +178,23 @@ La lógica del gate ya está cubierta por los tests `node:test` de `check-compat
 2. **PR compatible** (cambio trivial en JS, sin tocar deps nativas): el check `compat` debe salir **verde**.
 3. Confirmar que **`publish` NO corre** en ninguno de esos PRs (solo `compat`).
 
-## Fuera de alcance (posible fase 2)
+## Fase 2 — bloqueo duro con branch protection (APLICADA 2026-08-03)
 
-- **Branch protection con el check como *required*** en los repos de miniapp. Hoy esos repos no están protegidos, así que la ✗ es una advertencia fuerte pero **no bloquea** el merge por sí sola. Convertirla en bloqueo duro es un paso aparte (habilitar branch protection + marcar `compat` como required check). Se decide después.
+Branch protection con `compat / compat` como **required status check** en el `main` de cada miniapp → un PR con el check en rojo **no se puede mergear**.
+
+Config aplicada (vía API `PUT /repos/{owner}/{repo}/branches/main/protection`):
+- `required_status_checks: { strict: false, contexts: ["compat / compat"] }`
+- **`enforce_admins: false`** — el owner conserva el bypass. Decisión deliberada por el **gotcha de template-sync**: los PRs de sync se crean con el `GITHUB_TOKEN` de la Action, y GitHub **no dispara workflows** en eventos de ese token → el `compat` check **no corre** en PRs de sync; con `enforce_admins` quedarían impedidos de mergear. Sin enforce_admins, el admin los mergea igual. Ver [[template-sync-no-propaga-workflows]].
+- `required_pull_request_reviews: null`, `restrictions: null`.
+
+Estado por repo:
+- `cards_wallet` (public) → ✅ protegido.
+- `account-dashboard` (public) → ✅ protegido.
+- `hellow_widget` (**private**, plan free) → branch protection **no disponible** (requiere Pro o repo público). Queda con **check soft**: el `compat` corre y muestra rojo/verde en cada PR, pero no bloquea el merge. Decisión del owner: dejarlo así (es la miniapp de demo).
+
+### Notas fuera de alcance
 - PRs desde forks (sin acceso a secrets): no aplica hoy (repos same-owner). Si se diera, el check degradaría a fallo de secreto — aceptable, se aborda si aparece el caso.
+- **Pendiente si se activa GitHub Pro:** aplicar la misma protección a `hellow_widget` (mismo comando).
 
 ## Riesgos / Trade-offs
 
