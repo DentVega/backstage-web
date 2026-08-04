@@ -282,6 +282,16 @@ Expected: host → `[blast-radius, test]`; template → `[test]`.
 
 ---
 
+## Correcciones durante la ejecución
+
+El CI hizo su trabajo y destapó 3 cosas (todas resueltas):
+
+1. **Host — conflicto de versión de pnpm:** `pnpm/action-setup` con `version: 10` choca con `packageManager: pnpm@10.14.0` del `package.json` del host. Fix: sacar el `version:` (lee del `packageManager`). Solo aplica al host (el template no tiene `packageManager` → mantiene `version: 10`).
+2. **Host — workspace packages sin buildear:** `packages/host-runtime` typecheck fallaba (`Cannot find module '@dentvega/miniapp-contract'`) porque los workspace packages necesitan su `dist/.d.ts`. Fix: agregar `pnpm build:packages` antes del typecheck. El `tests.yml` real del host quedó: install → **build:packages** → typecheck → jest → node:test. (~5m51s, jest RN es lento.)
+3. **Template — `compat / compat` rojo en los PRs del propio template:** efecto colateral del feature anterior (el trigger `pull_request` en el `ci.yml` del template corría el gate sobre su manifest **placeholder**). Fix (commit `ced1219`): guardar los jobs `compat` **y** `publish` del `ci.yml` del template con `if: github.repository != 'DentVega/miniapp-template'` — el template no es una miniapp, no corre compat ni se publica a sí mismo. En las miniapps ambos jobs siguen corriendo normal.
+
+Evidencia e2e: host PR #12 (`test` verde 5m51s → mergeado `03f9ffa`); template PR #1 throwaway (`test` verde, `compat`/`publish` skipped tras el guard → cerrado). Branch protection final: host `[blast-radius, test]` (enforce_admins=true), template `[test]` (enforce_admins=false).
+
 ## Notas de ejecución
 
 - **No hay TDD clásico:** el entregable es CI (YAML + config) y la lógica ya está testeada por las suites que cablémos. Cada task valida con parse de YAML + el propio PR check como verificación real.
