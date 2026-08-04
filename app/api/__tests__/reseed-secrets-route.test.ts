@@ -86,6 +86,23 @@ describe("POST /api/admin/reseed-secrets", () => {
     expect(body.failed.map((f) => f.id)).toEqual(["b"]);
   });
 
+  it("usa el owner/repo real del repoUrl cuando el nombre no sigue miniapp-<id>", async () => {
+    // account_dashboard: repo migrado con guion (miniapp-account-dashboard), no `miniapp-account_dashboard`.
+    state.reg = {
+      account_dashboard: {
+        id: "account_dashboard" as never,
+        name: "Account",
+        owner: "DentVega",
+        versions: [],
+        repoUrl: "https://github.com/DentVega/miniapp-account-dashboard",
+      },
+    };
+    const res = await POST(post());
+    expect(res.status).toBe(200);
+    const call = state.setSecretCalls.find((c) => c.name === "PUBLISH_TOKEN");
+    expect(call).toMatchObject({ owner: "DentVega", repo: "miniapp-account-dashboard" });
+  });
+
   it("no reporta éxito si PUBLISH_TOKEN no está seteado (no toca ningún repo)", async () => {
     delete process.env.PUBLISH_TOKEN;
     const res = await POST(post());

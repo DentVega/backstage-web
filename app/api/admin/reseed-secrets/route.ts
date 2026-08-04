@@ -3,6 +3,7 @@ import { getStore } from "@/lib/registry/store";
 import { seedRepoSecrets } from "@/lib/scaffold";
 import { githubProvider } from "@/lib/git/github";
 import { githubToken, scaffoldAllowedLogins, scaffoldSecrets } from "@/lib/config";
+import { parseRepo } from "@/lib/git/miniapp-dispatch";
 import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { errorBody, statusForError } from "@/lib/http";
 
@@ -39,9 +40,14 @@ export async function POST(_req: Request): Promise<NextResponse> {
     const reseeded: string[] = [];
     const failed: { id: string; error: string }[] = [];
     for (const rec of Object.values(reg)) {
-      const repo = `miniapp-${rec.id}`;
+      // El repo real sale del repoUrl del registry, NO de `miniapp-${id}`: repos
+      // migrados (ej. account_dashboard → miniapp-account-dashboard, con guion) no
+      // siguen esa convención y quedaban sin reseed → publish con token viejo (401).
+      const parsed = parseRepo(rec.repoUrl);
+      const owner = parsed?.owner ?? rec.owner;
+      const repo = parsed?.repo ?? `miniapp-${rec.id}`;
       try {
-        const result = await seedRepoSecrets(provider, rec.owner, repo, secrets);
+        const result = await seedRepoSecrets(provider, owner, repo, secrets);
         if (result.failed.length > 0) {
           failed.push({ id: rec.id, error: result.failed.map((f) => `${f.name}: ${f.error}`).join("; ") });
         } else {
