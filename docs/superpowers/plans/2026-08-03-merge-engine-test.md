@@ -336,6 +336,11 @@ Expected: el run pasa; si había drift, abre un PR "Sync desde template @ …" (
 
 ---
 
+## Correcciones durante la ejecución
+
+- **Rollout (Task 3 step 1):** el PUT del workflow a las miniapps dio `422 "sha wasn't supplied"` — el `2>/dev/null` del helper tapó el GET del sha de un archivo existente. Fix: re-fetch del sha explícito por repo y re-PUT (los 3 OK). El script (archivo nuevo) sí entró en la 1ª pasada.
+- **e2e (Task 3 step 2):** hellow_widget tenía drift real (baseSha `d14c9bb` vs template `b43eea8`) → el sync corrió el merge: `template-merge: merged (sync/template-b43eea8, conflicted=true)` → abrió PR #6 (cerrado, era e2e). Confirma que el refactor es behavior-preserving punta a punta.
+
 ## Notas de ejecución
 
 - El objetivo es el **test** (Task 1); el refactor lo habilita sin cambiar comportamiento; el rollout alinea la flota.
