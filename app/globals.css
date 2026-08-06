@@ -274,6 +274,39 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
 .storage-saved { color: var(--ok); font-weight: 600; }
 .storage-source { opacity: .7; font-size: 11px; }
 
+/* version pin / rollback */
+.pin-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+.pin-label {
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.pin-select {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+}
+.pin-served { font-family: var(--mono); font-size: 12px; opacity: .8; }
+.pin-warn { color: var(--warn); font-size: 12px; font-weight: 600; }
+.served-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ok);
+  font-weight: 700;
+}
+
 /* Danger zone — eliminar miniapp */
 .danger-section h2 { color: #dc4c4c; }
 .danger-zone {

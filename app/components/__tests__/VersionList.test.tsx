@@ -28,4 +28,9 @@ describe("VersionList", () => {
     render(<VersionList versions={[]} />);
     expect(screen.getByRole("status")).toHaveTextContent(/Sin versiones/i);
   });
+
+  it("marca la versión servida con un badge", () => {
+    render(<VersionList versions={[v("1.0.0"), v("0.1.0")]} servedVersion={"0.1.0" as SemVer} />);
+    expect(screen.getByText("● servida")).toBeInTheDocument();
+  });
 });

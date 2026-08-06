@@ -16,6 +16,7 @@ import { DeployButton } from "@/app/components/DeployButton";
 import { SyncTemplateButton } from "@/app/components/SyncTemplateButton";
 import { getMiniappStorageState } from "@/lib/storage";
 import { MiniappStorageControl } from "@/app/components/MiniappStorageControl";
+import { MiniappVersionControl } from "@/app/components/MiniappVersionControl";
 import { MiniappDeleteControl } from "@/app/components/MiniappDeleteControl";
 
 export const dynamic = "force-dynamic";
@@ -81,11 +82,21 @@ export default async function MiniappDetailPage({
 
       <section className="detail-section">
         <h2>Versiones</h2>
-        <VersionList versions={detail.versions} />
+        <VersionList versions={detail.versions} servedVersion={detail.servedVersion} />
       </section>
 
       {canPublish ? (
         <>
+          <section className="detail-section">
+            <h2>Versión servida (rollback)</h2>
+            <MiniappVersionControl
+              id={id}
+              versions={detail.versions}
+              pinnedVersion={detail.pinnedVersion}
+              servedVersion={detail.servedVersion}
+              latestVersion={detail.latestVersion}
+            />
+          </section>
           <section className="detail-section">
             <h2>Deploy</h2>
             <DeployButton id={id} />

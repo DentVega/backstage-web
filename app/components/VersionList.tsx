@@ -3,7 +3,13 @@
 import type { VersionView } from "@/lib/registry/types";
 
 /** Presentational list of published versions (newest first). */
-export function VersionList({ versions }: { versions: readonly VersionView[] }) {
+export function VersionList({
+  versions,
+  servedVersion,
+}: {
+  versions: readonly VersionView[];
+  servedVersion?: string | null;
+}) {
   if (versions.length === 0) {
     return <p role="status" className="empty">Sin versiones publicadas.</p>;
   }
@@ -12,6 +18,9 @@ export function VersionList({ versions }: { versions: readonly VersionView[] }) 
       {versions.map((v) => (
         <li key={v.version} className="version-item">
           <span className="vv">v{v.version}</span>
+          {v.version === servedVersion ? (
+            <span className="served-badge">● servida</span>
+          ) : null}
           <time dateTime={v.publishedAt}>
             {new Date(v.publishedAt).toISOString().slice(0, 10)}
           </time>

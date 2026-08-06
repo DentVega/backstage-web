@@ -111,6 +111,26 @@ export function setMiniappStorageProvider(
   return { ...reg, [id]: { ...record, storageProvider: provider } };
 }
 
+/**
+ * Fija (o despina con null) la versión que el host sirve por defecto para una
+ * miniapp (rollback/freeze). La versión debe existir (append-only, nunca borra).
+ */
+export function setMiniappPin(reg: Registry, rawId: string, version: string | null): Registry {
+  const id = parseMiniappId(rawId);
+  if (id === null) throw new InvalidManifestError(`bad miniapp id "${rawId}"`);
+  const record = reg[id];
+  if (record === undefined) throw new MiniappNotFoundError(id);
+  if (version === null) {
+    const next = { ...record };
+    delete (next as { pinnedVersion?: SemVer }).pinnedVersion;
+    return { ...reg, [id]: next };
+  }
+  if (!record.versions.some((v) => v.version === version)) {
+    throw new InvalidManifestError(`version ${version} not published for ${id}`);
+  }
+  return { ...reg, [id]: { ...record, pinnedVersion: version as SemVer } };
+}
+
 export function publishVersion(
   reg: Registry,
   rawId: string,
@@ -193,6 +213,12 @@ export function resolveMiniapp(
     if (chosen === null) {
       throw new NoCompatibleVersionError(id, `none satisfy ${opts.range}`);
     }
+  } else if (record.pinnedVersion !== undefined) {
+    // Pin/rollback: el host pide sin versión → servimos la fijada. Fallback
+    // defensivo a la última (nunca debería faltar: las versiones son append-only).
+    chosen =
+      record.versions.find((v) => v.version === record.pinnedVersion) ??
+      selectLatest(record.versions);
   } else {
     chosen = selectLatest(record.versions);
   }
@@ -247,7 +273,9 @@ export function getMiniappDetail(reg: Registry, rawId: string): MiniappDetail {
     ...(record.createdAt !== undefined ? { createdAt: record.createdAt } : {}),
     ...(record.repoUrl !== undefined ? { repoUrl: record.repoUrl } : {}),
     ...(record.storageProvider !== undefined ? { storageProvider: record.storageProvider } : {}),
+    ...(record.pinnedVersion !== undefined ? { pinnedVersion: record.pinnedVersion } : {}),
     latestVersion: latest?.version ?? null,
+    servedVersion: record.pinnedVersion ?? latest?.version ?? null,
     versionCount: record.versions.length,
     versions,
     capabilities: latest?.manifest.capabilities ?? [],

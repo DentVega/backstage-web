@@ -11,6 +11,7 @@ const base: MiniappDetail = {
   createdAt: "2026-07-09T10:00:00.000Z",
   repoUrl: "https://github.com/acme/miniapp-account_dashboard",
   latestVersion: "0.1.0" as SemVer,
+  servedVersion: "0.1.0" as SemVer,
   versionCount: 1,
   versions: [],
   capabilities: [],

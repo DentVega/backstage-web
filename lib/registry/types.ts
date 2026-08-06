@@ -20,6 +20,8 @@ export interface MiniappRecord {
   readonly repoUrl?: string;
   /** Provider de storage pinneado para esta miniapp; undefined = usa el default global. */
   readonly storageProvider?: StorageProvider;
+  /** Versión fijada que el host sirve por defecto (rollback/freeze). undefined = última (auto). */
+  readonly pinnedVersion?: SemVer;
 }
 
 export type Registry = Readonly<Record<string, MiniappRecord>>;
@@ -57,6 +59,10 @@ export interface MiniappDetail {
   readonly capabilities: readonly string[];
   /** Per-miniapp storage override (undefined = global default). */
   readonly storageProvider?: StorageProvider;
+  /** Versión fijada (undefined = automática/última). */
+  readonly pinnedVersion?: SemVer;
+  /** Versión que el host sirve HOY: pinnedVersion ?? latest. */
+  readonly servedVersion: SemVer | null;
 }
 
 // --- Typed domain errors (mapped to HTTP status by the route handlers) ---
