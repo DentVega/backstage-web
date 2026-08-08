@@ -9,6 +9,7 @@ const entry: CatalogEntry = {
   name: "Account Dashboard",
   owner: "payments-team",
   latestVersion: "0.1.0" as SemVer,
+  servedVersion: "0.1.0" as SemVer,
   versionCount: 1,
   createdAt: "2026-07-09T10:00:00.000Z",
   repoUrl: "https://github.com/acme/miniapp-account_dashboard",
@@ -41,5 +42,12 @@ describe("CatalogList", () => {
   it("shows an empty state when there are no miniapps", () => {
     render(<CatalogList entries={[]} />);
     expect(screen.getByRole("status")).toHaveTextContent(/No hay miniapps/i);
+  });
+
+  it("muestra la versión servida y un indicador de rollback cuando difiere de la última", () => {
+    const pinned: CatalogEntry = { ...entry, latestVersion: "0.1.13" as SemVer, servedVersion: "0.1.12" as SemVer };
+    render(<CatalogList entries={[pinned]} />);
+    expect(screen.getByText(/v0\.1\.12/)).toBeInTheDocument(); // sirve la fijada
+    expect(screen.getByText(/última v0\.1\.13/)).toBeInTheDocument(); // indicador
   });
 });

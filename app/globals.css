@@ -306,6 +306,14 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
   color: var(--ok);
   font-weight: 700;
 }
+.pin-chip {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--warn);
+  font-weight: 600;
+  margin-left: 6px;
+  white-space: nowrap;
+}
 
 /* Danger zone — eliminar miniapp */
 .danger-section h2 { color: #dc4c4c; }

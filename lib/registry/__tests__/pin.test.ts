@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { InvalidManifestError, MiniappNotFoundError, type Registry } from "@/lib/registry/types";
 import {
   getMiniappDetail,
+  listCatalog,
   publishVersion,
   registerMiniapp,
   resolveMiniapp,
@@ -71,5 +72,18 @@ describe("getMiniappDetail — pin/served", () => {
     const d = getMiniappDetail(setMiniappPin(reg3(), "acc", "0.2.0"), "acc");
     expect(d.servedVersion).toBe("0.2.0");
     expect(d.pinnedVersion).toBe("0.2.0");
+  });
+});
+
+describe("listCatalog — servedVersion", () => {
+  const acc = (reg: ReturnType<typeof reg3>) => listCatalog(reg).find((e) => e.id === "acc");
+  it("sin pin: servedVersion = latest", () => {
+    expect(acc(reg3())?.servedVersion).toBe("0.3.0");
+    expect(acc(reg3())?.latestVersion).toBe("0.3.0");
+  });
+  it("con pin: servedVersion = fijada, latestVersion sigue siendo la última", () => {
+    const e = acc(setMiniappPin(reg3(), "acc", "0.1.0"));
+    expect(e?.servedVersion).toBe("0.1.0");
+    expect(e?.latestVersion).toBe("0.3.0");
   });
 });

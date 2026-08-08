@@ -31,6 +31,8 @@ export interface CatalogEntry {
   readonly name: string;
   readonly owner: string;
   readonly latestVersion: SemVer | null;
+  /** Versión que el host sirve (pinnedVersion ?? latest). null si no hay ninguna. */
+  readonly servedVersion: SemVer | null;
   readonly versionCount: number;
   readonly createdAt?: string;
   readonly repoUrl?: string;

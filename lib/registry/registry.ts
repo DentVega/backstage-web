@@ -241,6 +241,7 @@ export function listCatalog(reg: Registry): CatalogEntry[] {
       name: record.name,
       owner: record.owner,
       latestVersion: latest?.version ?? null,
+      servedVersion: record.pinnedVersion ?? latest?.version ?? null,
       versionCount: record.versions.length,
       ...(record.createdAt !== undefined ? { createdAt: record.createdAt } : {}),
       ...(record.repoUrl !== undefined ? { repoUrl: record.repoUrl } : {}),

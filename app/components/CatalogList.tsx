@@ -39,9 +39,14 @@ export function CatalogList({
             </div>
           </div>
           <span className="mrow-ver">
-            {e.latestVersion !== null ? (
+            {e.servedVersion !== null ? (
               <>
-                v{e.latestVersion} <span className="count">({e.versionCount})</span>
+                v{e.servedVersion} <span className="count">({e.versionCount})</span>
+                {e.servedVersion !== e.latestVersion ? (
+                  <span className="pin-chip" title={`Fijada; última publicada v${e.latestVersion}`}>
+                    🔒 última v{e.latestVersion}
+                  </span>
+                ) : null}
               </>
             ) : (
               "sin versiones"
