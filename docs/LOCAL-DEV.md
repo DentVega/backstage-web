@@ -15,11 +15,12 @@
 ```
  miniapp repo                    Backstage LOCAL (:3999)          Host móvil LOCAL
 ┌──────────────────┐            ┌───────────────────────┐        ┌───────────────────────┐
-│ pnpm bundle:android│  zip →   │ POST /upload           │        │ Metro/Re.Pack :8081    │
-│ build/generated/   │─────────▶│  fs storage:            │◀──────▶│  adb reverse tcp:3999  │
-│  android/*.bundle   │          │  data/registry.json     │ resolve│  adb reverse tcp:8081  │
-└──────────────────┘            │  public/chunks/<id>/... │        │                        │
-                                  └───────────────────────┘        │  <MiniappHost id=.../> │
+│ bundle:android +   │  zips →  │ POST /upload           │        │ Metro/Re.Pack :8081    │
+│ bundle:ios          │─────────▶│  fs storage:            │◀──────▶│  adb reverse tcp:3999  │
+│ build/generated/    │ (misma   │  data/registry.json     │ resolve│  adb reverse tcp:8081  │
+│  android/*.bundle    │ versión, │  public/chunks/<id>/...  │ ?platform=ios          │
+│ build/ios/*.bundle   │ 2 zips)  │   .../ios/... (chunk iOS)│        │                        │
+└──────────────────┘            └───────────────────────┘        │  <MiniappHost id=.../> │
                                                                     │  resuelve→descarga→monta│
                                                                     └───────────────────────┘
 ```
@@ -135,8 +136,8 @@ Este es el ciclo que repetís cada vez que cambiás código de tu miniapp.
 
 ```
  1. editar código de la miniapp
- 2. pnpm bundle:android                 (build estático → build/generated/android/)
- 3. cd build/generated/android && zip -r /tmp/build.zip .
+ 2. pnpm bundle:android (+ pnpm bundle:ios si también querés probar iOS)
+ 3. zip cada build (android y, si la hiciste, ios) por separado
  4. publicar a Backstage local (auto-bump de versión — ver abajo)
  5. reabrir la miniapp en el host (Home o el punto donde la montaste)
         ↑___________________________________________________________|
@@ -150,6 +151,9 @@ Desde el repo de la miniapp (no desde `backstage-web`):
 ```bash
 pnpm bundle:android
 # → build/generated/android/<id>.container.js.bundle + sub-chunks (mismo directorio)
+
+pnpm bundle:ios          # opcional, solo si también querés probar iOS
+# → build/ios/<id>.container.js.bundle + sub-chunks
 ```
 
 > Usá **siempre** el build estático (`bundle:android` / `bundle:ios`), **nunca** el
@@ -161,12 +165,14 @@ pnpm bundle:android
 ### 4.2 Zip
 
 ```bash
-cd build/generated/android && zip -r /tmp/build.zip .
+cd build/generated/android && zip -r /tmp/build.zip . && cd -
+cd build/ios && zip -r /tmp/build-ios.zip . && cd -             # solo si buildeaste iOS
 ```
 
 El zip tiene que contener el `.container.js.bundle` y los sub-chunks **al raíz**
 (directorio plano), no metidos en una subcarpeta — el host los resuelve relativos al
-directorio del container.
+directorio del container. Cada plataforma va en **su propio zip** (uno para el
+directorio `android/`, otro para `ios/`).
 
 ### 4.3 Publicar a Backstage local
 
@@ -174,14 +180,17 @@ directorio del container.
 
 ```bash
 BACKSTAGE_URL=http://localhost:3999 PUBLISH_TOKEN=dev-publish-secret \
-  node scripts/publish.mjs /tmp/build.zip
+  node scripts/publish.mjs /tmp/build.zip /tmp/build-ios.zip
+# el 2º argumento (zip de iOS) es opcional — sin él, publica solo Android
 ```
 
 Este script (en el repo de la miniapp, `scripts/publish.mjs`) lee la `latestVersion`
 actual desde Backstage y publica el siguiente patch automáticamente. Como el registro
 es **inmutable** (no se puede re-publicar la misma versión — da `409`), esto es lo que
 te evita tener que acordarte de bumpear `manifest.json`/`package.json` a mano en cada
-iteración.
+iteración. Con los dos zips, calcula la versión **una sola vez** y publica **ambas
+plataformas en esa misma versión**: el 2º upload (iOS) va con `platform=ios` y se
+adjunta a la versión que acaba de crear el 1º (Android).
 
 **Opción alternativa — upload directo, versión manual:**
 
@@ -201,6 +210,10 @@ Verificá que quedó publicada:
 ```bash
 curl "http://localhost:3999/api/resolve?id=<id>"
 # → { "url": "http://localhost:3999/chunks/<id>/<version>/<id>.container.js.bundle", "manifest": {...} }
+
+curl "http://localhost:3999/api/resolve?id=<id>&platform=ios"
+# solo si publicaste el zip de iOS →
+# { "url": "http://localhost:3999/chunks/<id>/<version>/ios/<id>.container.js.bundle", "manifest": {...} }
 ```
 
 ### 4.4 Ver el cambio en el host
@@ -215,12 +228,19 @@ curl "http://localhost:3999/api/resolve?id=<id>"
 ### 4.5 El ciclo completo, resumido
 
 ```bash
-# en el repo de la miniapp, cada vez que cambiás código:
+# en el repo de la miniapp, cada vez que cambiás código (solo Android):
 pnpm bundle:android
 cd build/generated/android && zip -r /tmp/build.zip . && cd -
 BACKSTAGE_URL=http://localhost:3999 PUBLISH_TOKEN=dev-publish-secret \
   node scripts/publish.mjs /tmp/build.zip
 # → reabrí la miniapp en el host
+
+# variante Android + iOS (misma versión, un solo publish):
+pnpm bundle:android && pnpm bundle:ios
+cd build/generated/android && zip -r /tmp/build.zip . && cd -
+cd build/ios && zip -r /tmp/build-ios.zip . && cd -
+BACKSTAGE_URL=http://localhost:3999 PUBLISH_TOKEN=dev-publish-secret \
+  node scripts/publish.mjs /tmp/build.zip /tmp/build-ios.zip
 ```
 
 No hay atajo más corto hoy: cada cambio de código de la miniapp pasa por build +

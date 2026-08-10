@@ -16,7 +16,7 @@ Una plataforma web en **Next.js** que actúa como plano de control de una flota 
 
 | Capacidad | Qué significa |
 |---|---|
-| **Registro** | Fuente de verdad de cada miniapp: versiones, chunks publicados, manifest, owner, fecha de creación, URL del repo. |
+| **Registro** | Fuente de verdad de cada miniapp: versiones, chunks publicados **por plataforma** (Android/iOS), manifest, owner, fecha de creación, URL del repo. |
 | **Scaffolder** | "Crear miniapp" → genera un repo git nuevo desde una plantilla (cada miniapp es su propio repo). |
 | **Distribución** | El host móvil pide *"dame `account_dashboard` compatible con `^0.1.0`"* y recibe la URL del chunk + manifest para descargar y montar en runtime. |
 
@@ -67,11 +67,13 @@ flowchart LR
 sequenceDiagram
     participant Host as Host (móvil)
     participant BS as Backstage
-    Host->>BS: GET /api/resolve?id=account_dashboard&range=^0.1.0
+    Host->>BS: GET /api/resolve?id=account_dashboard&range=^0.1.0&platform=ios
     BS->>BS: elige la versión más alta que cumple el rango
     BS-->>Host: { url, manifest } (URL del chunk + deps compartidas + capabilities)
     Host->>Host: descarga el chunk, verifica, monta el remote, inyecta capabilities acotadas
 ```
+
+La resolución es **por plataforma**: cada versión publicada puede tener un chunk de Android y, opcionalmente, uno de iOS (`iosUrl` + `iosIntegrity` — la integridad es por-plataforma porque los bytes difieren). Pasá `platform=ios` para obtener el chunk de iOS con su integridad pisada en el manifest; omitilo (o pasá `platform=android`) para obtener el chunk de Android, igual que antes.
 
 ## Stack
 
@@ -101,7 +103,7 @@ CI_STATUS_ENABLED=false   # los badges de CI salen "unknown" sin pegarle a GitHu
 
 | Endpoint | Propósito |
 |---|---|
-| `GET /api/resolve?id=&version=&range=` | El host resuelve qué montar → `{ id, version, url, manifest }` |
+| `GET /api/resolve?id=&version=&range=&platform=` | El host resuelve qué montar → `{ id, version, url, manifest }`. `platform=ios` devuelve el chunk de iOS (`iosUrl`/`iosIntegrity`); omitido/`android` devuelve el chunk de Android |
 | `GET /api/miniapps` | Lista el catálogo |
 | `POST /api/miniapps` | Registra una miniapp `{ id, name, owner }` |
 | `POST /api/miniapps/:id/publish` | Publica una versión `{ version, url, manifest }` *(token)* |

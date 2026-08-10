@@ -16,7 +16,7 @@ A **Next.js** web platform that is the control plane for a fleet of React Native
 
 | Capability | What it means |
 |---|---|
-| **Registry** | Source of truth for every miniapp: versions, published chunks, manifest, owner, creation date, repo URL. |
+| **Registry** | Source of truth for every miniapp: versions, published chunks **per platform** (Android/iOS), manifest, owner, creation date, repo URL. |
 | **Scaffolder** | "Create miniapp" → generates a brand-new git repo from a template (each miniapp is its own repo). |
 | **Distribution** | The mobile host asks *"give me `account_dashboard` compatible with `^0.1.0`"* and gets back a chunk URL + manifest to download and mount at runtime. |
 
@@ -67,11 +67,13 @@ flowchart LR
 sequenceDiagram
     participant Host as Host (mobile)
     participant BS as Backstage
-    Host->>BS: GET /api/resolve?id=account_dashboard&range=^0.1.0
+    Host->>BS: GET /api/resolve?id=account_dashboard&range=^0.1.0&platform=ios
     BS->>BS: pick highest version satisfying the range
     BS-->>Host: { url, manifest } (chunk URL + shared deps + capabilities)
     Host->>Host: download chunk, verify, mount remote, inject scoped capabilities
 ```
+
+Resolution is **per-platform**: each published version can carry an Android chunk and, optionally, an iOS chunk (`iosUrl` + `iosIntegrity` — integrity is per-platform since the bytes differ). Pass `platform=ios` to get the iOS chunk with its integrity swapped into the manifest; omit it (or pass `platform=android`) to get the Android chunk, same as before.
 
 ## Tech stack
 
@@ -101,7 +103,7 @@ CI_STATUS_ENABLED=false   # CI badges render "unknown" without hitting GitHub
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/resolve?id=&version=&range=` | Host resolves what to mount → `{ id, version, url, manifest }` |
+| `GET /api/resolve?id=&version=&range=&platform=` | Host resolves what to mount → `{ id, version, url, manifest }`. `platform=ios` returns the iOS chunk (`iosUrl`/`iosIntegrity`); omitted/`android` returns the Android chunk |
 | `GET /api/miniapps` | List the catalog |
 | `POST /api/miniapps` | Register a miniapp `{ id, name, owner }` |
 | `POST /api/miniapps/:id/publish` | Publish a version `{ version, url, manifest }` *(token)* |

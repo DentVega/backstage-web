@@ -47,9 +47,15 @@ En cada repo de miniapp (secrets):
 Buildear el host con la URL de prod:
 ```bash
 BACKSTAGE_URL=https://<tu-proyecto>.vercel.app pnpm --filter @app/host bundle:android
+BACKSTAGE_URL=https://<tu-proyecto>.vercel.app pnpm --filter @app/host bundle:ios   # opcional, para publicar el chunk iOS también
 ```
 El `DefinePlugin` inyecta `__BACKSTAGE_URL__`; en dev cae a `http://localhost:3999`.
 
 ## Selección de storage/store (automática por env)
 - `getStore()`: KV si hay `KV_REST_API_URL`+`KV_REST_API_TOKEN`; si no, `jsonStore` (dev).
-- `getStorage()`: Blob si hay `BLOB_READ_WRITE_TOKEN`; si no, `fsStorage` (dev, `public/chunks/`).
+- `getStorage()`: Blob (o R2) si hay las creds; si no, `fsStorage` (dev, `public/chunks/`).
+- **Chunks por plataforma:** cada versión puede tener un chunk Android y uno iOS. El
+  chunk Android va en `${id}/${version}/`; el iOS en el subfolder
+  `${id}/${version}/ios/` (mismo nombre de container, bytes distintos). El registro
+  guarda `url`+`manifest.integrity` para Android y, si se publicó, `iosUrl`+
+  `iosIntegrity` para iOS — la integridad es por-plataforma.

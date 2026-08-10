@@ -257,6 +257,17 @@ desde el **catálogo** (strip "Storage") y **por miniapp** desde el detalle
 fallback seguro al orden por env si el provider elegido no tiene creds. Ver
 Parte E. Sin preferencia guardada, manda el orden por env (R2 → Blob → fs).
 
+**Chunks por plataforma (Android + iOS):** cada versión puede tener un chunk
+Android y uno iOS. El chunk Android se guarda en `${id}/${version}/` (como
+siempre); el iOS va a un subfolder `${id}/${version}/ios/` — mismo nombre de
+container (`${id}.container.js.bundle}`) en ambos, distintos bytes. El
+`PublishedVersion` del registro guarda `url`+`manifest.integrity` para Android
+y, si se publicó, `iosUrl`+`iosIntegrity` para iOS (integrity **por
+plataforma**, porque los bytes del chunk difieren). `GET /api/resolve` acepta
+`?platform=ios` y devuelve `iosUrl` con la integridad de iOS pisada en el
+manifest; sin ese parámetro (o `platform=android`) resuelve el chunk Android,
+igual que antes.
+
 > **R2 y el 411:** el PUT a R2 fija `Content-Length` explícito. R2 rechaza
 > uploads *chunked* (HTTP 411) y el `fetch` parcheado de Next.js puede streamear
 > el body; el adapter lo evita. (Solo relevante si tocás `lib/storage/r2.ts`.)
@@ -374,12 +385,18 @@ adb reverse tcp:3999 tcp:3999     # Backstage (dev) — /resolve + /chunks
 
 ### 5.4 Correr en iOS (macOS)
 
+**Simulador:**
 ```bash
 cd apps/host/ios
 pod install          # requiere un Ruby con CocoaPods (2.7.6 o 3.3.5)
 cd ..
 pnpm ios
 ```
+
+**iPhone real:** abrí `apps/host/ios/host.xcworkspace` en Xcode, seteá tu
+**Team** de firma (Signing & Capabilities) y corré (▶) apuntando al
+dispositivo. ATS (App Transport Security) ya viene resuelto — R2 y Vercel
+sirven por HTTPS, así que no hace falta ninguna excepción de ATS.
 
 ### 5.5 Montar una miniapp en el host
 
@@ -457,10 +474,15 @@ autoelimina (workflow one-shot).
 ### 6.2 Publicar una versión
 
 Vía CI (automático en cada push a `main`, gracias al `ci.yml` → `publish.yml`
-reutilizable): construye el chunk estático, lo empaqueta y publica a
-Backstage con `PUBLISH_TOKEN`. El script `scripts/publish.mjs` lee la
-`latestVersion` del registro y **auto-bump-ea** el patch siguiente — evita el
-409 al reintentar un deploy sin cambiar la versión a mano.
+reutilizable): construye los chunks estáticos de **Android e iOS**, los
+empaqueta y publica ambos a Backstage con `PUBLISH_TOKEN`, en la misma
+versión. El script `scripts/publish.mjs android.zip [ios.zip]` calcula la
+versión **una sola vez** y **auto-bump-ea** el patch siguiente a partir de la
+`latestVersion` del registro — evita el 409 al reintentar un deploy sin
+cambiar la versión a mano. El 2° upload (iOS) se manda con `platform=ios` y
+queda **adjuntado** a la misma versión que el de Android; con un solo zip
+publica solo Android (compatible hacia atrás). El build de **iOS es
+best-effort**: si falla, no bloquea el publish de Android.
 
 También puedes disparar la build/publish bajo demanda con el botón
 **"Deploy"** de Backstage (`POST /api/miniapps/:id/deploy`, dispara
@@ -474,7 +496,8 @@ curl -X POST https://<tu-proyecto>.vercel.app/api/miniapps/<id>/upload \
 
 Verifica:
 ```bash
-curl "https://<tu-proyecto>.vercel.app/api/resolve?id=<id>"   # → {url, manifest}
+curl "https://<tu-proyecto>.vercel.app/api/resolve?id=<id>"                 # → {url, manifest} (Android)
+curl "https://<tu-proyecto>.vercel.app/api/resolve?id=<id>&platform=ios"    # → {url, manifest} con el chunk iOS, si se publicó
 ```
 
 ### 6.3 Verla montada en el host
@@ -558,6 +581,30 @@ El gate de `/upload` usa `satisfiesShared`/`checkCompatibility` de
 si no, cae a una copia local. El build de Vercel instala el package privado, así
 que el `GITHUB_TOKEN` de Vercel necesita `read:packages`.
 
+### 7.6 Maintainers por-miniapp
+
+Delega la gestión de una miniapp (publish/deploy/pin/borrar/maintainers) a
+gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
+
+- **Dos niveles de autorización:** `SCAFFOLD_ALLOWED_LOGINS` son los
+  **platform-admins** (gestionan cualquier miniapp). Cada miniapp puede además
+  tener sus propios **maintainers** (logins de GitHub, campo
+  `MiniappRecord.maintainers`) — gestionan **esa** miniapp. `canManageMiniapp`
+  autoriza si el login está en cualquiera de los dos conjuntos (admin ∪
+  maintainer).
+- **Se setean desde el detalle de la miniapp en Backstage** — un control que
+  solo puede tocar quien ya puede gestionar esa miniapp (admin o maintainer
+  actual).
+- **Seguridad — solo collaborators del repo:** no se puede poner de
+  maintainer a cualquier login; tiene que ser alguien con acceso al repo de
+  GitHub de esa miniapp. El control autocompleta desde
+  `GET /api/miniapps/:id/collaborators` (lista los collaborators del repo) y el
+  server **valida** en `PUT /api/miniapps/:id/maintainers` — rechaza con `400`
+  cualquier login que no sea collaborator, y con `400` si la miniapp no tiene
+  `repoUrl` todavía y la lista que mandás no está vacía.
+- Una lista vacía borra los maintainers de esa miniapp (vuelve a depender
+  solo de los platform-admins).
+
 ---
 
 ## 8. Referencia de variables de entorno
@@ -568,7 +615,7 @@ que el `GITHUB_TOKEN` de Vercel necesita `read:packages`.
 |---|---|---|
 | `AUTH_SECRET` | Firma de sesión de Auth.js | `openssl rand -base64 32` |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth App (login) | Callback `/api/auth/callback/github` |
-| `SCAFFOLD_ALLOWED_LOGINS` | CSV de logins de GitHub autorizados a crear miniapps y a disparar deploy/sync-template | Vacío = nadie puede (**fail-closed**). Case-insensitive |
+| `SCAFFOLD_ALLOWED_LOGINS` | CSV de logins de GitHub autorizados a **crear** miniapps y son **platform-admins** (pueden gestionar — publish/deploy/pin/borrar/maintainers — cualquier miniapp) | Vacío = nadie puede (**fail-closed**). Case-insensitive. Gestionar una miniapp puntual también lo puede un **maintainer** de esa miniapp (admin ∪ maintainer) — ver §7.6 |
 | `MINIAPP_TEMPLATE_REPO` | Repo template a clonar, ej. `Acme/miniapp-template` | Debe estar marcado **"Template repository"** en GitHub |
 | `GITHUB_TOKEN` | PAT del server: crear repos desde el template, admin de Actions (permisos+secrets), leer contenidos (drift), crear issues (capability requests), **borrar repos**, e instalar `@scope/miniapp-contract` en el build | Scopes (classic PAT): **`repo`** + **`workflow`** + **`delete_repo`** + **`read:packages`**. `delete_repo` habilita "borrar miniapp+repo" (Parte E). `read:packages` es obligatorio o el build de Vercel se cae al instalar el package privado |
 | `PUBLISH_TOKEN` | Token de servicio que validan los endpoints `/publish` y `/upload` | Mismo valor se siembra como secret `PUBLISH_TOKEN` en cada miniapp scaffoldeada. Rotación: Parte E |
@@ -576,8 +623,8 @@ que el `GITHUB_TOKEN` de Vercel necesita `read:packages`.
 | `BACKSTAGE_URL` | URL prod de este Backstage | Se siembra como secret en las miniapps nuevas (su CI publica de vuelta acá); también es el valor que debes pasar como `BACKSTAGE_URL` al buildear el host (§5.2) |
 | `BACKSTAGE_PUBLIC_URL` | Origen base para `fsStorage` (chunks servidos por Backstage mismo, modo dev/fs) | Solo relevante si NO hay R2 ni Blob (fs, no crítico en prod) |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Upstash Redis — registro/catálogo + preferencia de storage provider | Provisionado vía Vercel Marketplace |
-| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` / `R2_PUBLIC_BASE_URL` | Cloudflare R2 — CDN de chunks (primario, recomendado) | Las 5 juntas activan R2. `R2_PUBLIC_BASE_URL` = `https://pub-xxxxx.r2.dev` (sin barra final). Ver §4.3 |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob — CDN de chunks (fallback si no hay R2) | Provisionado vía Vercel Marketplace. Free tier se suspende al agotarse |
+| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` / `R2_PUBLIC_BASE_URL` | Cloudflare R2 — CDN de chunks (primario, recomendado), Android **e iOS** | Las 5 juntas activan R2. `R2_PUBLIC_BASE_URL` = `https://pub-xxxxx.r2.dev` (sin barra final). El chunk iOS va al subfolder `${id}/${version}/ios/`. Ver §4.3 |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob — CDN de chunks (fallback si no hay R2), Android **e iOS** | Provisionado vía Vercel Marketplace. Free tier se suspende al agotarse |
 | `HOST_CONTRACT_TOKEN` | Token dedicado que valida `PUT /api/host-contract` (publicar el contrato del host) | Separado del `PUBLISH_TOKEN`. `openssl rand -hex 32`. Parte E / compat gates |
 | `HOST_REPO` | Repo del host, ej. `Acme/backstagereactnative` | Destino de los capability requests (issues) cuando una miniapp pide un nativo |
 | `COMPAT_ENFORCE` | `"1"` → el gate de `/upload` rechaza (422) publishes incompatibles | Ausente/`"0"` = warn (default). Solo al pasar a enforce (Parte E) |

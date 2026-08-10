@@ -38,7 +38,9 @@ Crea el **repo** (desde el template) y lo **registra** en el catálogo (aún sin
 
 **Desde la UI:**
 1. Logueado, abre **`http://localhost:3999/create`**.
-2. Rellena **id** (minúsculas + guion bajo, ej. `cards_wallet`), **name**, **owner** (tu cuenta/org de GitHub).
+2. Rellena **id** (minúsculas + guion bajo, ej. `cards_wallet`), **name**, **owner**
+   (tu cuenta/org de GitHub) — el form **prellena `owner`** con tu login de GitHub
+   (de la sesión); es editable (datalist) por si el owner real es una organización.
 3. Enviar → crea `github.com/<owner>/miniapp-<id>` (privado) y lo registra.
 
 **Desde la API** (equivalente):
@@ -73,10 +75,13 @@ Resultado: la miniapp aparece en el catálogo; `GET /api/resolve?id=<id>` respon
   carga como remote):
   ```bash
   pnpm bundle:android    # → build/generated/android/<id>.container.js.bundle + chunks
+  pnpm bundle:ios         # opcional → build/ios/<id>.container.js.bundle + chunks
   ```
-- Empaquetar los chunks en un zip (el contenedor y los sub-chunks al **raíz** del zip):
+- Empaquetar los chunks en un zip **por plataforma** (el contenedor y los sub-chunks al
+  **raíz** del zip):
   ```bash
   cd build/generated/android && zip -q /tmp/<id>.zip *.bundle
+  cd build/ios && zip -q /tmp/<id>-ios.zip *.bundle   # solo si buildeaste iOS
   ```
 
 ### 2b. Publicar (dos caminos)
@@ -87,20 +92,33 @@ Resultado: la miniapp aparece en el catálogo; `GET /api/resolve?id=<id>` respon
 3. Publicar. El server guarda los chunks y arma el manifest por defecto (entry `./Entry`,
    shared del host). No hace falta escribir JSON.
 
-**Desde CI** (automatizable):
+**Desde CI** (automatizable) — el `ci.yml`/`publish.yml` reutilizable del template
+corre `node scripts/publish.mjs <android.zip> [ios.zip]`: calcula la versión una
+sola vez (auto-bump del patch), publica el zip de Android y, si le pasás un
+segundo zip, también el de iOS **adjuntado a la misma versión** (`platform=ios`
+en el upload). El build de iOS es **best-effort** — si falla, no bloquea el
+publish de Android. Equivalente manual con `curl` (un upload por plataforma):
 ```bash
 curl -X POST http://localhost:3999/api/miniapps/<id>/upload \
   -H "Authorization: Bearer $PUBLISH_TOKEN" \
   -F "version=0.1.0" -F "capabilities=accounts:read" \
   -F "file=@/tmp/<id>.zip;type=application/zip"
 # (opcional) -F 'manifest={...}'  para un manifest explícito
+
+# opcional — adjuntar el chunk iOS a esa misma versión:
+curl -X POST http://localhost:3999/api/miniapps/<id>/upload \
+  -H "Authorization: Bearer $PUBLISH_TOKEN" \
+  -F "version=0.1.0" -F "platform=ios" \
+  -F "file=@/tmp/<id>-ios.zip;type=application/zip"
 ```
 
-Storage: **dev** → servido por Backstage en `/chunks/<id>/<version>/…`; **prod** → Vercel Blob.
+Storage: **dev** → servido por Backstage en `/chunks/<id>/<version>/…` (el chunk
+iOS en el subfolder `.../<version>/ios/…`); **prod** → Vercel Blob / R2.
 
 **Verificar:**
 ```bash
-curl "http://localhost:3999/api/resolve?id=<id>"   # → { url, manifest } de la versión más alta
+curl "http://localhost:3999/api/resolve?id=<id>"                # → { url, manifest } (Android), versión más alta
+curl "http://localhost:3999/api/resolve?id=<id>&platform=ios"   # → { url: iosUrl, manifest } si se publicó iOS
 ```
 
 > Publicar una **nueva versión** de una miniapp ya listada la actualiza **sin recompilar
@@ -150,7 +168,8 @@ expone credenciales, solo el grant scoped y revocable.
 
 | Síntoma | Causa / fix |
 |---|---|
-| Crear falla con `FORBIDDEN` | Tu login no está en `SCAFFOLD_ALLOWED_LOGINS`. |
+| Crear falla con `FORBIDDEN` | Tu login no está en `SCAFFOLD_ALLOWED_LOGINS` (solo los platform-admins pueden crear miniapps). |
+| Publicar/gestionar (deploy, pin, borrar, maintainers) falla con `FORBIDDEN` | Tu login no está en `SCAFFOLD_ALLOWED_LOGINS` **ni** en los `maintainers` de esa miniapp. A diferencia de crear, gestionar una miniapp existente también lo puede hacer un **maintainer** — pedile a un admin o a un maintainer actual que te agregue desde el detalle de la miniapp. |
 | Crear falla con `GITHUB generate failed` | El template no está marcado como "Template repository", o `GITHUB_TOKEN` sin scope `repo`. |
 | `resolve` → `NO_COMPATIBLE_VERSION` | La miniapp existe pero no tiene versión publicada. |
 | Publicar falla `401` | Ni sesión autorizada ni `PUBLISH_TOKEN` válido. |

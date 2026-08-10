@@ -71,6 +71,12 @@ repo de tu miniapp). Andá ahí.
   **vos Y el template** editaron lo mismo. Resolvés (dejás lo correcto de cada
   lado), pusheás al branch del PR, y mergeás. Es un conflicto de git normal.
 
+> ⚠️ **Lección dura:** nunca mergees un PR de template-sync con marcadores
+> `<<<<<<<` sin resolver. Para git son **texto**, no un conflicto real — GitHub
+> **te deja apretar Merge** igual. Si esos marcadores quedan en un archivo JSON
+> (como `package.json`), lo rompen → `pnpm/action-setup` falla al parsearlo →
+> CI muerta en el repo. Siempre resolvé los marcadores **antes** de mergear.
+
 **Paso 6 — Re-deploy.**
 Después de mergear, se publica una versión nueva (con el botón **Deploy** o
 automático). La versión **se auto-incrementa sola** (no tenés que tocar el
@@ -80,22 +86,24 @@ número). El host móvil resuelve la última → monta tu miniapp actualizada.
 
 ## Un ejemplo concreto
 
-El template sube **React Native de 0.76 a 0.77**. Vos, en tu miniapp, ya tenías tu
-pantalla hecha y habías agregado la librería `zod`.
+El template mejora `scripts/publish.mjs` para que publique **también el chunk
+iOS** (además del de Android) en un solo paso. Vos, en tu miniapp, ya tenías tu
+pantalla hecha y habías agregado la librería `zod` a tu `package.json`.
 
 Corrés el sync → el PR muestra:
 
 ```diff
-  package.json
-- "react-native": "0.76.6"
-+ "react-native": "0.77.0"      ← lo trajo el template
-  "zod": "^3.0.0"               ← TU dependencia, intacta ✅
+  scripts/publish.mjs
+- // node scripts/publish.mjs <android.zip>
++ // node scripts/publish.mjs <android.zip> [ios.zip]   ← lo trajo el template
 
+  package.json                  ← NO aparece en el PR (ignorado, es tuyo) ✅
   src/Screen.tsx                ← NO aparece en el PR (protegido) ✅
   manifest.json                 ← NO aparece (protegido) ✅
 ```
 
-Mergeás → re-deploy → tu miniapp corre con RN 0.77 y **todo tu trabajo sigue ahí**.
+Mergeás → re-deploy → tu miniapp ya puede publicar iOS+Android y **todo tu
+trabajo sigue ahí** (tu `package.json`, con `zod` incluido, ni se toca).
 
 ---
 
@@ -105,12 +113,16 @@ Los archivos se dividen en tres grupos, y el sync trata cada uno distinto:
 
 | Grupo | Ejemplos | Qué le pasa |
 |---|---|---|
-| **Tuyo** 🙋 | `src/Screen.tsx`, cualquier pantalla/componente nuevo tuyo, `manifest.json`, `README` | **Nunca se tocan.** |
+| **Tuyo** 🙋 | `src/Screen.tsx`, cualquier pantalla/componente nuevo tuyo, `manifest.json`, `package.json`, `README*` | **Nunca se tocan.** |
 | **Del template** 🤖 | `rspack.config.mjs`, `tsconfig.json`, `scripts/publish.mjs`, config de build | Se actualizan (merge, casi siempre limpio). |
-| **Compartido** 🤝 | `package.json` | Merge inteligente: **suma** lo del template (bumps de core), **conserva** lo tuyo (deps que agregaste). |
+
+`package.json` es tuyo (no "compartido"): tiene tu `name`/`version`, tus deps
+propias, y tus scripts de bundle con el id real de tu miniapp (contra el
+placeholder `__MINIAPP_ID__` del template) — un 3-way merge ahí chocaba
+**siempre**. Por eso está excluido del sync, junto con `README*`.
 
 La lista exacta de lo protegido está en el archivo `.templatesyncignore` de tu
-repo.
+repo (hoy incluye, entre otros, `package.json` y `README*`).
 
 ---
 
@@ -138,7 +150,12 @@ template de tu miniapp contra la última).
 **El PR tiene conflictos, ¿me asusto?**
 No. Es un conflicto de git normal (`<<<<<<<`). Resolvés dejando lo que corresponde,
 o pedís una mano. Pasa **solo** si tocaste exactamente la misma línea que el
-template.
+template. **Nunca mergees con los marcadores sin resolver** (ver Lección dura en
+el Paso 5) — para git son texto plano, GitHub te deja mergear igual, y si caen
+en un JSON lo rompen. Es justo la razón por la que `package.json` quedó excluido
+del sync (ver la tabla de grupos arriba): el 3-way merge chocaba ahí siempre
+(nombre/versión/deps propias vs. el placeholder `__MINIAPP_ID__` del template),
+generando conflictos constantes.
 
 **¿Y si el CI del PR falla (rojo)?**
 Mirá el log: capaz el cambio del template necesita un ajuste de tu lado (raro). **No
