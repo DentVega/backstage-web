@@ -3,33 +3,44 @@ import { getMetricsStore } from "@/lib/metrics/store";
 
 export const dynamic = "force-dynamic";
 
-/** Explicación de cada razón de fallback (para el tooltip). kind: transitorio se auto-reintenta. */
-const REASON_INFO: Record<string, { kind: "transitorio" | "permanente"; desc: string }> = {
-  "resolve-failed": {
+/**
+ * Razones de fallback en orden del pipeline del host (resolve → evaluate → verify → download).
+ * kind "transitorio" = el host hace 1 auto-retry; "permanente" = no reintenta.
+ * Fuente única del tooltip Y de la leyenda fija.
+ */
+const REASONS: { reason: string; kind: "transitorio" | "permanente"; desc: string }[] = [
+  {
+    reason: "resolve-failed",
     kind: "transitorio",
     desc: "No se pudo resolver qué montar: falló GET /api/resolve (device sin red, Backstage caído, o no hay versión/plataforma compatible).",
   },
-  "download-failed": {
+  {
+    reason: "download-failed",
     kind: "transitorio",
     desc: "Se resolvió la versión, pero bajar el chunk del CDN (R2) falló.",
   },
-  "integrity-failed": {
+  {
+    reason: "integrity-failed",
     kind: "transitorio",
     desc: "El chunk bajó pero su sha256 no coincide con el del manifest (corrupto o incompleto).",
   },
-  "invalid-manifest": {
+  {
+    reason: "invalid-manifest",
     kind: "permanente",
     desc: "El manifest de la versión no cumple el contrato o tiene datos inválidos.",
   },
-  skew: {
+  {
+    reason: "skew",
     kind: "permanente",
     desc: "Una librería compartida (singleton) está en una versión incompatible con la que provee el host.",
   },
-  "host-too-old": {
+  {
+    reason: "host-too-old",
     kind: "permanente",
     desc: "La miniapp exige un Host Contract más nuevo (minHostContract) que el del binario del host.",
   },
-};
+];
+const REASON_INFO = Object.fromEntries(REASONS.map((r) => [r.reason, r]));
 
 export default async function MetricsPage() {
   const reg = await getStore().load();
@@ -116,6 +127,28 @@ export default async function MetricsPage() {
             })}
           </ul>
         )}
+      </section>
+
+      <section className="metrics-section">
+        <h2>Qué significa cada razón</h2>
+        <ul className="reason-legend">
+          {REASONS.map((r) => (
+            <li key={r.reason} className={`reason-card ${r.kind}`}>
+              <div className="reason-card-head">
+                <code>{r.reason}</code>
+                <span className={`reason-kind ${r.kind}`}>
+                  {r.kind === "transitorio" ? "🔄 transitorio" : "🔒 permanente"}
+                </span>
+              </div>
+              <p>{r.desc}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="reason-note">
+          <b>Transitorio</b> → el host hace 1 auto-retry antes de mostrar el fallback.{" "}
+          <b>Permanente</b> → no reintenta; son las incompatibilidades que el compat gate intenta
+          frenar antes de publicar.
+        </p>
       </section>
     </main>
   );
