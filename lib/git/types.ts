@@ -39,6 +39,11 @@ export interface EnsureIssueInput {
   readonly labels?: readonly string[];
 }
 
+export interface ListCollaboratorsInput {
+  readonly owner: string;
+  readonly repo: string;
+}
+
 export interface GitProvider {
   createFromTemplate(input: CreateFromTemplateInput): Promise<{ repoUrl: string }>;
   /** Trigger a `workflow_dispatch` run (build + publish the miniapp). */
@@ -61,6 +66,12 @@ export interface GitProvider {
   ensureIssue(input: EnsureIssueInput): Promise<{ created: boolean; url: string }>;
   /** Delete a GitHub repo. 404 → { deleted: false } (idempotent); 403 (no scope) throws. */
   deleteRepo(input: { owner: string; repo: string }): Promise<{ deleted: boolean }>;
+  /**
+   * Lista los collaborators (gente con acceso) del repo. Usado para restringir/validar
+   * quién puede ser maintainer de una miniapp: solo alguien con acceso al proyecto.
+   * Best-effort: si la API no responde ok, devuelve [].
+   */
+  listCollaborators(input: ListCollaboratorsInput): Promise<{ login: string }[]>;
 }
 
 export class GitProviderError extends Error {

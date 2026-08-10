@@ -6,6 +6,7 @@ import {
   type EnableActionsPullRequestsInput,
   type EnsureIssueInput,
   type GitProvider,
+  type ListCollaboratorsInput,
   type SetSecretInput,
 } from "./types";
 
@@ -190,6 +191,25 @@ export function githubProvider(token: string): GitProvider {
       }
       const detail = await res.text().catch(() => "");
       throw new GitProviderError(`repo delete failed: HTTP ${res.status} ${detail.slice(0, 200)}`);
+    },
+
+    async listCollaborators(input: ListCollaboratorsInput): Promise<{ login: string }[]> {
+      const res = await fetch(
+        `https://api.github.com/repos/${input.owner}/${input.repo}/collaborators?per_page=100`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        },
+      );
+      // Best-effort: si no podemos listar (permiso/rate-limit), no rompemos el flujo.
+      if (!res.ok) return [];
+      const users = (await res.json().catch(() => [])) as { login?: unknown }[];
+      return users
+        .filter((u): u is { login: string } => typeof u.login === "string")
+        .map((u) => ({ login: u.login }));
     },
   };
 }

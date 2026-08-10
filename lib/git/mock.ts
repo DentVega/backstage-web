@@ -1,7 +1,7 @@
 import type { CreateFromTemplateInput, GitProvider } from "./types";
 
-/** No-network provider for tests. */
-export function mockProvider(): GitProvider {
+/** No-network provider for tests. `collaborators` alimenta listCollaborators (default []). */
+export function mockProvider(collaborators: string[] = []): GitProvider {
   return {
     async createFromTemplate(input: CreateFromTemplateInput): Promise<{ repoUrl: string }> {
       return { repoUrl: `https://github.com/${input.owner}/${input.name}` };
@@ -20,6 +20,9 @@ export function mockProvider(): GitProvider {
     },
     async deleteRepo(): Promise<{ deleted: boolean }> {
       return { deleted: true };
+    },
+    async listCollaborators(): Promise<{ login: string }[]> {
+      return collaborators.map((login) => ({ login }));
     },
   };
 }

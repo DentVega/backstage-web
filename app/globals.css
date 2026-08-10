@@ -312,6 +312,8 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
 .maint-chip button:hover { color: var(--danger); }
 .maint-add { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .maint-input { font-family: var(--mono); font-size: 12.5px; padding: 5px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
+.maint-hint { color: var(--muted); font-size: 12px; margin: 0; }
+.maint-error { color: var(--danger); font-size: 12px; margin: 0; }
 .pin-warn { color: var(--warn); font-size: 12px; font-weight: 600; }
 .served-badge {
   font-family: var(--mono);

@@ -69,6 +69,7 @@ describe("scaffoldMiniapp", () => {
       setSecret: async () => {},
       ensureIssue: async () => ({ created: true, url: "x" }),
       deleteRepo: async () => ({ deleted: true }),
+      listCollaborators: async () => [],
     };
     await expect(
       scaffoldMiniapp({}, provider, TEMPLATE, { id: "cards", name: "Cards", owner: "o" }, NOW),
@@ -155,6 +156,7 @@ describe("seedRepoSecrets", () => {
       },
       ensureIssue: async () => ({ created: true, url: "x" }),
       deleteRepo: async () => ({ deleted: true }),
+      listCollaborators: async () => [],
     };
     const res = await seedRepoSecrets(provider, "acme", "miniapp-x", {
       BACKSTAGE_URL: "https://b",
@@ -175,6 +177,7 @@ describe("seedRepoSecrets", () => {
       },
       ensureIssue: async () => ({ created: true, url: "x" }),
       deleteRepo: async () => ({ deleted: true }),
+      listCollaborators: async () => [],
     };
     const res = await seedRepoSecrets(provider, "acme", "miniapp-x", {
       BACKSTAGE_URL: "https://b",

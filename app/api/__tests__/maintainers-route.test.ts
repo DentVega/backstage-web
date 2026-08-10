@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const state = vi.hoisted(() => ({ reg: {} as Record<string, unknown> }));
+const state = vi.hoisted(() => ({
+  reg: {} as Record<string, unknown>,
+  collaborators: [] as string[],
+}));
 
 vi.mock("@/lib/registry/store", () => ({
   getStore: () => ({
@@ -11,6 +14,9 @@ vi.mock("@/lib/registry/store", () => ({
   }),
 }));
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
+vi.mock("@/lib/git/collaborators", () => ({
+  repoCollaboratorLogins: async () => state.collaborators,
+}));
 
 import { PUT } from "@/app/api/miniapps/[id]/maintainers/route";
 import { auth } from "@/auth";
@@ -27,7 +33,10 @@ function put(body: unknown): Request {
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
 
 beforeEach(() => {
-  state.reg = { acc: { id: "acc", name: "Acc", owner: "o", versions: [] } };
+  state.reg = {
+    acc: { id: "acc", name: "Acc", owner: "o", repoUrl: "https://github.com/o/acc", versions: [] },
+  };
+  state.collaborators = ["alice", "bob", "carol"];
   process.env.SCAFFOLD_ALLOWED_LOGINS = "DentVega";
   authMock.mockResolvedValue({ githubLogin: "DentVega" });
 });
@@ -37,7 +46,7 @@ afterEach(() => {
 });
 
 describe("PUT /api/miniapps/:id/maintainers", () => {
-  it("un platform-admin setea la lista", async () => {
+  it("un platform-admin setea la lista (todos collaborators)", async () => {
     const res = await PUT(put({ maintainers: ["alice", "bob"] }), params("acc"));
     expect(res.status).toBe(200);
     expect(reg().acc.maintainers).toEqual(["alice", "bob"]);
@@ -49,6 +58,26 @@ describe("PUT /api/miniapps/:id/maintainers", () => {
     const res = await PUT(put({ maintainers: ["alice", "carol"] }), params("acc"));
     expect(res.status).toBe(200);
     expect(reg().acc.maintainers).toEqual(["alice", "carol"]);
+  });
+
+  it("rechaza (400) un login que NO es collaborator del repo", async () => {
+    const res = await PUT(put({ maintainers: ["alice", "mallory"] }), params("acc"));
+    expect(res.status).toBe(400);
+    expect(reg().acc.maintainers).toBeUndefined(); // no persiste
+  });
+
+  it("400 si la miniapp no tiene repo y la lista es no-vacía", async () => {
+    delete (state.reg.acc as { repoUrl?: string }).repoUrl;
+    state.collaborators = [];
+    const res = await PUT(put({ maintainers: ["alice"] }), params("acc"));
+    expect(res.status).toBe(400);
+  });
+
+  it("lista vacía siempre pasa (limpia maintainers)", async () => {
+    (state.reg.acc as { maintainers?: string[] }).maintainers = ["alice"];
+    const res = await PUT(put({ maintainers: [] }), params("acc"));
+    expect(res.status).toBe(200);
+    expect(reg().acc.maintainers).toBeUndefined(); // lista vacía borra el campo
   });
 
   it("un tercero no puede (403)", async () => {

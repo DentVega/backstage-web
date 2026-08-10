@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /** Gestiona los maintainers (logins de GitHub) de una miniapp. Admin o el propio maintainer. */
@@ -10,10 +10,42 @@ export function MaintainersControl({ id, maintainers = [] }: { id: string; maint
   const [input, setInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Collaborators del repo = única gente que puede ser maintainer (acceso al proyecto).
+  const [collaborators, setCollaborators] = useState<string[] | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/miniapps/${id}/collaborators`)
+      .then((r) => (r.ok ? r.json() : { collaborators: [] }))
+      .then((d: { collaborators?: unknown }) => {
+        if (!alive) return;
+        setCollaborators(
+          Array.isArray(d.collaborators)
+            ? d.collaborators.filter((x): x is string => typeof x === "string")
+            : [],
+        );
+      })
+      .catch(() => alive && setCollaborators([]));
+    return () => {
+      alive = false;
+    };
+  }, [id]);
 
   function add(): void {
     const v = input.trim();
-    if (v && !list.some((m) => m.toLowerCase() === v.toLowerCase())) setList([...list, v]);
+    setError("");
+    if (!v) return;
+    if (list.some((m) => m.toLowerCase() === v.toLowerCase())) {
+      setInput("");
+      return;
+    }
+    // Solo se puede agregar a alguien con acceso al repo (validado también en el server).
+    if (collaborators !== null && !collaborators.some((c) => c.toLowerCase() === v.toLowerCase())) {
+      setError(`"${v}" no tiene acceso al repo; agregalo como collaborator en GitHub primero.`);
+      return;
+    }
+    setList([...list, v]);
     setInput("");
     setSaved(false);
   }
@@ -25,6 +57,7 @@ export function MaintainersControl({ id, maintainers = [] }: { id: string; maint
   async function save(): Promise<void> {
     setSaving(true);
     setSaved(false);
+    setError("");
     try {
       const res = await fetch(`/api/miniapps/${id}/maintainers`, {
         method: "PUT",
@@ -34,11 +67,19 @@ export function MaintainersControl({ id, maintainers = [] }: { id: string; maint
       if (res.ok) {
         setSaved(true);
         router.refresh();
+      } else {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(d.error ?? "no se pudo guardar");
       }
     } finally {
       setSaving(false);
     }
   }
+
+  // Sugerencias = collaborators que todavía no están en la lista.
+  const suggestions = (collaborators ?? []).filter(
+    (c) => !list.some((m) => m.toLowerCase() === c.toLowerCase()),
+  );
 
   return (
     <div className="maint-control">
@@ -59,7 +100,8 @@ export function MaintainersControl({ id, maintainers = [] }: { id: string; maint
       <div className="maint-add">
         <input
           type="text"
-          placeholder="login de GitHub"
+          list={`collab-${id}`}
+          placeholder={collaborators === null ? "cargando acceso…" : "login con acceso al repo"}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -71,6 +113,11 @@ export function MaintainersControl({ id, maintainers = [] }: { id: string; maint
           aria-label="Agregar maintainer"
           className="maint-input"
         />
+        <datalist id={`collab-${id}`}>
+          {suggestions.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
         <button type="button" className="btn btn-ghost btn-sm" onClick={add}>
           Agregar
         </button>
@@ -79,6 +126,10 @@ export function MaintainersControl({ id, maintainers = [] }: { id: string; maint
         </button>
         {saved ? <span className="storage-saved">Guardado ✓</span> : null}
       </div>
+      {collaborators !== null && collaborators.length === 0 ? (
+        <p className="maint-hint">Sin collaborators con acceso al repo (o el repo no es accesible).</p>
+      ) : null}
+      {error ? <p className="maint-error">{error}</p> : null}
     </div>
   );
 }
