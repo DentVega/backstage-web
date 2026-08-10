@@ -44,7 +44,7 @@ export default async function RootLayout({
                   Catálogo
                 </Link>
                 <Link href="/metrics" className="nav-link">
-                  Métricas
+                  <span aria-hidden="true">📊</span> Métricas
                 </Link>
               </>
             ) : null}
