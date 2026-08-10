@@ -22,6 +22,8 @@ export interface MiniappRecord {
   readonly storageProvider?: StorageProvider;
   /** Versión fijada que el host sirve por defecto (rollback/freeze). undefined = última (auto). */
   readonly pinnedVersion?: SemVer;
+  /** Logins de GitHub que pueden gestionar esta miniapp (además de los platform-admins). */
+  readonly maintainers?: string[];
 }
 
 export type Registry = Readonly<Record<string, MiniappRecord>>;
@@ -65,6 +67,8 @@ export interface MiniappDetail {
   readonly pinnedVersion?: SemVer;
   /** Versión que el host sirve HOY: pinnedVersion ?? latest. */
   readonly servedVersion: SemVer | null;
+  /** Logins de GitHub que pueden gestionar esta miniapp. */
+  readonly maintainers?: string[];
 }
 
 // --- Typed domain errors (mapped to HTTP status by the route handlers) ---

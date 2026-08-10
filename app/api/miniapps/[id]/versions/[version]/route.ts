@@ -3,7 +3,7 @@ import { getStore } from "@/lib/registry/store";
 import { removeVersion, getMiniappDetail } from "@/lib/registry/registry";
 import { getStorage } from "@/lib/storage";
 import { scaffoldAllowedLogins } from "@/lib/config";
-import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
+import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { errorBody, statusForError } from "@/lib/http";
 
 export const runtime = "nodejs";
@@ -18,13 +18,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; version: string }> },
 ): Promise<NextResponse> {
   try {
-    const { auth } = await import("@/auth"); // lazy (patrón del resto de las routes admin)
-    const session = await auth();
-    if (!canScaffold(session?.githubLogin, scaffoldAllowedLogins())) {
-      throw new ScaffoldForbiddenError();
-    }
     const { id, version } = await params;
     const reg = await getStore().load();
+    const { auth } = await import("@/auth"); // lazy (patrón del resto de las routes admin)
+    const session = await auth();
+    if (!canManageMiniapp(session?.githubLogin, reg[id]?.maintainers, scaffoldAllowedLogins())) {
+      throw new ScaffoldForbiddenError();
+    }
     const storage = await getStorage(reg[id]?.storageProvider ?? null);
     // Valida (servida / existe) ANTES de tocar el storage.
     const next = removeVersion(reg, id, version);

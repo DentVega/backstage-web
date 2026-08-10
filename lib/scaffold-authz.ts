@@ -22,3 +22,19 @@ export function canScaffold(
   if (l.length === 0) return false;
   return allowlist.some((a) => a.trim().toLowerCase() === l);
 }
+
+/**
+ * ¿`login` puede GESTIONAR esta miniapp? True si es platform-admin (allowlist global)
+ * o maintainer de la miniapp (case-insensitive). Superset de canScaffold → sin regresión.
+ */
+export function canManageMiniapp(
+  login: string | null | undefined,
+  maintainers: readonly string[] | undefined,
+  allowlist: readonly string[],
+): boolean {
+  if (canScaffold(login, allowlist)) return true;
+  if (!login) return false;
+  const l = login.trim().toLowerCase();
+  if (l.length === 0) return false;
+  return (maintainers ?? []).some((m) => m.trim().toLowerCase() === l);
+}

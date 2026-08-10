@@ -5,7 +5,7 @@ import { MiniappNotFoundError } from "@/lib/registry/types";
 import { getCiProvider, repoFullNameFor, type CiStatus } from "@/lib/ci";
 import { resolveDriftStatuses } from "@/lib/drift/resolve";
 import { auth } from "@/auth";
-import { canScaffold } from "@/lib/scaffold-authz";
+import { canManageMiniapp } from "@/lib/scaffold-authz";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { MiniappHeader } from "@/app/components/MiniappHeader";
 import { VersionList } from "@/app/components/VersionList";
@@ -17,6 +17,7 @@ import { SyncTemplateButton } from "@/app/components/SyncTemplateButton";
 import { getMiniappStorageState } from "@/lib/storage";
 import { MiniappStorageControl } from "@/app/components/MiniappStorageControl";
 import { MiniappVersionControl } from "@/app/components/MiniappVersionControl";
+import { MaintainersControl } from "@/app/components/MaintainersControl";
 import { MiniappDeleteControl } from "@/app/components/MiniappDeleteControl";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,11 @@ export default async function MiniappDetailPage({
   }
 
   const session = await auth();
-  const canPublish = canScaffold(session?.githubLogin, scaffoldAllowedLogins());
+  const canPublish = canManageMiniapp(
+    session?.githubLogin,
+    detail.maintainers,
+    scaffoldAllowedLogins(),
+  );
   const storageState = canPublish
     ? await getMiniappStorageState(detail.storageProvider ?? null)
     : null;
@@ -92,6 +97,10 @@ export default async function MiniappDetailPage({
 
       {canPublish ? (
         <>
+          <section className="detail-section">
+            <h2>Maintainers</h2>
+            <MaintainersControl id={id} maintainers={detail.maintainers} />
+          </section>
           <section className="detail-section">
             <h2>Versión servida (rollback)</h2>
             <MiniappVersionControl

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { dispatchMiniappWorkflow } from "@/lib/git/miniapp-dispatch";
+import { getStore } from "@/lib/registry/store";
 import { scaffoldAllowedLogins } from "@/lib/config";
-import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
+import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { errorBody, statusForError } from "@/lib/http";
 
 export const runtime = "nodejs";
@@ -17,11 +18,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
+    const { id } = await params;
+    const reg = await getStore().load();
     const session = await auth();
-    if (!canScaffold(session?.githubLogin, scaffoldAllowedLogins())) {
+    if (!canManageMiniapp(session?.githubLogin, reg[id]?.maintainers, scaffoldAllowedLogins())) {
       throw new ScaffoldForbiddenError();
     }
-    const { id } = await params;
     const { actionsUrl } = await dispatchMiniappWorkflow(id, "template-sync.yml");
     return NextResponse.json({ dispatched: true, actionsUrl }, { status: 202 });
   } catch (err) {

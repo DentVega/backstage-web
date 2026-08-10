@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
+import { canScaffold, canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { statusForError } from "@/lib/http";
 
@@ -42,5 +42,21 @@ describe("scaffoldAllowedLogins (env parsing)", () => {
 describe("ScaffoldForbiddenError", () => {
   it("maps to HTTP 403", () => {
     expect(statusForError(new ScaffoldForbiddenError())).toBe(403);
+  });
+});
+
+describe("canManageMiniapp", () => {
+  it("platform-admin (allowlist) puede gestionar cualquiera", () => {
+    expect(canManageMiniapp("DentVega", undefined, ["dentvega"])).toBe(true);
+    expect(canManageMiniapp("DentVega", ["otro"], ["dentvega"])).toBe(true);
+  });
+  it("maintainer puede la suya (case-insensitive); no otra", () => {
+    expect(canManageMiniapp("Alice", ["alice", "bob"], ["dentvega"])).toBe(true);
+    expect(canManageMiniapp("alice", [], ["dentvega"])).toBe(false);
+  });
+  it("ni admin ni maintainer → false; sin login → false", () => {
+    expect(canManageMiniapp("mallory", ["alice"], ["dentvega"])).toBe(false);
+    expect(canManageMiniapp(null, ["alice"], ["dentvega"])).toBe(false);
+    expect(canManageMiniapp("", ["alice"], ["dentvega"])).toBe(false);
   });
 });

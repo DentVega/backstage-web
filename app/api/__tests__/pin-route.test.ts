@@ -77,4 +77,18 @@ describe("PUT /api/miniapps/:id/pin", () => {
   it("404 miniapp inexistente", async () => {
     expect((await PUT(putReq({ version: "0.1.0" }), params("ghost"))).status).toBe(404);
   });
+
+  it("un maintainer no-admin puede gestionar SU miniapp", async () => {
+    (state.reg.cards_wallet as { maintainers?: string[] }).maintainers = ["alice"];
+    authMock.mockResolvedValue({ githubLogin: "alice" }); // NO está en la allowlist
+    const res = await PUT(putReq({ version: "0.1.0" }), params("cards_wallet"));
+    expect(res.status).toBe(200);
+    expect(reg().cards_wallet.pinnedVersion).toBe("0.1.0");
+  });
+
+  it("un tercero (ni admin ni maintainer) no puede (403)", async () => {
+    (state.reg.cards_wallet as { maintainers?: string[] }).maintainers = ["alice"];
+    authMock.mockResolvedValue({ githubLogin: "mallory" });
+    expect((await PUT(putReq({ version: "0.1.0" }), params("cards_wallet"))).status).toBe(403);
+  });
 });

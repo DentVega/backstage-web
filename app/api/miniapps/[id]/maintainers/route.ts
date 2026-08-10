@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
+import { getStore } from "@/lib/registry/store";
+import { setMaintainers, getMiniappDetail } from "@/lib/registry/registry";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
-import { getStore } from "@/lib/registry/store";
-import { setMiniappPin, getMiniappDetail } from "@/lib/registry/registry";
 import { errorBody, statusForError } from "@/lib/http";
 
 export const runtime = "nodejs";
 
 /**
- * PUT /api/miniapps/:id/pin — fija (o despina con `version: null`) la versión que el
- * host sirve por defecto para esta miniapp (rollback/freeze). Admin (canScaffold).
- * 400 si la versión no existe / no es string; 404 si la miniapp no existe.
- * Devuelve el MiniappDetail actualizado.
+ * PUT /api/miniapps/:id/maintainers — setea los maintainers (logins de GitHub) de una
+ * miniapp. Auth: platform-admin O un maintainer actual (auto-gobierno del equipo).
+ * Body `{ maintainers: string[] }`. Devuelve el MiniappDetail actualizado.
  */
 export async function PUT(
   req: Request,
@@ -20,18 +19,16 @@ export async function PUT(
   try {
     const { id } = await params;
     const reg = await getStore().load();
-    // Lazy (evita el crash de next-auth/Next-16 al importarse en el grafo de tests).
     const { auth } = await import("@/auth");
     const session = await auth();
     if (!canManageMiniapp(session?.githubLogin, reg[id]?.maintainers, scaffoldAllowedLogins())) {
       throw new ScaffoldForbiddenError();
     }
-    const body = (await req.json().catch(() => null)) as { version?: unknown } | null;
-    const version = body?.version ?? null;
-    if (version !== null && typeof version !== "string") {
-      return NextResponse.json({ error: "version must be a string or null" }, { status: 400 });
-    }
-    const next = setMiniappPin(reg, id, version); // InvalidManifestError→400, MiniappNotFoundError→404
+    const body = (await req.json().catch(() => null)) as { maintainers?: unknown } | null;
+    const list = Array.isArray(body?.maintainers)
+      ? body.maintainers.filter((x): x is string => typeof x === "string")
+      : [];
+    const next = setMaintainers(reg, id, list); // MiniappNotFoundError → 404
     await getStore().save(next);
     return NextResponse.json(getMiniappDetail(next, id), { status: 200 });
   } catch (err) {

@@ -165,6 +165,21 @@ export function setMiniappPin(reg: Registry, rawId: string, version: string | nu
   return { ...reg, [id]: { ...record, pinnedVersion: version as SemVer } };
 }
 
+/** Setea los maintainers (logins) de una miniapp. Normaliza (trim + dedup); vacío borra el campo. */
+export function setMaintainers(reg: Registry, rawId: string, list: readonly string[]): Registry {
+  const id = parseMiniappId(rawId);
+  if (id === null) throw new InvalidManifestError(`bad miniapp id "${rawId}"`);
+  const record = reg[id];
+  if (record === undefined) throw new MiniappNotFoundError(id);
+  const cleaned = [...new Set(list.map((s) => s.trim()).filter((s) => s.length > 0))];
+  if (cleaned.length === 0) {
+    const next = { ...record };
+    delete (next as { maintainers?: string[] }).maintainers;
+    return { ...reg, [id]: next };
+  }
+  return { ...reg, [id]: { ...record, maintainers: cleaned } };
+}
+
 export function publishVersion(
   reg: Registry,
   rawId: string,
@@ -309,6 +324,7 @@ export function getMiniappDetail(reg: Registry, rawId: string): MiniappDetail {
     ...(record.repoUrl !== undefined ? { repoUrl: record.repoUrl } : {}),
     ...(record.storageProvider !== undefined ? { storageProvider: record.storageProvider } : {}),
     ...(record.pinnedVersion !== undefined ? { pinnedVersion: record.pinnedVersion } : {}),
+    ...(record.maintainers !== undefined ? { maintainers: record.maintainers } : {}),
     latestVersion: latest?.version ?? null,
     servedVersion: record.pinnedVersion ?? latest?.version ?? null,
     versionCount: record.versions.length,

@@ -3,7 +3,7 @@ import { getStore } from "@/lib/registry/store";
 import { removeMiniapp, updateMiniappMeta } from "@/lib/registry/registry";
 import { MiniappNotFoundError } from "@/lib/registry/types";
 import { scaffoldAllowedLogins, githubToken } from "@/lib/config";
-import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
+import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { githubProvider } from "@/lib/git/github";
 import { parseRepo } from "@/lib/git/miniapp-dispatch";
 import { errorBody, statusForError } from "@/lib/http";
@@ -21,15 +21,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
-    // Lazy (evita el crash de next-auth/Next-16 en el grafo de tests).
-    const { auth } = await import("@/auth");
-    const session = await auth();
-    if (!canScaffold(session?.githubLogin, scaffoldAllowedLogins())) {
-      throw new ScaffoldForbiddenError();
-    }
     const { id } = await params;
     const alsoRepo = new URL(req.url).searchParams.get("repo") === "true";
     const reg = await getStore().load();
+    // Lazy (evita el crash de next-auth/Next-16 en el grafo de tests).
+    const { auth } = await import("@/auth");
+    const session = await auth();
+    if (!canManageMiniapp(session?.githubLogin, reg[id]?.maintainers, scaffoldAllowedLogins())) {
+      throw new ScaffoldForbiddenError();
+    }
 
     let repoDeleted: boolean | undefined;
     if (alsoRepo) {
@@ -81,12 +81,13 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
+    const { id } = await params;
+    const reg = await getStore().load();
     const { auth } = await import("@/auth");
     const session = await auth();
-    if (!canScaffold(session?.githubLogin, scaffoldAllowedLogins())) {
+    if (!canManageMiniapp(session?.githubLogin, reg[id]?.maintainers, scaffoldAllowedLogins())) {
       throw new ScaffoldForbiddenError();
     }
-    const { id } = await params;
     const body = (await req.json().catch(() => null)) as { repoUrl?: unknown; owner?: unknown } | null;
     const patch: { repoUrl?: string; owner?: string } = {};
     if (typeof body?.repoUrl === "string") {
@@ -105,7 +106,6 @@ export async function PATCH(
         { status: 400 },
       );
     }
-    const reg = await getStore().load();
     const next = updateMiniappMeta(reg, id, patch); // MiniappNotFoundError → 404
     await getStore().save(next);
     const rec = next[id];
