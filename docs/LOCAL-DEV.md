@@ -348,6 +348,43 @@ pnpm --filter @app/host android
   al dev server (con integridad desactivada **solo** para ellos, bajo `__DEV__`).
 - En release, `DEV_REMOTES` no se setea → el host resuelve/verifica normal.
 
+#### Varias miniapps a la vez (Modo 2)
+
+Cada miniapp corre su propio dev server en un **puerto distinto** (el `start` por
+default usa `:9000`); el host las rutea por id con múltiples entradas en `DEV_REMOTES`:
+
+```bash
+# terminal A — miniapp 1 (:9000 por default)
+cd miniapp-hellow_widget && pnpm start
+
+# terminal B — miniapp 2 (otro puerto, para no chocar con :9000)
+cd miniapp-cards_wallet && pnpm exec react-native webpack-start --port 9001
+
+# terminal C — host, mapeando cada id a su dev server
+DEV_REMOTES="hellow_widget=http://localhost:9000,cards_wallet=http://localhost:9001" \
+  pnpm --filter @app/host start
+
+# terminal D — reenviar cada puerto al emulador + instalar
+adb reverse tcp:9000 tcp:9000
+adb reverse tcp:9001 tcp:9001
+pnpm --filter @app/host android
+```
+
+- Los **ids** deben coincidir con los del catálogo. Las miniapps que **no** estén en
+  `DEV_REMOTES` se resuelven normal (chunk publicado) → podés mezclar unas vivas-desde-dev-server
+  con otras publicadas.
+- Para una sola miniapp, dejás una entrada; para varias, las separás con coma.
+
+#### iOS (Modo 1 y 2)
+
+Los dos modos andan igual en iOS — cambiá `pnpm --filter @app/host android` por
+`ios`. La diferencia es la red:
+
+- **iOS Simulator:** `localhost` apunta a tu Mac → **no** hace falta `adb reverse` ni
+  el port-forward de los `:9000x`. Funcionan directo.
+- **iPhone real:** `localhost` es el teléfono → usá la **IP LAN de tu Mac** en las URLs
+  de `DEV_REMOTES` (`http://192.168.x.x:9000`), no `localhost`.
+
 ### Qué modo para qué tarea
 
 | Tarea | Modo |
