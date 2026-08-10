@@ -1,6 +1,8 @@
 import { CreateForm } from "@/app/components/CreateForm";
+import { auth } from "@/auth";
 
-export default function CreatePage() {
+export default async function CreatePage() {
+  const session = await auth();
   return (
     <main className="page">
       <p className="eyebrow">Scaffolder</p>
@@ -10,7 +12,7 @@ export default function CreatePage() {
         en el catálogo.
       </p>
       <div style={{ marginTop: 28 }}>
-        <CreateForm />
+        <CreateForm defaultOwner={session?.githubLogin ?? ""} />
       </div>
     </main>
   );

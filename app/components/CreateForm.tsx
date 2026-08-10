@@ -9,10 +9,12 @@ type State =
   | { status: "done"; repoUrl: string; id: string }
   | { status: "error"; message: string };
 
-export function CreateForm() {
+export function CreateForm({ defaultOwner = "" }: { defaultOwner?: string }) {
   const [id, setId] = useState("");
   const [name, setName] = useState("");
-  const [owner, setOwner] = useState("");
+  // Prellenado con tu usuario de GitHub (de la sesión) para no tener que tipearlo;
+  // editable por si el owner es una organización.
+  const [owner, setOwner] = useState(defaultOwner);
   const [state, setState] = useState<State>({ status: "idle" });
 
   // Same rule the server enforces — validate before hitting the API.
@@ -67,7 +69,24 @@ export function CreateForm() {
       </label>
       <label className="field">
         owner
-        <input className="input" aria-label="owner" value={owner} onChange={(e) => setOwner(e.target.value)} required />
+        <input
+          className="input"
+          aria-label="owner"
+          list="owner-suggestions"
+          value={owner}
+          onChange={(e) => setOwner(e.target.value)}
+          required
+        />
+        {defaultOwner ? (
+          <datalist id="owner-suggestions">
+            <option value={defaultOwner} />
+          </datalist>
+        ) : null}
+        <span className="field-hint" style={{ color: "var(--faint)" }}>
+          {defaultOwner
+            ? "prellenado con tu usuario; cambialo si el owner es una organización"
+            : "usuario u organización dueña del repo"}
+        </span>
       </label>
       <button
         type="submit"

@@ -39,6 +39,11 @@ describe("CreateForm", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("ya existe"));
   });
 
+  it("prellena el owner con el usuario de la sesión (defaultOwner)", () => {
+    render(<CreateForm defaultOwner="DentVega" />);
+    expect(screen.getByLabelText("owner")).toHaveValue("DentVega");
+  });
+
   it("blocks submit and flags an invalid id (no API call)", () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
