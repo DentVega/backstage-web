@@ -7,6 +7,8 @@ import type { RegistryStore } from "./store";
 export interface KvClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string): Promise<void>;
+  /** Incremento atómico (para contadores de métricas). Devuelve el valor nuevo. */
+  incr(key: string): Promise<number>;
 }
 
 const REGISTRY_KEY = "registry";
@@ -20,6 +22,24 @@ export function kvStore(client: KvClient): RegistryStore {
     },
     async save(reg: Registry): Promise<void> {
       await client.set(REGISTRY_KEY, JSON.stringify(reg));
+    },
+  };
+}
+
+/** KvClient en memoria (fallback dev / tests). No persiste. */
+export function inMemoryKvClient(): KvClient {
+  const map = new Map<string, string>();
+  return {
+    async get(key) {
+      return map.get(key) ?? null;
+    },
+    async set(key, value) {
+      map.set(key, value);
+    },
+    async incr(key) {
+      const next = Number(map.get(key) ?? 0) + 1;
+      map.set(key, String(next));
+      return next;
     },
   };
 }
@@ -44,6 +64,9 @@ export function upstashClient(): KvClient {
     },
     async set(key: string, value: string): Promise<void> {
       await redis.set(key, value);
+    },
+    async incr(key: string): Promise<number> {
+      return redis.incr(key);
     },
   };
 }

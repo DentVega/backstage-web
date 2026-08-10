@@ -12,6 +12,11 @@ function memClient(): KvClient & { data: Map<string, string> } {
     async set(k, v) {
       data.set(k, v);
     },
+    async incr(k) {
+      const n = Number(data.get(k) ?? 0) + 1;
+      data.set(k, String(n));
+      return n;
+    },
   };
 }
 

@@ -12,6 +12,11 @@ function inMemoryKv(): KvClient {
     async set(k, v) {
       map.set(k, v);
     },
+    async incr(k) {
+      const n = Number(map.get(k) ?? 0) + 1;
+      map.set(k, String(n));
+      return n;
+    },
   };
 }
 

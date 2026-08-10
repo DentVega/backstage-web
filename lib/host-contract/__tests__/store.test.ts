@@ -26,6 +26,7 @@ function memKv(): KvClient {
   return {
     async get(k) { return m.get(k) ?? null; },
     async set(k, v) { m.set(k, v); },
+    async incr(k) { const n = Number(m.get(k) ?? 0) + 1; m.set(k, String(n)); return n; },
   };
 }
 
