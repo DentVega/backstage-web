@@ -80,12 +80,19 @@ export async function POST(
         { status: 400 },
       );
     }
-    // Integrity from the ACTUAL uploaded bytes (never a client-supplied value),
-    // so the host can verify the CDN download before executing it.
-    manifest = {
-      ...(manifest as Record<string, unknown>),
-      integrity: sha256Integrity(container.data),
-    };
+    // Plataforma del chunk subido (default android → backward-compat con el publish.mjs viejo).
+    const platform = form.get("platform") === "ios" ? "ios" : "android";
+    // Integrity de los bytes REALES del chunk (nunca un valor del cliente),
+    // así el host puede verificar la descarga del CDN antes de ejecutarla.
+    const integrity = sha256Integrity(container.data);
+    // Android es el manifest canónico (lleva su integrity). iOS NO pisa el manifest —
+    // su integrity viaja aparte (iosIntegrity) y el resolve la inyecta.
+    if (platform === "android") {
+      manifest = {
+        ...(manifest as Record<string, unknown>),
+        integrity,
+      };
+    }
 
     // Gate de compatibilidad. Default WARN (loguea, no rechaza); con COMPAT_ENFORCE=1
     // rechaza el publish con 422. Chequea skew de shared + módulos nativos del host (Fase 2).
@@ -157,10 +164,17 @@ export async function POST(
 
     const reg = await getStore().load();
     const storage = await getStorage(reg[id]?.storageProvider ?? null);
-    const { baseUrl } = await storage.putMany(`${id}/${version}`, files);
+    // iOS va a un subfolder para no colisionar con el chunk Android (mismo containerName).
+    const prefix = platform === "ios" ? `${id}/${version}/ios` : `${id}/${version}`;
+    const { baseUrl } = await storage.putMany(prefix, files);
     const url = `${baseUrl}/${containerName}`;
 
-    const next = publishVersion(reg, id, { version, url, manifest }, new Date().toISOString());
+    const next = publishVersion(
+      reg,
+      id,
+      { version, url, manifest, platform, integrity },
+      new Date().toISOString(),
+    );
     await getStore().save(next);
 
     // Prune de versiones viejas (best-effort — el publish ya está guardado). Mantiene
@@ -172,7 +186,7 @@ export async function POST(
       /* el prune nunca rompe el publish */
     }
 
-    return NextResponse.json({ id, version, url }, { status: 201 });
+    return NextResponse.json({ id, version, url, platform }, { status: 201 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });
   }

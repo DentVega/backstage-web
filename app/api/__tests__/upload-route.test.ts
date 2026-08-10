@@ -136,6 +136,38 @@ describe("POST /api/miniapps/:id/upload", () => {
     expect(res.status).toBe(409);
   });
 
+  it("platform=ios adjunta el chunk iOS a la versión Android existente (misma versión)", async () => {
+    // 1) publicar Android @0.2.0 (crea la versión).
+    await POST(uploadReq({ token: "secret" }), params);
+    // 2) publicar iOS @0.2.0 (mismo version, platform=ios) → se adjunta.
+    const form = new FormData();
+    form.set("file", new Blob([buildZip() as unknown as BlobPart]), "build.zip");
+    form.set("version", "0.2.0");
+    form.set("platform", "ios");
+    form.set("manifest", JSON.stringify({ ...manifest, version: "0.2.0" }));
+    const req = new Request("http://x/api/miniapps/account_dashboard/upload", {
+      method: "POST",
+      headers: { authorization: "Bearer secret" },
+      body: form,
+    });
+
+    const res = await POST(req, params);
+
+    expect(res.status).toBe(201);
+    expect((await res.json()).platform).toBe("ios");
+    expect(state.reg.account_dashboard.versions).toHaveLength(1); // NO crea versión nueva
+    const v = state.reg.account_dashboard.versions.find((x) => x.version === "0.2.0")!;
+    expect(v.iosUrl).toBe(
+      "https://mock.blob/account_dashboard/0.2.0/ios/account_dashboard.container.js.bundle",
+    );
+    expect(v.iosIntegrity).toMatch(/^sha256-[0-9a-f]{64}$/);
+    // Android intacto (path SIN /ios/, integrity en el manifest canónico).
+    expect(v.url).toBe(
+      "https://mock.blob/account_dashboard/0.2.0/account_dashboard.container.js.bundle",
+    );
+    expect(v.manifest.integrity).toMatch(/^sha256-[0-9a-f]{64}$/);
+  });
+
   it("publishes via an allowlisted session, no token, default manifest (UI flow)", async () => {
     process.env.SCAFFOLD_ALLOWED_LOGINS = "dentvega";
     authMock.mockResolvedValue({ githubLogin: "DentVega" }); // case-insensitive match
