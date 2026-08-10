@@ -57,6 +57,28 @@ export function versionsToPrune(record: MiniappRecord, keepN: number): SemVer[] 
   return sorted.filter((v) => !keep.has(v.version)).map((v) => v.version);
 }
 
+/**
+ * Saca una versión puntual del registry (borrado manual). Rechaza la servida
+ * (pinnedVersion ?? latest — se está montando) y las versiones inexistentes.
+ */
+export function removeVersion(reg: Registry, rawId: string, version: string): Registry {
+  const id = parseMiniappId(rawId);
+  if (id === null) throw new InvalidManifestError(`bad miniapp id "${rawId}"`);
+  const record = reg[id];
+  if (record === undefined) throw new MiniappNotFoundError(id);
+  if (!record.versions.some((v) => v.version === version)) {
+    throw new InvalidManifestError(`version ${version} not found for ${id}`);
+  }
+  const served = record.pinnedVersion ?? selectLatest(record.versions)?.version;
+  if (version === served) {
+    throw new InvalidManifestError(`no se puede borrar la versión servida (${version})`);
+  }
+  return {
+    ...reg,
+    [id]: { ...record, versions: record.versions.filter((v) => v.version !== version) },
+  };
+}
+
 export function registerMiniapp(
   reg: Registry,
   input: { id: string; name: string; owner: string; repoUrl?: string },

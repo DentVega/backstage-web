@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { VersionList } from "@/app/components/VersionList";
 import type { VersionView } from "@/lib/registry/types";
 import type { SemVer } from "@dentvega/miniapp-contract";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 const v = (version: string, capabilities: string[] = []): VersionView => ({
   version: version as SemVer,
@@ -32,5 +34,24 @@ describe("VersionList", () => {
   it("marca la versión servida con un badge", () => {
     render(<VersionList versions={[v("1.0.0"), v("0.1.0")]} servedVersion={"0.1.0" as SemVer} />);
     expect(screen.getByText("● servida")).toBeInTheDocument();
+  });
+
+  it("con canDelete muestra 🗑 en las no-servidas y NO en la servida", () => {
+    render(
+      <VersionList
+        versions={[v("1.0.0"), v("0.1.0")]}
+        servedVersion={"1.0.0" as SemVer}
+        miniappId="acc"
+        canDelete
+      />,
+    );
+    // 1.0.0 es la servida → sin botón; 0.1.0 → con botón.
+    expect(screen.getByRole("button", { name: "Borrar v0.1.0" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Borrar v1.0.0" })).toBeNull();
+  });
+
+  it("sin canDelete no muestra botones de borrado", () => {
+    render(<VersionList versions={[v("1.0.0")]} miniappId="acc" />);
+    expect(screen.queryByRole("button", { name: /Borrar/ })).toBeNull();
   });
 });

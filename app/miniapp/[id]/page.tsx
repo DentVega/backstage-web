@@ -82,7 +82,12 @@ export default async function MiniappDetailPage({
 
       <section className="detail-section">
         <h2>Versiones</h2>
-        <VersionList versions={detail.versions} servedVersion={detail.servedVersion} />
+        <VersionList
+          versions={detail.versions}
+          servedVersion={detail.servedVersion}
+          miniappId={id}
+          canDelete={canPublish}
+        />
       </section>
 
       {canPublish ? (

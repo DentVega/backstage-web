@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   versionsToPrune,
+  removeVersion,
   publishVersion,
   registerMiniapp,
   setMiniappPin,
 } from "@/lib/registry/registry";
+import { InvalidManifestError, MiniappNotFoundError } from "@/lib/registry/types";
 import { pruneMiniapp } from "@/lib/registry/prune";
 import { mockStorage } from "@/lib/storage/mock";
 import type { ChunkStorage } from "@/lib/storage/types";
@@ -72,5 +74,29 @@ describe("pruneMiniapp", () => {
     const { reg, pruned } = await pruneMiniapp(regN(V7), failing, "acc", 5);
     expect(pruned.sort()).toEqual(["0.1.0", "0.2.0"]);
     expect(reg.acc!.versions).toHaveLength(5);
+  });
+});
+
+describe("removeVersion", () => {
+  it("saca una versión no-servida", () => {
+    const reg = removeVersion(regN(V7), "acc", "0.1.0");
+    expect(reg.acc!.versions.map((v) => v.version)).not.toContain("0.1.0");
+    expect(reg.acc!.versions).toHaveLength(6);
+  });
+  it("rechaza borrar la servida (latest)", () => {
+    expect(() => removeVersion(regN(V7), "acc", "0.7.0")).toThrow(InvalidManifestError);
+  });
+  it("rechaza borrar la servida (pinneada)", () => {
+    const reg = setMiniappPin(regN(V7), "acc", "0.3.0");
+    expect(() => removeVersion(reg, "acc", "0.3.0")).toThrow(InvalidManifestError);
+  });
+  it("versión inexistente → InvalidManifest; miniapp inexistente → NotFound", () => {
+    expect(() => removeVersion(regN(V7), "acc", "9.9.9")).toThrow(InvalidManifestError);
+    expect(() => removeVersion(regN(V7), "ghost", "0.1.0")).toThrow(MiniappNotFoundError);
+  });
+  it("no muta el registry original", () => {
+    const start = regN(V7);
+    removeVersion(start, "acc", "0.1.0");
+    expect(start.acc!.versions).toHaveLength(7);
   });
 });
