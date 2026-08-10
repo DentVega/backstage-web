@@ -15,9 +15,10 @@ export async function GET(req: Request): Promise<NextResponse> {
     }
     const version = url.searchParams.get("version") ?? undefined;
     const range = url.searchParams.get("range") ?? undefined;
+    const platform = url.searchParams.get("platform") === "ios" ? "ios" : undefined;
 
     const reg = await getStore().load();
-    const resolved = resolveMiniapp(reg, id, { version, range });
+    const resolved = resolveMiniapp(reg, id, { version, range, platform });
     return NextResponse.json(resolved, { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });
