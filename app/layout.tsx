@@ -39,9 +39,14 @@ export default async function RootLayout({
           <span className="header-sp" />
           <div className="header-actions">
             {session?.user ? (
-              <Link href="/catalog" className="nav-link">
-                Catálogo
-              </Link>
+              <>
+                <Link href="/catalog" className="nav-link">
+                  Catálogo
+                </Link>
+                <Link href="/metrics" className="nav-link">
+                  Métricas
+                </Link>
+              </>
             ) : null}
             <ThemeToggle />
             <UserMenu user={session?.user} />
