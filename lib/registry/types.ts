@@ -7,6 +7,10 @@ export interface PublishedVersion {
   readonly url: string;
   readonly manifest: Manifest;
   readonly publishedAt: string; // ISO
+  /** URL del chunk iOS (opcional; aditivo — Android sigue en `url`). */
+  readonly iosUrl?: string;
+  /** sha256 del chunk iOS ("sha256-…"); el resolve iOS lo pisa en manifest.integrity. */
+  readonly iosIntegrity?: string;
 }
 
 export interface MiniappRecord {

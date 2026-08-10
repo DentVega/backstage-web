@@ -183,7 +183,13 @@ export function setMaintainers(reg: Registry, rawId: string, list: readonly stri
 export function publishVersion(
   reg: Registry,
   rawId: string,
-  input: { version: string; url: string; manifest: unknown },
+  input: {
+    version: string;
+    url: string;
+    manifest: unknown;
+    platform?: "android" | "ios";
+    integrity?: string;
+  },
   now: string,
 ): Registry {
   const id = parseMiniappId(rawId);
@@ -210,10 +216,34 @@ export function publishVersion(
   if (typeof input.url !== "string" || input.url.length === 0) {
     throw new InvalidManifestError("missing chunk url");
   }
-  if (record.versions.some((v) => v.version === version)) {
-    throw new VersionExistsError(id, version);
+
+  const platform = input.platform ?? "android";
+  const existing = record.versions.find((v) => v.version === version);
+
+  if (platform === "ios") {
+    // iOS se ADJUNTA a la versión de Android existente (no crea versión nueva).
+    if (existing === undefined) {
+      throw new InvalidManifestError(`publicá Android primero para la versión ${version}`);
+    }
+    if (existing.iosUrl !== undefined) {
+      throw new VersionExistsError(id, `${version} (ios)`);
+    }
+    const attached: PublishedVersion = {
+      ...existing,
+      iosUrl: input.url,
+      iosIntegrity: input.integrity,
+    };
+    const updated: MiniappRecord = {
+      ...record,
+      versions: record.versions.map((v) => (v.version === version ? attached : v)),
+    };
+    return { ...reg, [id]: updated };
   }
 
+  // Android (default) — comportamiento histórico.
+  if (existing !== undefined) {
+    throw new VersionExistsError(id, version);
+  }
   const published: PublishedVersion = {
     version,
     url: input.url,
@@ -232,6 +262,8 @@ export interface ResolveOptions {
   version?: string;
   /** Semver range the host requires (host provides this compatibility window). */
   range?: string;
+  /** Plataforma del host; "ios" sirve el chunk iOS. Default/ausente = Android. */
+  platform?: "android" | "ios";
 }
 
 export function resolveMiniapp(
@@ -274,6 +306,19 @@ export function resolveMiniapp(
 
   // selectLatest returns non-null here (versions.length > 0 checked above).
   const version = chosen as PublishedVersion;
+
+  if (opts.platform === "ios") {
+    if (version.iosUrl === undefined) {
+      throw new NoCompatibleVersionError(id, `iOS no publicado para la versión ${version.version}`);
+    }
+    return {
+      id,
+      version: version.version,
+      url: version.iosUrl,
+      manifest: { ...version.manifest, integrity: version.iosIntegrity },
+    };
+  }
+
   return {
     id,
     version: version.version,

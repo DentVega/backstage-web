@@ -205,3 +205,81 @@ describe("getMiniappDetail", () => {
     expect(() => getMiniappDetail({}, "ghost")).toThrow(MiniappNotFoundError);
   });
 });
+
+describe("publishVersion — iOS attach", () => {
+  it("adjunta iOS a una versión Android existente (misma versión)", () => {
+    let reg = seeded(); // account_dashboard@0.1.0 (Android)
+    reg = publishVersion(
+      reg,
+      "account_dashboard",
+      {
+        version: "0.1.0",
+        url: "http://h/v010/ios",
+        manifest: manifest("account_dashboard", "0.1.0"),
+        platform: "ios",
+        integrity: "sha256-IOS",
+      },
+      now,
+    );
+    const v = reg.account_dashboard!.versions.find((x) => x.version === "0.1.0")!;
+    expect(v.url).toBe("http://h/v010"); // Android intacto
+    expect(v.iosUrl).toBe("http://h/v010/ios"); // iOS adjuntado
+    expect(v.iosIntegrity).toBe("sha256-IOS");
+    expect(reg.account_dashboard!.versions).toHaveLength(1); // no crea versión nueva
+  });
+
+  it("iOS en una versión inexistente → InvalidManifestError", () => {
+    const reg = seeded();
+    expect(() =>
+      publishVersion(
+        reg,
+        "account_dashboard",
+        { version: "9.9.9", url: "http://h/x/ios", manifest: manifest("account_dashboard", "9.9.9"), platform: "ios", integrity: "sha256-X" },
+        now,
+      ),
+    ).toThrow(InvalidManifestError);
+  });
+
+  it("iOS dos veces en la misma versión → VersionExistsError", () => {
+    let reg = seeded();
+    reg = publishVersion(reg, "account_dashboard", { version: "0.1.0", url: "http://h/v010/ios", manifest: manifest("account_dashboard", "0.1.0"), platform: "ios", integrity: "sha256-IOS" }, now);
+    expect(() =>
+      publishVersion(reg, "account_dashboard", { version: "0.1.0", url: "http://h/v010/ios2", manifest: manifest("account_dashboard", "0.1.0"), platform: "ios", integrity: "sha256-IOS2" }, now),
+    ).toThrow(VersionExistsError);
+  });
+
+  it("Android (default) sigue creando versión y con VERSION_EXISTS", () => {
+    let reg = seeded();
+    reg = publishVersion(reg, "account_dashboard", { version: "0.2.0", url: "http://h/v020", manifest: manifest("account_dashboard", "0.2.0") }, now);
+    expect(reg.account_dashboard!.versions).toHaveLength(2);
+    expect(() =>
+      publishVersion(reg, "account_dashboard", { version: "0.2.0", url: "http://h/v020b", manifest: manifest("account_dashboard", "0.2.0") }, now),
+    ).toThrow(VersionExistsError);
+  });
+});
+
+describe("resolveMiniapp — platform", () => {
+  function withIos(): Registry {
+    let reg = seeded(); // account_dashboard@0.1.0 android
+    reg = publishVersion(reg, "account_dashboard", { version: "0.1.0", url: "http://h/v010/ios", manifest: manifest("account_dashboard", "0.1.0"), platform: "ios", integrity: "sha256-IOS" }, now);
+    return reg;
+  }
+
+  it("platform ios → devuelve iosUrl + integrity iOS pisada", () => {
+    const r = resolveMiniapp(withIos(), "account_dashboard", { platform: "ios" });
+    expect(r.url).toBe("http://h/v010/ios");
+    expect(r.manifest.integrity).toBe("sha256-IOS");
+  });
+
+  it("sin platform (android) → intacto (url + manifest Android)", () => {
+    const r = resolveMiniapp(withIos(), "account_dashboard", {});
+    expect(r.url).toBe("http://h/v010");
+    expect(r.manifest.integrity).toBeUndefined(); // el manifest del fixture no trae integrity
+  });
+
+  it("platform ios cuando la versión no tiene iOS → NoCompatibleVersionError", () => {
+    expect(() => resolveMiniapp(seeded(), "account_dashboard", { platform: "ios" })).toThrow(
+      NoCompatibleVersionError,
+    );
+  });
+});
