@@ -8,6 +8,7 @@ import { canScaffold } from "@/lib/scaffold-authz";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { getStorageProviderState } from "@/lib/storage";
 import { StorageProviderControl } from "@/app/components/StorageProviderControl";
+import { SyncAllControl } from "@/app/components/SyncAllControl";
 import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,11 @@ export default async function CatalogPage() {
           {storageState !== null && (
             <div className="catalog-storage-bar">
               <StorageProviderControl {...storageState} />
+            </div>
+          )}
+          {canAdmin && (
+            <div className="catalog-storage-bar">
+              <SyncAllControl />
             </div>
           )}
           <CatalogList entries={entries} statusById={statusById} driftById={driftById} />
