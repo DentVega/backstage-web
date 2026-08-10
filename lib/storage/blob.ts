@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob";
+import { put, list, del } from "@vercel/blob";
 import { StorageError, type ChunkStorage, type StorageFile } from "./types";
 
 /**
@@ -29,6 +29,10 @@ export function blobStorage(token = process.env.BLOB_READ_WRITE_TOKEN): ChunkSto
       } catch (err) {
         throw new StorageError(err instanceof Error ? err.message : "blob upload failed");
       }
+    },
+    async deletePrefix(prefix): Promise<void> {
+      const { blobs } = await list({ prefix: `${prefix}/`, token });
+      if (blobs.length > 0) await del(blobs.map((b) => b.url), { token });
     },
   };
 }

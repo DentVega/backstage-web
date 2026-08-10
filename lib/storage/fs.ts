@@ -19,5 +19,11 @@ export function fsStorage(
       }
       return { baseUrl: `${baseOrigin}/chunks/${prefix}` };
     },
+    async deletePrefix(prefix): Promise<void> {
+      await fs.rm(path.join(process.cwd(), "public", "chunks", prefix), {
+        recursive: true,
+        force: true,
+      });
+    },
   };
 }

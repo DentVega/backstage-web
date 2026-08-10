@@ -45,6 +45,18 @@ export function selectLatest(
   );
 }
 
+/**
+ * Versiones a prunear: las que quedan FUERA de {últimas keepN} ∪ {servida}. La versión
+ * servida (pinnedVersion ?? latest) JAMÁS se prunea (su chunk se sigue montando).
+ */
+export function versionsToPrune(record: MiniappRecord, keepN: number): SemVer[] {
+  const sorted = [...record.versions].sort((a, b) => compareSemVer(b.version, a.version)); // desc
+  const served = record.pinnedVersion ?? sorted[0]?.version;
+  const keep = new Set<string>(sorted.slice(0, keepN).map((v) => v.version));
+  if (served !== undefined) keep.add(served);
+  return sorted.filter((v) => !keep.has(v.version)).map((v) => v.version);
+}
+
 export function registerMiniapp(
   reg: Registry,
   input: { id: string; name: string; owner: string; repoUrl?: string },

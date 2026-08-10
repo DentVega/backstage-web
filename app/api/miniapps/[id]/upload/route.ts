@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { unzipSync } from "fflate";
 import { getStore } from "@/lib/registry/store";
 import { publishVersion } from "@/lib/registry/registry";
+import { pruneMiniapp } from "@/lib/registry/prune";
 import { getStorage } from "@/lib/storage";
 import { authorizeUpload } from "@/lib/auth";
 import { defaultManifest, parseCapabilities, resolveDefaultShared } from "@/lib/manifest";
@@ -9,7 +10,7 @@ import { getHostContractStore } from "@/lib/host-contract/store";
 import { sha256Integrity } from "@/lib/integrity";
 import { errorBody, statusForError } from "@/lib/http";
 import { githubProvider } from "@/lib/git/github";
-import { githubToken, HOST_REPO } from "@/lib/config";
+import { githubToken, HOST_REPO, pruneKeep } from "@/lib/config";
 import { openCapabilityRequests } from "@/lib/capability-request";
 import { satisfiesShared, type SemVer } from "@dentvega/miniapp-contract";
 import type { StorageFile } from "@/lib/storage/types";
@@ -161,6 +162,15 @@ export async function POST(
 
     const next = publishVersion(reg, id, { version, url, manifest }, new Date().toISOString());
     await getStore().save(next);
+
+    // Prune de versiones viejas (best-effort — el publish ya está guardado). Mantiene
+    // las últimas PRUNE_KEEP + la servida/pinneada; borra el chunk + la entrada del resto.
+    try {
+      const { reg: prunedReg, pruned } = await pruneMiniapp(next, storage, id, pruneKeep());
+      if (pruned.length > 0) await getStore().save(prunedReg);
+    } catch {
+      /* el prune nunca rompe el publish */
+    }
 
     return NextResponse.json({ id, version, url }, { status: 201 });
   } catch (err) {

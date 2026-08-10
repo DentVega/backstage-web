@@ -44,7 +44,7 @@ describe("r2Storage.putMany", () => {
     const calls: { url: string; method: string; headers?: Record<string, string> }[] = [];
     const fake: SignedFetch = async (url, init) => {
       calls.push({ url, method: init.method, headers: init.headers });
-      return { ok: true, status: 200 };
+      return { ok: true, status: 200, text: async () => "" };
     };
     const r = await r2Storage(config, fake).putMany("cards_wallet/0.1.5", [
       { path: "cards_wallet.container.js.bundle", data: new Uint8Array([1, 2]) },
@@ -63,14 +63,47 @@ describe("r2Storage.putMany", () => {
   });
 
   it("0 files → StorageError", async () => {
-    const fake: SignedFetch = async () => ({ ok: true, status: 200 });
+    const fake: SignedFetch = async () => ({ ok: true, status: 200, text: async () => "" });
     await expect(r2Storage(config, fake).putMany("x", [])).rejects.toBeInstanceOf(StorageError);
   });
 
   it("un PUT !ok → StorageError con el status", async () => {
-    const fake: SignedFetch = async () => ({ ok: false, status: 403 });
+    const fake: SignedFetch = async () => ({ ok: false, status: 403, text: async () => "" });
     await expect(
       r2Storage(config, fake).putMany("x", [{ path: "a.bundle", data: new Uint8Array([1]) }]),
     ).rejects.toThrow(/403/);
+  });
+});
+
+describe("r2Storage.deletePrefix", () => {
+  const listXml =
+    "<ListBucketResult>" +
+    "<Contents><Key>a/1.0.0/a.container.js.bundle</Key></Contents>" +
+    "<Contents><Key>a/1.0.0/vendors.chunk.bundle</Key></Contents>" +
+    "</ListBucketResult>";
+
+  it("lista bajo el prefijo y borra cada key", async () => {
+    const calls: { method: string; url: string }[] = [];
+    const fake: SignedFetch = async (url, init) => {
+      calls.push({ method: init.method, url });
+      if (init.method === "GET") return { ok: true, status: 200, text: async () => listXml };
+      return { ok: true, status: 200, text: async () => "" };
+    };
+    await r2Storage(config, fake).deletePrefix("a/1.0.0");
+    expect(calls.filter((c) => c.method === "GET")).toHaveLength(1);
+    const deletes = calls.filter((c) => c.method === "DELETE");
+    expect(deletes).toHaveLength(2);
+    expect(deletes[0]!.url).toContain("a/1.0.0/a.container.js.bundle");
+    expect(deletes[1]!.url).toContain("a/1.0.0/vendors.chunk.bundle");
+  });
+
+  it("si el list no da ok, no borra nada (best-effort)", async () => {
+    const methods: string[] = [];
+    const fake: SignedFetch = async (_url, init) => {
+      methods.push(init.method);
+      return { ok: false, status: 500, text: async () => "" };
+    };
+    await r2Storage(config, fake).deletePrefix("a/1.0.0");
+    expect(methods.filter((m) => m === "DELETE")).toHaveLength(0);
   });
 });

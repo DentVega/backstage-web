@@ -39,3 +39,9 @@ export function scaffoldAllowedLogins(): string[] {
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 }
+
+/** Cuántas versiones se mantienen al prunear (además de la servida/pinneada). Default 5. */
+export function pruneKeep(): number {
+  const n = Number(process.env.PRUNE_KEEP);
+  return Number.isFinite(n) && n > 0 ? n : 5;
+}

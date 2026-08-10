@@ -25,8 +25,8 @@ export function r2ConfigFromEnv(): R2Config | null {
 /** Minimal signed-fetch: prod wraps aws4fetch; tests pass a fake. */
 export type SignedFetch = (
   url: string,
-  init: { method: string; body: Uint8Array; headers?: Record<string, string> },
-) => Promise<{ ok: boolean; status: number }>;
+  init: { method: string; body?: Uint8Array; headers?: Record<string, string> },
+) => Promise<{ ok: boolean; status: number; text: () => Promise<string> }>;
 
 function contentType(path: string): string {
   if (path.endsWith(".js") || path.endsWith(".bundle")) return "application/javascript";
@@ -77,6 +77,20 @@ export function r2Storage(config: R2Config, fetchImpl?: SignedFetch): ChunkStora
         throw new StorageError(err instanceof Error ? err.message : "R2 upload failed");
       }
       return { baseUrl: `${publicBase}/${prefix}` };
+    },
+    async deletePrefix(prefix): Promise<void> {
+      // ListObjectsV2 bajo el prefijo → DELETE cada key. Best-effort (el prune no
+      // debe romper nada): si el list no da ok, no borramos.
+      const listRes = await doFetch(
+        `${s3}?list-type=2&prefix=${encodeURIComponent(`${prefix}/`)}`,
+        { method: "GET" },
+      );
+      if (!listRes.ok) return;
+      const xml = await listRes.text();
+      const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map((m) => m[1]!);
+      for (const key of keys) {
+        await doFetch(`${s3}/${key}`, { method: "DELETE" });
+      }
     },
   };
 }
