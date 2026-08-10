@@ -217,8 +217,21 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
 .detail-section h2 { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
 
 .cap-list, .version-list { list-style: none; display: grid; gap: 8px; }
-.cap-list li { font-family: var(--mono); font-size: 13px; }
+.cap-list li { font-family: var(--mono); font-size: 13px; display: flex; align-items: center; }
 .cap-list code { color: var(--accent); }
+/* Tooltip explicativo por capability (CSS puro, hover + focus). */
+.cap-info { position: relative; display: inline-flex; align-items: center; margin-left: 7px; color: var(--muted); font-size: 12px; cursor: help; }
+.cap-info:hover, .cap-info:focus-visible { color: var(--wire); outline: none; }
+.cap-tip {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 30;
+  width: max-content; max-width: min(320px, 74vw);
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: 10px; padding: 9px 11px; box-shadow: 0 10px 30px rgba(0,0,0,.16);
+  font-family: var(--sans, inherit); font-size: 12px; line-height: 1.45; color: var(--text);
+  white-space: normal; opacity: 0; visibility: hidden; transform: translateY(-3px);
+  transition: opacity .12s ease, transform .12s ease, visibility .12s; pointer-events: none;
+}
+.cap-info:hover .cap-tip, .cap-info:focus-within .cap-tip { opacity: 1; visibility: visible; transform: translateY(0); }
 .version-item {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;

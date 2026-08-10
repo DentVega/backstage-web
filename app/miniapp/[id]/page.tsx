@@ -22,6 +22,17 @@ import { MiniappDeleteControl } from "@/app/components/MiniappDeleteControl";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Qué le da al miniapp cada capability (para el tooltip). Permisos acotados y revocables
+ * que el host otorga — nunca un credential crudo. Set semilla del contrato.
+ */
+const CAPABILITY_INFO: Record<string, string> = {
+  "accounts:read":
+    "Leer las cuentas del usuario (saldos, listado) que el host expone. Solo lectura — nunca escribe ni recibe el credential.",
+  "session:whoami":
+    "Saber quién es el usuario logueado (identidad de la sesión). Sin acceso al token de sesión.",
+};
+
 export default async function MiniappDetailPage({
   params,
 }: {
@@ -74,11 +85,20 @@ export default async function MiniappDetailPage({
         <h2>Capabilities</h2>
         {detail.capabilities.length > 0 ? (
           <ul aria-label="Capabilities" className="cap-list">
-            {detail.capabilities.map((c) => (
-              <li key={c}>
-                <code>{c}</code>
-              </li>
-            ))}
+            {detail.capabilities.map((c) => {
+              const info = CAPABILITY_INFO[c];
+              return (
+                <li key={c}>
+                  <code>{c}</code>
+                  {info ? (
+                    <span className="cap-info" tabIndex={0} role="note" aria-label={`${c}: ${info}`}>
+                      <span aria-hidden="true">ⓘ</span>
+                      <span className="cap-tip" role="tooltip">{info}</span>
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p role="status" className="empty">Sin capabilities declaradas.</p>
