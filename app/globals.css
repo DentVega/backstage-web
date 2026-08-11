@@ -523,3 +523,46 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
 .doc-toc li a:hover { color: var(--text); }
 .doc-toc .doc-toc-l3 a { padding-left: 24px; font-size: 12px; }
 .doc-toc li.is-active a { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+
+/* --- Búsqueda (Ctrl+K) --- */
+.docs-search-btn {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
+  margin-bottom: 14px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px;
+  background: var(--surface); color: var(--muted); font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.docs-search-btn:hover { border-color: var(--accent); color: var(--text); }
+.docs-search-btn kbd, .docs-search-foot kbd {
+  font-family: var(--mono); font-size: 10.5px; color: var(--faint); background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; line-height: 1.4;
+}
+.docs-search-overlay {
+  position: fixed; inset: 0; z-index: 100; background: rgba(10, 14, 22, .45);
+  backdrop-filter: blur(2px); display: flex; justify-content: center; align-items: flex-start;
+  padding: 12vh 16px 16px;
+}
+.docs-search-modal {
+  width: 100%; max-width: 600px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.35); overflow: hidden; display: flex; flex-direction: column;
+  max-height: 72vh;
+}
+.docs-search-input {
+  border: none; border-bottom: 1px solid var(--line); background: transparent; color: var(--text);
+  font-size: 16px; padding: 16px 18px; outline: none; font-family: inherit;
+}
+.docs-search-input::placeholder { color: var(--faint); }
+.docs-search-results { overflow-y: auto; }
+.docs-search-empty { color: var(--muted); font-size: 13.5px; padding: 22px 18px; margin: 0; text-align: center; }
+.docs-search-results ul { list-style: none; margin: 0; padding: 6px; }
+.docs-search-hit {
+  display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; cursor: pointer;
+  background: transparent; border: none; border-radius: 9px; padding: 10px 12px; font-family: inherit;
+}
+.docs-search-hit.is-active { background: var(--surface-2); }
+.hit-head { font-size: 14px; font-weight: 600; color: var(--text); }
+.hit-meta { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+.hit-snip { font-size: 12.5px; color: var(--muted); line-height: 1.4; margin-top: 1px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.docs-search-foot {
+  display: flex; gap: 16px; padding: 9px 16px; border-top: 1px solid var(--line);
+  font-size: 11.5px; color: var(--faint);
+}
+.docs-search-foot span { display: inline-flex; align-items: center; gap: 5px; }

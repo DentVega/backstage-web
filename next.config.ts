@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     "/api/**": ["./data/**"],
     // El sitio de docs lee los .md con fs en runtime; inclúyelos en el bundle.
     "/docs/[slug]": ["./docs/**"],
+    "/api/docs/search-index": ["./docs/**"],
   },
 };
 
