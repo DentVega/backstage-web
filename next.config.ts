@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
     "/catalog": ["./data/**"],
     "/miniapp/[id]": ["./data/**"],
     "/api/**": ["./data/**"],
+    // El sitio de docs lee los .md con fs en runtime; inclúyelos en el bundle.
+    "/docs/[slug]": ["./docs/**"],
   },
 };
 

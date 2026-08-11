@@ -48,6 +48,9 @@ export default async function RootLayout({
                 </Link>
               </>
             ) : null}
+            <Link href="/docs" className="nav-link">
+              Docs
+            </Link>
             <ThemeToggle />
             <UserMenu user={session?.user} />
           </div>

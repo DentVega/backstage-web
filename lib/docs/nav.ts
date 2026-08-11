@@ -1,0 +1,86 @@
+/** Config del sitio de docs (/docs): grupos → items → { slug, título, archivo .md }. */
+
+export interface DocItem {
+  readonly slug: string;
+  readonly title: string;
+  /** Path del .md relativo a la raíz del repo (process.cwd()). */
+  readonly file: string;
+  readonly blurb: string;
+}
+
+export interface DocGroup {
+  readonly group: string;
+  readonly items: readonly DocItem[];
+}
+
+export const DOC_GROUPS: readonly DocGroup[] = [
+  {
+    group: "Empezar",
+    items: [
+      {
+        slug: "platform-overview",
+        title: "Platform Overview",
+        file: "docs/PLATFORM-OVERVIEW.md",
+        blurb: "El mental model completo de la plataforma: arquitectura, conceptos y ciclo de vida.",
+      },
+    ],
+  },
+  {
+    group: "Integrar una miniapp",
+    items: [
+      {
+        slug: "integration-guide",
+        title: "Integration Guide",
+        file: "docs/INTEGRATION-GUIDE.md",
+        blurb: "De cero a tu primera miniapp publicada, con el contrato que debés cumplir.",
+      },
+      {
+        slug: "miniapps-guide",
+        title: "Guía de miniapps",
+        file: "docs/miniapps-guide.md",
+        blurb: "El ciclo de vida completo: crear → publicar → usar.",
+      },
+      {
+        slug: "local-dev",
+        title: "Desarrollo local",
+        file: "docs/LOCAL-DEV.md",
+        blurb: "El inner loop en tu máquina y el dev-loop de miniapps (Modo 1 y 2).",
+      },
+    ],
+  },
+  {
+    group: "Operar la plataforma",
+    items: [
+      {
+        slug: "setup",
+        title: "Setup",
+        file: "docs/SETUP.md",
+        blurb: "Levantar toda la plataforma desde cero.",
+      },
+      {
+        slug: "compat-gates",
+        title: "Compat gates",
+        file: "docs/activar-compat-gates.md",
+        blurb: "Encender los gates de compatibilidad (WARN vs ENFORCE).",
+      },
+      {
+        slug: "actualizar-miniapp",
+        title: "Actualizar desde template",
+        file: "docs/actualizar-miniapp.md",
+        blurb: "Propagar mejoras del template a la flota (Capa 2).",
+      },
+      {
+        slug: "rotar-publish-token",
+        title: "Rotar PUBLISH_TOKEN",
+        file: "docs/rotar-publish-token.md",
+        blurb: "Rotación del token de publish sin ventana de riesgo.",
+      },
+    ],
+  },
+];
+
+export const ALL_DOCS: readonly DocItem[] = DOC_GROUPS.flatMap((g) => g.items);
+
+export function findDoc(slug: string): DocItem | undefined {
+  return ALL_DOCS.find((d) => d.slug === slug);
+}
