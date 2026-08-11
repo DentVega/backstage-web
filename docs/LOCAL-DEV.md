@@ -12,18 +12,36 @@
 
 ## 1. Panorama del loop local
 
-```
- miniapp repo                    Backstage LOCAL (:3999)          Host móvil LOCAL
-┌──────────────────┐            ┌───────────────────────┐        ┌───────────────────────┐
-│ bundle:android +   │  zips →  │ POST /upload           │        │ Metro/Re.Pack :8081    │
-│ bundle:ios          │─────────▶│  fs storage:            │◀──────▶│  adb reverse tcp:3999  │
-│ build/generated/    │ (misma   │  data/registry.json     │ resolve│  adb reverse tcp:8081  │
-│  android/*.bundle    │ versión, │  public/chunks/<id>/...  │ ?platform=ios          │
-│ build/ios/*.bundle   │ 2 zips)  │   .../ios/... (chunk iOS)│        │                        │
-└──────────────────┘            └───────────────────────┘        │  <MiniappHost id=.../> │
-                                                                    │  resuelve→descarga→monta│
-                                                                    └───────────────────────┘
-```
+<div class="dgm dgm-arch">
+<div class="dgm-plane">
+<span class="dgm-plane-label">Repo de miniapp</span>
+<ul>
+<li><code>bundle:android</code> + <code>bundle:ios</code></li>
+<li>zip por plataforma → upload</li>
+</ul>
+<span class="dgm-plane-foot">build estático</span>
+</div>
+<div class="dgm-arrow">publish</div>
+<div class="dgm-plane dgm-accent">
+<span class="dgm-plane-label">Backstage local · :3999</span>
+<ul>
+<li><code>POST /upload</code> → fs storage</li>
+<li><code>data/registry.json</code> · <code>public/chunks/…</code></li>
+<li><code>/api/resolve</code></li>
+</ul>
+<span class="dgm-plane-foot">next dev</span>
+</div>
+<div class="dgm-arrow">resolve</div>
+<div class="dgm-plane">
+<span class="dgm-plane-label">Host móvil local</span>
+<ul>
+<li>Metro/Re.Pack :8081</li>
+<li><code>adb reverse tcp:3999</code></li>
+<li>monta la miniapp</li>
+</ul>
+<span class="dgm-plane-foot">emulador / device</span>
+</div>
+</div>
 
 **Puntos clave que cambian el mental model respecto a un dev server típico:**
 

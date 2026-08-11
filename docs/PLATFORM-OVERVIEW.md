@@ -32,21 +32,39 @@ antes de que el cambio se mergee.
 La plataforma vive en tres planos que **solo se hablan a través del
 registry** (Backstage). Ninguno conoce los internals de los otros.
 
-```
-┌─────────────────────────┐        ┌──────────────────────────┐        ┌─────────────────────────────┐
-│  Repos de miniapp (+CI)  │        │   Backstage (control-plane) │      │   Host móvil (RN + Re.Pack)   │
-│                           │        │                            │      │                               │
-│  código + ./Entry         │  build │  Registry (versiones,       │      │  resuelve por id             │
-│  rspack.config.mjs        │ + zip  │   urls por-plataforma)      │      │   GET /api/resolve            │
-│  manifest.json             │──────▶│  Catálogo (served version,   │◀────▶│  descarga el chunk            │
-│                            │publish │   badges drift/CI)           │resolve│  verifica sha256              │
-│  CI: build android+iOS →   │        │  Scaffolder (crea repo+CI)   │      │  monta <MiniappHost/>         │
-│   publish (PUBLISH_TOKEN)  │        │  Compat gate (Host Contract) │      │  fallback tipado + auto-retry │
-│                            │        │  Storage (R2/Blob/fs)         │      │  cache por-versión            │
-│                            │        │  Métricas                     │      │                               │
-└─────────────────────────┘        └──────────────────────────┘        └─────────────────────────────┘
-        repo propio                      Next.js, repo backstage-web           RN + Re.Pack, repo backstagereactnative
-```
+<div class="dgm dgm-arch">
+<div class="dgm-plane">
+<span class="dgm-plane-label">① Repos de miniapp (+ CI)</span>
+<ul>
+<li>código + <code>./Entry</code></li>
+<li><code>rspack.config.mjs</code> · <code>manifest.json</code></li>
+<li>CI: build <b>android + iOS</b> → publish (<code>PUBLISH_TOKEN</code>)</li>
+</ul>
+<span class="dgm-plane-foot">repo propio</span>
+</div>
+<div class="dgm-arrow">publish</div>
+<div class="dgm-plane dgm-accent">
+<span class="dgm-plane-label">② Backstage · control-plane</span>
+<ul>
+<li>Registry (versiones, urls por-plataforma)</li>
+<li>Catálogo (served version, badges drift/CI)</li>
+<li>Scaffolder · Compat gate (Host Contract)</li>
+<li>Storage (R2/Blob/fs) · Métricas</li>
+</ul>
+<span class="dgm-plane-foot">Next.js · backstage-web</span>
+</div>
+<div class="dgm-arrow">resolve</div>
+<div class="dgm-plane">
+<span class="dgm-plane-label">③ Host móvil</span>
+<ul>
+<li>resuelve por id: <code>GET /api/resolve</code></li>
+<li>descarga el chunk · verifica sha256</li>
+<li>monta <code>&lt;MiniappHost/&gt;</code></li>
+<li>fallback tipado + auto-retry · cache</li>
+</ul>
+<span class="dgm-plane-foot">RN + Re.Pack · backstagereactnative</span>
+</div>
+</div>
 
 **El flujo por el registry, en una frase:** un repo de miniapp **publica** un
 chunk versionado a Backstage; el host **resuelve** un id contra Backstage y
@@ -154,28 +172,23 @@ catálogo.
 
 ## 4. El ciclo de vida end-to-end
 
-```
- scaffold           desarrollar          publicar (CI)              resolve                  mount
-┌──────────┐      ┌──────────────┐    ┌───────────────────┐    ┌──────────────────┐    ┌────────────────────┐
-│ POST      │      │ código del    │    │ build android+iOS  │    │ GET /api/resolve  │    │ MiniappHost:        │
-│ /api/     │─────▶│ ./Entry, dev  │───▶│ zip → upload        │───▶│  ?id=&platform=   │───▶│ download → verify   │
-│ scaffold  │      │ local (§ LOCAL│    │ (PUBLISH_TOKEN)      │    │  → {url, manifest} │    │ sha256 → mount      │
-│           │      │ -DEV.md)      │    │                     │    │                    │    │ → fallback si falla │
-└──────────┘      └──────────────┘    └─────────┬───────────┘    └──────────────────┘    └────────────────────┘
- crea repo desde                                  │
- template + registra                    ┌─────────▼──────────┐
- en el catálogo                          │ COMPAT GATE          │  ← acá actúa el gate de compatibilidad
-                                          │ manifest vs Host      │    (warn por default; 422 con
-                                          │ Contract               │     COMPAT_ENFORCE=1)
-                                          └────────────────────┘
-
-                    (aparte, en cada PR que toca deps del HOST)
-                    ┌──────────────────────────────────────────┐
-                    │ BLAST-RADIUS GATE                          │  ← acá actúa el gate del lado host
-                    │ findNewlyBroken: ¿el nuevo contract rompe   │     (bloquea el merge si rompe algo
-                    │ alguna miniapp YA publicada?                │      ya publicado)
-                    └──────────────────────────────────────────┘
-```
+<div class="dgm">
+<div class="dgm-flow">
+<div class="dgm-step"><span class="dgm-step-n">1 · scaffold</span><span class="dgm-step-t">Crear el repo</span><span class="dgm-step-d"><code>POST /api/scaffold</code> → repo desde el template + registro en el catálogo.</span></div>
+<div class="dgm-arrow"></div>
+<div class="dgm-step"><span class="dgm-step-n">2 · desarrollar</span><span class="dgm-step-t">Código + dev local</span><span class="dgm-step-d"><code>./Entry</code>; dev-loop (LOCAL-DEV).</span></div>
+<div class="dgm-arrow"></div>
+<div class="dgm-step"><span class="dgm-step-n">3 · publicar (CI)</span><span class="dgm-step-t">Build + publish</span><span class="dgm-step-d">build android+iOS → zip → upload (<code>PUBLISH_TOKEN</code>). <span class="dgm-gate">compat gate</span></span></div>
+<div class="dgm-arrow"></div>
+<div class="dgm-step"><span class="dgm-step-n">4 · resolve</span><span class="dgm-step-t">El host pregunta</span><span class="dgm-step-d"><code>GET /api/resolve?id=&amp;platform=</code> → <code>{url, manifest}</code>.</span></div>
+<div class="dgm-arrow"></div>
+<div class="dgm-step dgm-accent"><span class="dgm-step-n">5 · mount</span><span class="dgm-step-t">Montar</span><span class="dgm-step-d">download → verify sha256 → mount → fallback si falla.</span></div>
+</div>
+<div class="dgm-notes">
+<div class="dgm-note"><b>Compat gate</b> — en el publish (paso 3): el manifest de la miniapp vs el Host Contract. Warn por default; 422 con <code>COMPAT_ENFORCE=1</code>.</div>
+<div class="dgm-note"><b>Blast-radius gate</b> — en cada PR que toca deps del host: <code>findNewlyBroken</code> bloquea el merge si el cambio rompe una miniapp ya publicada.</div>
+</div>
+</div>
 
 1. **Scaffold** — `POST /api/scaffold` (o el form en `/create`) genera el
    repo `github.com/<owner>/miniapp-<id>` desde el template y lo registra en

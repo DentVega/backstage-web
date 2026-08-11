@@ -29,15 +29,36 @@ del control-plane.
 
 ## 2. Cómo funciona, en 1 minuto
 
-```
-Tu repo de miniapp              Backstage (control-plane, web)         Host móvil (app)
-┌─────────────────────┐        ┌──────────────────────────────┐      ┌─────────────────────┐
-│ código + ./Entry      │ push  │ Registry (catálogo)            │      │ resuelve por id       │
-│ CI: build → publish   │──────▶│ Distribution API (/resolve)    │◀────▶│ descarga el chunk     │
-│ (android + iOS)        │        │ Compat gate (Host Contract)    │      │ verifica sha256        │
-└─────────────────────┘        └──────────────────────────────┘      │ monta <MiniappHost/>  │
-                                                                        └─────────────────────┘
-```
+<div class="dgm dgm-arch">
+<div class="dgm-plane">
+<span class="dgm-plane-label">Tu repo de miniapp</span>
+<ul>
+<li>código + <code>./Entry</code></li>
+<li>CI: build <b>android + iOS</b> → publish</li>
+</ul>
+<span class="dgm-plane-foot">tu equipo</span>
+</div>
+<div class="dgm-arrow">push</div>
+<div class="dgm-plane dgm-accent">
+<span class="dgm-plane-label">Backstage · control-plane</span>
+<ul>
+<li>Registry (catálogo)</li>
+<li>Distribution API (<code>/resolve</code>)</li>
+<li>Compat gate (Host Contract)</li>
+</ul>
+<span class="dgm-plane-foot">web</span>
+</div>
+<div class="dgm-arrow">resolve</div>
+<div class="dgm-plane">
+<span class="dgm-plane-label">Host móvil (app)</span>
+<ul>
+<li>resuelve por id · descarga el chunk</li>
+<li>verifica sha256</li>
+<li>monta <code>&lt;MiniappHost/&gt;</code></li>
+</ul>
+<span class="dgm-plane-foot">iOS + Android</span>
+</div>
+</div>
 
 Una **miniapp** es un **remote de Module Federation**: un bundle de JS que expone
 un punto de entrada (`./Entry`) y que el **host móvil descarga y monta en
