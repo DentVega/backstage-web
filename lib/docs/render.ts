@@ -38,7 +38,11 @@ const processor = unified()
 
 export async function renderMarkdown(md: string): Promise<string> {
   const file = await processor.process(md);
-  return String(file);
+  // Envolver las tablas en un contenedor con scroll horizontal (evita romper el
+  // ancho o desbordar la página en tablas anchas).
+  return String(file)
+    .replace(/<table>/g, '<div class="table-wrap"><table>')
+    .replace(/<\/table>/g, "</table></div>");
 }
 
 /** Extrae el TOC (h2/h3) del HTML ya renderizado, para el rail "En esta página". */
