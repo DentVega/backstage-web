@@ -84,3 +84,18 @@ export const ALL_DOCS: readonly DocItem[] = DOC_GROUPS.flatMap((g) => g.items);
 export function findDoc(slug: string): DocItem | undefined {
   return ALL_DOCS.find((d) => d.slug === slug);
 }
+
+/** Doc anterior/siguiente en el orden plano (para el nav prev/next del pie). */
+export function docNeighbors(slug: string): { prev?: DocItem; next?: DocItem } {
+  const i = ALL_DOCS.findIndex((d) => d.slug === slug);
+  if (i === -1) return {};
+  return {
+    prev: i > 0 ? ALL_DOCS[i - 1] : undefined,
+    next: i < ALL_DOCS.length - 1 ? ALL_DOCS[i + 1] : undefined,
+  };
+}
+
+/** Grupo al que pertenece un doc (para el breadcrumb). */
+export function docGroup(slug: string): string | undefined {
+  return DOC_GROUPS.find((g) => g.items.some((it) => it.slug === slug))?.group;
+}

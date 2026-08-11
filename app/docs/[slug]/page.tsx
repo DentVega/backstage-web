@@ -1,11 +1,15 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import type { Metadata } from "next";
-import { marked } from "marked";
-import { ALL_DOCS, findDoc } from "@/lib/docs/nav";
+import { ALL_DOCS, findDoc, docNeighbors, docGroup } from "@/lib/docs/nav";
+import { renderMarkdown, extractToc } from "@/lib/docs/render";
+import { DocsToc } from "@/app/components/DocsToc";
+import { DocsEnhance } from "@/app/components/DocsEnhance";
 
-/** Pre-genera una ruta por doc (útil si el segmento se renderiza estático). */
+const REPO_BLOB = "https://github.com/DentVega/backstage-web/blob/main";
+
 export function generateStaticParams() {
   return ALL_DOCS.map((d) => ({ slug: d.slug }));
 }
@@ -30,8 +34,60 @@ export default async function DocPage({
   if (doc === undefined) notFound();
 
   const raw = await readFile(path.join(process.cwd(), doc.file), "utf8");
-  // Contenido propio del repo (no input de usuario) → render directo, GFM por default.
-  const html = await marked.parse(raw, { gfm: true });
+  const html = await renderMarkdown(raw);
+  const toc = extractToc(html);
+  const group = docGroup(slug);
+  const { prev, next } = docNeighbors(slug);
 
-  return <article className="doc-body" dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <div className="doc-page">
+      <div className="doc-col">
+        <nav className="doc-crumbs" aria-label="Ubicación">
+          <Link href="/docs">Docs</Link>
+          {group ? <span> / {group}</span> : null}
+          <span> / {doc.title}</span>
+        </nav>
+
+        <article className="doc-body" dangerouslySetInnerHTML={{ __html: html }} />
+
+        <div className="doc-footer">
+          <a
+            className="doc-edit"
+            href={`${REPO_BLOB}/${doc.file}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Editar esta página en GitHub ↗
+          </a>
+        </div>
+
+        {prev || next ? (
+          <nav className="doc-prevnext" aria-label="Navegación entre docs">
+            {prev ? (
+              <Link href={`/docs/${prev.slug}`} className="doc-pn doc-pn-prev">
+                <span className="doc-pn-lab">← Anterior</span>
+                <span className="doc-pn-title">{prev.title}</span>
+              </Link>
+            ) : (
+              <span />
+            )}
+            {next ? (
+              <Link href={`/docs/${next.slug}`} className="doc-pn doc-pn-next">
+                <span className="doc-pn-lab">Siguiente →</span>
+                <span className="doc-pn-title">{next.title}</span>
+              </Link>
+            ) : (
+              <span />
+            )}
+          </nav>
+        ) : null}
+      </div>
+
+      <aside className="doc-toc-rail">
+        <DocsToc key={slug} items={toc} />
+      </aside>
+
+      <DocsEnhance key={slug} />
+    </div>
+  );
 }
