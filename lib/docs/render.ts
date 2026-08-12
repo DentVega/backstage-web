@@ -46,6 +46,17 @@ export async function renderMarkdown(md: string): Promise<string> {
     .replace(/<\/table>/g, "</table></div>");
 }
 
+/** Decodifica las entidades HTML comunes (el heading render trae `&#x26;` etc.). */
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&(?:lt|#0*60|#x0*3c);/gi, "<")
+    .replace(/&(?:gt|#0*62|#x0*3e);/gi, ">")
+    .replace(/&(?:quot|#0*34|#x0*22);/gi, '"')
+    .replace(/&(?:apos|#0*39|#x0*27);/gi, "'")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&(?:amp|#0*38|#x0*26);/gi, "&");
+}
+
 /** Extrae el TOC (h2/h3) del HTML ya renderizado, para el rail "En esta página". */
 export function extractToc(html: string): TocItem[] {
   const out: TocItem[] = [];
@@ -54,10 +65,12 @@ export function extractToc(html: string): TocItem[] {
   while ((m = re.exec(html)) !== null) {
     const level = Number(m[1]) as 2 | 3;
     const id = m[2]!;
-    const text = m[3]!
-      .replace(/<[^>]+>/g, "")
-      .replace(/#\s*$/, "")
-      .trim();
+    const text = decodeEntities(
+      m[3]!
+        .replace(/<[^>]+>/g, "")
+        .replace(/#\s*$/, "")
+        .trim(),
+    );
     if (text) out.push({ id, text, level });
   }
   return out;
