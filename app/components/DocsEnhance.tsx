@@ -47,11 +47,36 @@ export function DocsEnhance() {
     // 2) <pre> sueltos (sin lenguaje/figure) → botón copiar flotante.
     document.querySelectorAll<HTMLElement>(".doc-body pre").forEach((pre) => {
       if (pre.closest("figure[data-rehype-pretty-code-figure]")) return;
+      if (pre.closest(".tab")) return;
       if (pre.querySelector(".copy-btn")) return;
       pre.classList.add("has-copy-float");
       const btn = copyBtn(pre);
       btn.classList.add("copy-btn-float");
       pre.appendChild(btn);
+    });
+
+    // 3) Tabs: barra de pestañas + toggle de visibilidad.
+    document.querySelectorAll<HTMLElement>(".doc-body .tabs").forEach((tabs) => {
+      if (tabs.querySelector(".tab-bar")) return;
+      const panels = Array.from(tabs.querySelectorAll<HTMLElement>(":scope > .tab"));
+      if (panels.length === 0) return;
+      const bar = document.createElement("div");
+      bar.className = "tab-bar";
+      panels.forEach((panel, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `tab-btn${i === 0 ? " is-active" : ""}`;
+        btn.textContent = panel.getAttribute("data-label") || `Tab ${i + 1}`;
+        btn.addEventListener("click", () => {
+          bar.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("is-active"));
+          btn.classList.add("is-active");
+          panels.forEach((p, j) => p.classList.toggle("is-active", j === i));
+        });
+        bar.appendChild(btn);
+        panel.classList.toggle("is-active", i === 0);
+      });
+      tabs.insertBefore(bar, tabs.firstChild);
+      tabs.classList.add("tabs-ready");
     });
   }, []);
 

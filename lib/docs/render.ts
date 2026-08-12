@@ -1,6 +1,7 @@
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
+import remarkDirective from "remark-directive";
 import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeSlug from "rehype-slug";
@@ -9,6 +10,7 @@ import rehypePrettyCode from "rehype-pretty-code";
 import rehypeStringify from "rehype-stringify";
 import { registryDark, registryLight } from "./shiki-theme";
 import { rehypeCallouts } from "./rehype-callouts";
+import { remarkTabs } from "./remark-tabs";
 
 export interface TocItem {
   readonly id: string;
@@ -24,6 +26,8 @@ export interface TocItem {
 const processor = unified()
   .use(remarkParse)
   .use(remarkGfm)
+  .use(remarkDirective)
+  .use(remarkTabs)
   .use(remarkRehype, { allowDangerousHtml: true })
   .use(rehypeRaw)
   .use(rehypeCallouts)

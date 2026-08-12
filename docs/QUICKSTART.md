@@ -63,15 +63,31 @@ provee** (no las bundlees vos):
 
 ## 4. Probarla local (opcional pero recomendado)
 
-Montá tu miniapp contra el host en tu máquina antes de publicar. La forma más rápida es
-el **dev-mount** (Fast Refresh):
+Montá tu miniapp contra el host antes de publicar. La forma más rápida es el
+**dev-mount** (Fast Refresh). En una terminal, el dev server del host montando tu
+miniapp local:
 
 ```bash
-# en el repo del host:
-DEV_MINIAPP_PATH=/ruta/a/tu/miniapp-<id> \
-  pnpm --filter @app/host start
-pnpm --filter @app/host ios     # o android
+DEV_MINIAPP_PATH=/ruta/a/tu/miniapp-<id> pnpm --filter @app/host start
 ```
+
+Y en otra terminal, buildeás e instalás en el device:
+
+::::tabs
+
+:::tab{label="Android"}
+```bash
+pnpm --filter @app/host android
+```
+:::
+
+:::tab{label="iOS"}
+```bash
+pnpm --filter @app/host ios
+```
+:::
+
+::::
 
 > [!TIP]
 > Para probar el camino **federado real** (como en prod) o **varias miniapps juntas**,
