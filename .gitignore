@@ -44,3 +44,6 @@ next-env.d.ts
 # IDE
 .idea/
 .vscode/
+
+# docs-sync: state del hook de drift (no versionar)
+.claude/.docs-drift-state.json

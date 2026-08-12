@@ -1,0 +1,16 @@
+{
+  "rules": [
+    { "paths": ["app/api/**/route.ts"], "docs": ["docs/API-REFERENCE.md"], "why": "endpoints" },
+    { "paths": ["lib/registry/types.ts"], "docs": ["docs/API-REFERENCE.md", "docs/PLATFORM-OVERVIEW.md"], "why": "schemas + conceptos" },
+    { "paths": ["lib/registry/registry.ts"], "docs": ["docs/API-REFERENCE.md"], "why": "resolve/publish + errores" },
+    { "paths": ["lib/http.ts"], "docs": ["docs/API-REFERENCE.md"], "why": "tabla de codigos de error" },
+    { "paths": ["lib/scaffold-authz.ts", "lib/auth-paths.ts"], "docs": ["docs/INTEGRATION-GUIDE.md", "docs/API-REFERENCE.md"], "why": "auth/ownership" },
+    { "paths": ["lib/config.ts"], "docs": ["docs/SETUP.md", "docs/API-REFERENCE.md"], "why": "env vars" },
+    { "paths": ["lib/storage/**"], "docs": ["docs/SETUP.md"], "why": "seleccion de storage" },
+    { "paths": ["../backstagereactnative/apps/host/shared-deps.mjs"], "docs": ["docs/INTEGRATION-GUIDE.md", "docs/PLATFORM-OVERVIEW.md"], "why": "Host Contract / singletons" },
+    { "paths": ["../backstagereactnative/packages/miniapp-contract/src/types.ts"], "docs": ["docs/API-REFERENCE.md", "docs/PLATFORM-OVERVIEW.md", "docs/INTEGRATION-GUIDE.md"], "why": "Manifest/contract" },
+    { "paths": ["../backstagereactnative/apps/host/RUN.md"], "action": "pnpm sync:host-docs", "docs": ["docs/HOST-RUN.md"], "why": "espejo del host" },
+    { "paths": ["../backstagereactnative/docs/mounting-miniapps.md"], "action": "pnpm sync:host-docs", "docs": ["docs/HOST-MOUNTING.md"], "why": "espejo del host" },
+    { "paths": ["../miniapp-template/scripts/publish.mjs", "../miniapp-template/.github/workflows/publish.yml"], "docs": ["docs/INTEGRATION-GUIDE.md", "docs/QUICKSTART.md", "docs/miniapps-guide.md"], "why": "flujo de publish" }
+  ]
+}
