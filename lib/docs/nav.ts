@@ -101,6 +101,23 @@ export const DOC_GROUPS: readonly DocGroup[] = [
     ],
   },
   {
+    group: "Conceptos",
+    items: [
+      {
+        slug: "host-contract",
+        title: "Host Contract",
+        file: "docs/HOST-CONTRACT.md",
+        blurb: "El contrato que declara qué singletons y versiones trae el host — el corazón de la compatibilidad.",
+      },
+      {
+        slug: "compat-gate",
+        title: "Compat gate",
+        file: "docs/COMPAT-GATE.md",
+        blurb: "Los dos gates que impiden publicar una miniapp incompatible o romper la flota ya publicada.",
+      },
+    ],
+  },
+  {
     group: "Referencia",
     items: [
       {
@@ -108,6 +125,12 @@ export const DOC_GROUPS: readonly DocGroup[] = [
         title: "API & Schemas",
         file: "docs/API-REFERENCE.md",
         blurb: "Endpoints, request/response y schemas (manifest, Host Contract, códigos de error).",
+      },
+      {
+        slug: "troubleshooting",
+        title: "Troubleshooting",
+        file: "docs/TROUBLESHOOTING.md",
+        blurb: "Síntoma → causa → fix: publish, montaje en el host, compat gate, dev-loop y template-sync.",
       },
     ],
   },

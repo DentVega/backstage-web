@@ -171,7 +171,7 @@ pnpm bundle:android
 # → build/generated/android/<id>.container.js.bundle + sub-chunks (mismo directorio)
 
 pnpm bundle:ios          # opcional, solo si también querés probar iOS
-# → build/ios/<id>.container.js.bundle + sub-chunks
+# → build/generated/ios/<id>.container.js.bundle + sub-chunks
 ```
 
 > [!WARNING]
@@ -185,7 +185,7 @@ pnpm bundle:ios          # opcional, solo si también querés probar iOS
 
 ```bash
 cd build/generated/android && zip -r /tmp/build.zip . && cd -
-cd build/ios && zip -r /tmp/build-ios.zip . && cd -             # solo si buildeaste iOS
+cd build/generated/ios && zip -r /tmp/build-ios.zip . && cd -             # solo si buildeaste iOS
 ```
 
 El zip tiene que contener el `.container.js.bundle` y los sub-chunks **al raíz**
@@ -257,7 +257,7 @@ BACKSTAGE_URL=http://localhost:3999 PUBLISH_TOKEN=dev-publish-secret \
 # variante Android + iOS (misma versión, un solo publish):
 pnpm bundle:android && pnpm bundle:ios
 cd build/generated/android && zip -r /tmp/build.zip . && cd -
-cd build/ios && zip -r /tmp/build-ios.zip . && cd -
+cd build/generated/ios && zip -r /tmp/build-ios.zip . && cd -
 BACKSTAGE_URL=http://localhost:3999 PUBLISH_TOKEN=dev-publish-secret \
   node scripts/publish.mjs /tmp/build.zip /tmp/build-ios.zip
 ```

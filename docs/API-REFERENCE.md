@@ -263,8 +263,9 @@ Crea el repo de la miniapp desde el template + la registra. Auth: sesión con
 ## 5. Gestión (sesión requerida — admin ∪ maintainer)
 
 Todas las rutas de esta sección exigen `canManageMiniapp` salvo donde se indique
-`canScaffold` explícito (admin puro, sin maintainer). El shape de error 403 es
-siempre `{ "error": "...", "code": "FORBIDDEN" }`.
+`canScaffold` explícito (admin puro, sin maintainer). El 403 del auth-gate es
+`{ "error": "...", "code": "FORBIDDEN" }` (algunas rutas devuelven otros códigos
+403 — ver `REPO_DELETE_FAILED` en §5.6).
 
 | Endpoint | Método | Auth | Body | Respuesta 200/201/202 |
 |---|---|---|---|---|
@@ -467,6 +468,12 @@ interface HostContract {
   reactNative: string;
   shared: Record<string, string>;  // nombre → versión concreta que el host trae
   nativeModules: string[];         // presencia only, sin API JS
+  generatedAt?: string;            // ISO — cuándo se generó el contrato
+  hostCommit?: string;             // SHA del host que lo generó
+  capabilitySince?: {              // desde qué versión el host provee cada capability
+    shared: Record<string, string>;
+    native: Record<string, string>;
+  };
 }
 
 // ResolveResponse — GET /api/resolve.

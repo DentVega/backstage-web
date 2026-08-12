@@ -75,13 +75,13 @@ Resultado: la miniapp aparece en el catálogo; `GET /api/resolve?id=<id>` respon
   carga como remote):
   ```bash
   pnpm bundle:android    # → build/generated/android/<id>.container.js.bundle + chunks
-  pnpm bundle:ios         # opcional → build/ios/<id>.container.js.bundle + chunks
+  pnpm bundle:ios         # opcional → build/generated/ios/<id>.container.js.bundle + chunks
   ```
 - Empaquetar los chunks en un zip **por plataforma** (el contenedor y los sub-chunks al
   **raíz** del zip):
   ```bash
   cd build/generated/android && zip -q /tmp/<id>.zip *.bundle
-  cd build/ios && zip -q /tmp/<id>-ios.zip *.bundle   # solo si buildeaste iOS
+  cd build/generated/ios && zip -q /tmp/<id>-ios.zip *.bundle   # solo si buildeaste iOS
   ```
 
 ### 2b. Publicar (dos caminos)

@@ -217,7 +217,7 @@ CI_STATUS_ENABLED=false   # los badges de CI muestran "unknown" sin pegarle a Gi
 
 GitHub → Settings → Developer settings → **OAuth Apps** → New OAuth App:
 - **Homepage URL**: `http://localhost:3999` (dev) o tu URL de Vercel (prod) — puedes crear una app por entorno o una sola con ambos callbacks si GitHub lo permite; lo más simple es **una app de dev** y **una de prod**.
-- **Authorization callback URL**: `http://localhost:3999/api/auth/callback/github` (dev) — nota: el repo usa el puerto **3999** en dev, no el 3000 por defecto de Next, porque el host móvil espera Backstage en `:3999`. Corre el dev server con `PORT=3999 pnpm dev` (o `pnpm exec next dev -p 3999`).
+- **Authorization callback URL**: `http://localhost:3999/api/auth/callback/github` (dev) — nota: por convención el host móvil espera Backstage en `:3999` (no el 3000 por defecto de Next). El script `dev` es `next dev` pelado, así que corré el dev server con `PORT=3999 pnpm dev` (o `pnpm exec next dev -p 3999`).
 - Para prod: `https://<tu-proyecto>.vercel.app/api/auth/callback/github`.
 
 ### 4.3 Provisionar servicios (registro + storage de chunks)
@@ -630,6 +630,7 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 | `HOST_REPO` | Repo del host, ej. `Acme/backstagereactnative` | Destino de los capability requests (issues) cuando una miniapp pide un nativo |
 | `COMPAT_ENFORCE` | `"1"` → el gate de `/upload` rechaza (422) publishes incompatibles | Ausente/`"0"` = warn (default). Solo al pasar a enforce (Parte E) |
 | `CI_STATUS_ENABLED` | Habilita el badge de estado de CI por miniapp (consulta GitHub Actions) | Opcional; `"false"` fuerza `unknown` sin llamar a GitHub |
+| `PRUNE_KEEP` | Cuántas versiones se retienen al prunear (además de la servida/pinneada) tras un publish | Opcional; default `5` (`lib/config.ts`) |
 
 > **Discrepancia detectada entre las fuentes:** `DEPLOY.md` solo menciona
 > `BACKSTAGE_PUBLIC_URL` en su lista de env vars de prod, pero el código real
