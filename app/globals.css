@@ -487,16 +487,18 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
 :root[data-theme="dark"] .doc-body code[data-theme] span { color: var(--shiki-dark); }
 :root[data-theme="light"] .doc-body code[data-theme] span { color: var(--shiki-light); }
 
-/* Copy button */
-.doc-body .has-copy { position: relative; }
-.copy-btn {
-  position: absolute; top: 8px; right: 8px; z-index: 2; font-family: var(--mono); font-size: 11px;
-  color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
-  padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .12s ease;
-}
-.has-copy:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
-@media (hover: none) { .copy-btn { opacity: 1; } }
-.copy-btn:hover { color: var(--text); border-color: var(--accent); }
+/* Code block: barra con lenguaje + copiar (estilo Stripe) */
+.doc-body figure[data-rehype-pretty-code-figure].has-bar pre { border-top-left-radius: 0; border-top-right-radius: 0; }
+.code-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px 5px 13px; background: var(--surface); border: 1px solid var(--line); border-bottom: none; border-radius: 10px 10px 0 0; }
+.code-lang { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.copy-btn { font-family: var(--mono); font-size: 11px; color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.copy-btn:hover { color: var(--text); background: var(--surface-2); }
+.copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* Copy flotante para <pre> sin barra (bloques sin lenguaje) */
+.doc-body .has-copy-float { position: relative; }
+.copy-btn-float { position: absolute; top: 8px; right: 8px; z-index: 2; background: var(--surface); border-color: var(--line); opacity: 0; transition: opacity .12s ease; }
+.has-copy-float:hover .copy-btn-float, .copy-btn-float:focus-visible { opacity: 1; }
+@media (hover: none) { .copy-btn-float { opacity: 1; } }
 
 /* Breadcrumbs */
 .doc-crumbs { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin-bottom: 18px; }
