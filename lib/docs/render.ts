@@ -8,6 +8,7 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeStringify from "rehype-stringify";
 import { registryDark, registryLight } from "./shiki-theme";
+import { rehypeCallouts } from "./rehype-callouts";
 
 export interface TocItem {
   readonly id: string;
@@ -25,6 +26,7 @@ const processor = unified()
   .use(remarkGfm)
   .use(remarkRehype, { allowDangerousHtml: true })
   .use(rehypeRaw)
+  .use(rehypeCallouts)
   .use(rehypeSlug)
   .use(rehypeAutolinkHeadings, {
     behavior: "append",

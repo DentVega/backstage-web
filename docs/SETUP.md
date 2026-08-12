@@ -268,6 +268,7 @@ plataforma**, porque los bytes del chunk difieren). `GET /api/resolve` acepta
 manifest; sin ese parámetro (o `platform=android`) resuelve el chunk Android,
 igual que antes.
 
+> [!TIP]
 > **R2 y el 411:** el PUT a R2 fija `Content-Length` explícito. R2 rechaza
 > uploads *chunked* (HTTP 411) y el `fetch` parcheado de Next.js puede streamear
 > el body; el adapter lo evita. (Solo relevante si tocás `lib/storage/r2.ts`.)

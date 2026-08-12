@@ -55,8 +55,8 @@ apretás.
 El botón dispara un proceso que hace el merge y **te abre un PR en GitHub** (en el
 repo de tu miniapp). Andá ahí.
 
-> ⚠️ Importante: **abre un PR, no toca tu `main` directamente.** Nada cambia hasta
-> que vos mergeás.
+> [!IMPORTANT]
+> **Abre un PR, no toca tu `main` directamente.** Nada cambia hasta que vos mergeás.
 
 **Paso 4 — Revisás el PR.**
 - Mirá el diff: son las mejoras del template (ej. `react-native` subió de versión).
@@ -71,7 +71,8 @@ repo de tu miniapp). Andá ahí.
   **vos Y el template** editaron lo mismo. Resolvés (dejás lo correcto de cada
   lado), pusheás al branch del PR, y mergeás. Es un conflicto de git normal.
 
-> ⚠️ **Lección dura:** nunca mergees un PR de template-sync con marcadores
+> [!WARNING]
+> **Lección dura:** nunca mergees un PR de template-sync con marcadores
 > `<<<<<<<` sin resolver. Para git son **texto**, no un conflicto real — GitHub
 > **te deja apretar Merge** igual. Si esos marcadores quedan en un archivo JSON
 > (como `package.json`), lo rompen → `pnpm/action-setup` falla al parsearlo →

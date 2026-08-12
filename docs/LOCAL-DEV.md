@@ -174,6 +174,7 @@ pnpm bundle:ios          # opcional, solo si también querés probar iOS
 # → build/ios/<id>.container.js.bundle + sub-chunks
 ```
 
+> [!WARNING]
 > Usá **siempre** el build estático (`bundle:android` / `bundle:ios`), **nunca** el
 > dev server webpack de la miniapp (`pnpm start`, alias `webpack-start --port 9000`).
 > Ese dev server sirve URLs con `?platform=...` pensadas para Metro, y el host no

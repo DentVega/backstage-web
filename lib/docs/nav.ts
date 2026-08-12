@@ -18,6 +18,12 @@ export const DOC_GROUPS: readonly DocGroup[] = [
     group: "Empezar",
     items: [
       {
+        slug: "quickstart",
+        title: "Quickstart",
+        file: "docs/QUICKSTART.md",
+        blurb: "De cero a tu primera miniapp corriendo en la app, en ~10 minutos.",
+      },
+      {
         slug: "platform-overview",
         title: "Platform Overview",
         file: "docs/PLATFORM-OVERVIEW.md",
