@@ -55,6 +55,23 @@ export const DOC_GROUPS: readonly DocGroup[] = [
     ],
   },
   {
+    group: "Host móvil",
+    items: [
+      {
+        slug: "host-run",
+        title: "Correr el host",
+        file: "docs/HOST-RUN.md",
+        blurb: "Referencia rápida: dev/prod × Android/iOS + el dev-loop de miniapps.",
+      },
+      {
+        slug: "host-mounting",
+        title: "Montar miniapps (host)",
+        file: "docs/HOST-MOUNTING.md",
+        blurb: "Playbook del lado host: montar una miniapp donde quieras.",
+      },
+    ],
+  },
+  {
     group: "Operar la plataforma",
     items: [
       {
