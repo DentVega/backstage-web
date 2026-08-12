@@ -83,6 +83,17 @@ export const DOC_GROUPS: readonly DocGroup[] = [
       },
     ],
   },
+  {
+    group: "Referencia",
+    items: [
+      {
+        slug: "api-reference",
+        title: "API & Schemas",
+        file: "docs/API-REFERENCE.md",
+        blurb: "Endpoints, request/response y schemas (manifest, Host Contract, códigos de error).",
+      },
+    ],
+  },
 ];
 
 export const ALL_DOCS: readonly DocItem[] = DOC_GROUPS.flatMap((g) => g.items);
