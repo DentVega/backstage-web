@@ -7,6 +7,7 @@ import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeStringify from "rehype-stringify";
+import { registryDark, registryLight } from "./shiki-theme";
 
 export interface TocItem {
   readonly id: string;
@@ -31,7 +32,7 @@ const processor = unified()
     content: { type: "text", value: "#" },
   })
   .use(rehypePrettyCode, {
-    theme: { light: "github-light", dark: "github-dark" },
+    theme: { light: registryLight, dark: registryDark },
     keepBackground: false,
   })
   .use(rehypeStringify);
