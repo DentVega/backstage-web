@@ -138,6 +138,18 @@ export const DOC_GROUPS: readonly DocGroup[] = [
         file: "docs/TROUBLESHOOTING.md",
         blurb: "Síntoma → causa → fix: publish, montaje en el host, compat gate, dev-loop y template-sync.",
       },
+      {
+        slug: "glosario",
+        title: "Glosario",
+        file: "docs/GLOSARIO.md",
+        blurb: "El vocabulario de la plataforma: Host Contract, blast-radius, skew, capabilities y demás, definidos con precisión.",
+      },
+      {
+        slug: "changelog",
+        title: "Changelog",
+        file: "docs/CHANGELOG.md",
+        blurb: "Los hitos de la plataforma en orden cronológico, con fechas reales del historial.",
+      },
     ],
   },
 ];
