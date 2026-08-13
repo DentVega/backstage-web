@@ -333,13 +333,22 @@ con un grant mock (de las capabilities de su `manifest.json`). Al ser código de
 bundle del host, editar el miniapp da **Fast Refresh instantáneo**.
 
 ```bash
-# host, apuntando a tu miniapp clonado al lado:
-DEV_MINIAPP_PATH=../miniapp-cards_wallet pnpm --filter @app/host start
+# desde la raíz del repo host (backstagereactnative):
+DEV_MINIAPP_PATH="$PWD/../miniapp-cards_wallet" pnpm --filter @app/host start
+# otra terminal (arrancá el dev server de arriba PRIMERO):
 pnpm --filter @app/host android
 # → en el Home tocá "▶ Dev Mount" → editá miniapp-cards_wallet/src/Screen.tsx
-#   → refresco instantáneo
+#   → refresco instantáneo, sin reiniciar la app
 ```
 
+> [!IMPORTANT]
+> `DEV_MINIAPP_PATH` se resuelve **relativo al CWD del dev server** (`apps/host`), no
+> al directorio donde tipeás → pasá un path **absoluto**. `"$PWD/../miniapp-<id>"`
+> desde la raíz del repo host apunta al miniapp hermano; una ruta como
+> `../miniapp-<id>` caería en `apps/miniapp-<id>` (inexistente) y verías el placeholder.
+
+- Arrancá el **dev server (T1) antes** que `pnpm android`: si no, RN levanta un Metro
+  sin el alias y cargás el placeholder.
 - Sin `DEV_MINIAPP_PATH`, "Dev Mount" muestra un placeholder (y en release ni se
   registra).
 - **Límite:** no prueba la federación (boundary MF, resolve, integridad). Y solo
