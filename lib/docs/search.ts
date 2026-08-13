@@ -36,6 +36,7 @@ function stripMd(s: string): string {
 export function buildSearchIndex(): SearchSection[] {
   const out: SearchSection[] = [];
   for (const doc of ALL_DOCS) {
+    if (doc.protected) continue; // los runbooks internos no van al índice público
     let md: string;
     try {
       md = readFileSync(path.join(process.cwd(), doc.file), "utf8");

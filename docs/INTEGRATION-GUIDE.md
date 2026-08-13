@@ -5,7 +5,7 @@
 > tu primera miniapp publicada y corriendo dentro del host móvil, entendiendo el
 > **contrato** que tenés que cumplir para que eso funcione.
 >
-> Demo viva del control-plane: **https://backstage-web-blond.vercel.app**
+> Para levantar tu propia instancia del control-plane, ver [Setup](/docs/setup).
 
 ---
 

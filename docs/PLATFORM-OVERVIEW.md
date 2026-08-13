@@ -16,7 +16,7 @@ se montan **en runtime**, sin que el host se recompile ni se vuelva a subir a
 las tiendas. Un **control-plane web (Backstage)** orquesta la creación,
 versión, distribución y gobernanza de esas miniapps.
 
-Demo live: **https://backstage-web-blond.vercel.app**
+Para levantar tu propia instancia, ver [Setup](/docs/setup).
 
 Cada miniapp es un equipo con su propio repo, su propio CI, su propio ciclo de
 release — publica una versión nueva cuando quiere, y esa versión llega al

@@ -22,6 +22,12 @@ const DOCS = [
 for (const d of DOCS) {
   let md = readFileSync(path.join(HOST, d.src), "utf8");
 
+  // El sitio de docs es público: genericizar info de la instancia real (hostname de
+  // producción + paths absolutos de la máquina del maintainer).
+  md = md
+    .replace(/https:\/\/backstage-web-blond\.vercel\.app/g, "https://<tu-proyecto>.vercel.app")
+    .replace(/\/Volumes\/SSDExterno\/prodproyects\//g, "../");
+
   // Links relativos (./ ../) → URL de GitHub del host-repo, resueltos desde srcDir.
   md = md.replace(/\]\((\.\.?\/[^)]+)\)/g, (_m, rel) => {
     const resolved = path.posix.normalize(path.posix.join(d.srcDir, rel));

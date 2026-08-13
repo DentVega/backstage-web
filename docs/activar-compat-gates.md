@@ -34,7 +34,7 @@ openssl rand -hex 32   # → <HOST_CONTRACT_TOKEN>
 **0.2 — Backstage (Vercel env, production):**
 ```bash
 vercel env add HOST_CONTRACT_TOKEN production   # pegás <HOST_CONTRACT_TOKEN>
-vercel env add HOST_REPO production             # ej. DentVega/backstagereactnative
+vercel env add HOST_REPO production             # ej. <owner>/backstagereactnative
 vercel --prod                                   # redeploy para tomar el env
 ```
 (`BACKSTAGE_URL`, `GITHUB_TOKEN`, `KV_*`, `BLOB_*` ya están.)
@@ -83,7 +83,7 @@ una miniapp sincroniza, su gate se saltea (guard de existencia) — no rompe.
 
 Para cada miniapp (o desde Backstage con el botón **"Actualizar desde template"**):
 ```bash
-gh workflow run template-sync.yml --repo DentVega/miniapp-<id> --ref main
+gh workflow run template-sync.yml --repo <owner>/miniapp-<id> --ref main
 ```
 Se abre un PR de sync en cada repo → **revisás y mergeás** (trae los scripts + `semver`).
 
@@ -101,7 +101,7 @@ Re-publicar cada miniapp hace que su CI corra `gen-manifest-shared` → el manif
 Para cada miniapp sincronizada (Paso 2), disparar un publish — botón **Deploy** en
 Backstage, o:
 ```bash
-gh workflow run publish.yml --repo DentVega/miniapp-<id> --ref main
+gh workflow run publish.yml --repo <owner>/miniapp-<id> --ref main
 # (o ci.yml, según cómo dispare el publish tu miniapp)
 ```
 

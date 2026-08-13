@@ -696,6 +696,9 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
 .hc-sublabel { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); margin: 0 0 10px; }
 .hc-count { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 5px; background: var(--surface-2); color: var(--muted); text-align: center; }
 
+.doc-gate { padding: 32px 0 48px; }
+.doc-gate p { color: var(--muted); margin: 12px 0 22px; max-width: 60ch; }
+
 @media (max-width: 620px) {
   .fleet-row { grid-template-columns: 1fr auto; }
   .fleet-ver { grid-column: 1 / -1; }

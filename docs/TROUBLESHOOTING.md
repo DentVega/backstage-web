@@ -7,7 +7,7 @@
 > `packages/host-runtime` + `apps/host` en `backstagereactnative`) — no es folklore.
 >
 > Si tu síntoma no está acá, revisá primero [`LOCAL-DEV.md` §7](./LOCAL-DEV.md#7-troubleshooting)
-> (dev-loop) y [`docs/mounting-miniapps.md`](https://github.com/DentVega/backstagereactnative/blob/main/docs/mounting-miniapps.md)
+> (dev-loop) y [`docs/mounting-miniapps.md`](https://github.com/<owner>/backstagereactnative/blob/main/docs/mounting-miniapps.md)
 > del repo del host (montaje), que tienen sus propias tablas de síntomas puntuales.
 
 ---

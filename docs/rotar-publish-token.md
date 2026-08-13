@@ -24,7 +24,7 @@ La comparación es timing-safe (no filtra el token por tiempo ni por longitud).
 
 2. **Setear el env en Vercel (prod)** y redeployar:
    - `PUBLISH_TOKEN` = `<nuevo>` (el de openssl)
-   - `PUBLISH_TOKENS_OLD` = `<viejo>` (el `dev-publish-secret` actual)
+   - `PUBLISH_TOKENS_OLD` = `<viejo>` (el token de publish anterior / inicial)
    ```bash
    vercel env add PUBLISH_TOKEN production        # pegás <nuevo>
    vercel env add PUBLISH_TOKENS_OLD production    # pegás <viejo>

@@ -16,7 +16,7 @@ pnpm build:packages
 ## La variable que manda: `BACKSTAGE_URL`
 
 Se **hornea en el bundle en build-time** (no hay `.env`). De ahí salen el catálogo y el
-resolve. Prod = `https://backstage-web-blond.vercel.app`; default sin setear =
+resolve. Prod = `https://<tu-proyecto>.vercel.app`; default sin setear =
 `http://localhost:3999`. Si la cambiás, **reiniciá el dev server** (dev) o **re-buildeá**
 (release) — un reload de JS no alcanza.
 
@@ -28,7 +28,7 @@ Dos terminales; `BACKSTAGE_URL` va en la del dev server (arma el JS):
 
 ```bash
 # Terminal A — dev server (Re.Pack)
-export BACKSTAGE_URL=https://backstage-web-blond.vercel.app
+export BACKSTAGE_URL=https://<tu-proyecto>.vercel.app
 cd apps/host && pnpm start
 
 # Terminal B — build + install
@@ -45,7 +45,7 @@ cd apps/host && pnpm android
 cd apps/host/ios && pod install && cd ..      # solo la 1ª vez
 
 # Terminal A — dev server
-export BACKSTAGE_URL=https://backstage-web-blond.vercel.app
+export BACKSTAGE_URL=https://<tu-proyecto>.vercel.app
 cd apps/host && pnpm start
 
 # Terminal B
@@ -62,7 +62,7 @@ dev server corriendo). ATS ya está resuelto; no toques `Info.plist`.
 ## 3 · PROD — Android (release, JS dentro del binario)
 
 ```bash
-export BACKSTAGE_URL=https://backstage-web-blond.vercel.app   # ANTES de buildear
+export BACKSTAGE_URL=https://<tu-proyecto>.vercel.app   # ANTES de buildear
 
 cd apps/host/android
 ./gradlew assembleRelease      # APK → app/build/outputs/apk/release/
@@ -74,7 +74,7 @@ Gradle invoca el bundle de Re.Pack y lo mete en el binario. No hay dev server en
 ## 4 · PROD — iOS (release)
 
 ```bash
-export BACKSTAGE_URL=https://backstage-web-blond.vercel.app   # ANTES de buildear
+export BACKSTAGE_URL=https://<tu-proyecto>.vercel.app   # ANTES de buildear
 cd apps/host && pnpm ios --mode Release
 ```
 
@@ -106,8 +106,8 @@ host, editar la miniapp da **Fast Refresh instantáneo**.
 
 ```bash
 # Terminal A — host dev server, apuntando a tu miniapp clonada al lado
-export BACKSTAGE_URL=https://backstage-web-blond.vercel.app
-DEV_MINIAPP_PATH=/Volumes/SSDExterno/prodproyects/miniapp-hellow_widget \
+export BACKSTAGE_URL=https://<tu-proyecto>.vercel.app
+DEV_MINIAPP_PATH=../miniapp-hellow_widget \
   pnpm --filter @app/host start
 
 # Terminal B — build + install
@@ -131,10 +131,10 @@ trae el fresco.
 
 ```bash
 # Terminal A — dev server de la miniapp (:9000 por default)
-cd /Volumes/SSDExterno/prodproyects/miniapp-hellow_widget && pnpm start
+cd ../miniapp-hellow_widget && pnpm start
 
 # Terminal B — host, mapeando el id a su dev server
-export BACKSTAGE_URL=https://backstage-web-blond.vercel.app
+export BACKSTAGE_URL=https://<tu-proyecto>.vercel.app
 DEV_REMOTES="hellow_widget=http://localhost:9000" \
   pnpm --filter @app/host start
 
@@ -147,18 +147,18 @@ pnpm --filter @app/host android
 
 ```bash
 # Terminal A — miniapp 1 (:9000 por default)
-cd /Volumes/SSDExterno/prodproyects/miniapp-hellow_widget && pnpm start
+cd ../miniapp-hellow_widget && pnpm start
 
 # Terminal B — miniapp 2 (otro puerto, para no chocar con :9000)
-cd /Volumes/SSDExterno/prodproyects/miniapp-cards_wallet && \
+cd ../miniapp-cards_wallet && \
   pnpm exec react-native webpack-start --port 9001
 
 # Terminal C — miniapp 3 (otro puerto más)
-cd /Volumes/SSDExterno/prodproyects/miniapp-account-dashboard && \
+cd ../miniapp-account-dashboard && \
   pnpm exec react-native webpack-start --port 9002
 
 # Terminal D — host, mapeando cada id a su dev server
-export BACKSTAGE_URL=https://backstage-web-blond.vercel.app
+export BACKSTAGE_URL=https://<tu-proyecto>.vercel.app
 DEV_REMOTES="hellow_widget=http://localhost:9000,\
 cards_wallet=http://localhost:9001,\
 account_dashboard=http://localhost:9002" \

@@ -715,7 +715,7 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
       Ver [`docs/activar-compat-gates.md`](./activar-compat-gates.md).
 - [ ] Selector de storage por UI verificado (default global + override por miniapp).
 - [ ] Borrado de miniapp+repo verificado (con `delete_repo` en el token).
-- [ ] `PUBLISH_TOKEN` rotado desde el `dev-publish-secret`/valor inicial a uno
+- [ ] `PUBLISH_TOKEN` rotado desde el token inicial a uno
       fuerte (`openssl rand -hex 32`). Ver [`docs/rotar-publish-token.md`](./rotar-publish-token.md).
 
 ---

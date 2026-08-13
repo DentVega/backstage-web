@@ -102,7 +102,7 @@ expone público en `GET /api/host-contract`.
 ## El shape real
 
 Este es el `host-contract.json` publicado hoy (generado el 2026-08-03, commit
-`406ee4c`), verificado contra el archivo real del repo del host:
+`<host-commit-sha>`), verificado contra el archivo real del repo del host:
 
 ```json
 {
@@ -143,7 +143,7 @@ Este es el `host-contract.json` publicado hoy (generado el 2026-08-03, commit
     }
   },
   "generatedAt": "2026-08-03T10:16:57.304Z",
-  "hostCommit": "406ee4ce37391a149ee53a8ac428bcb4111585ad"
+  "hostCommit": "<host-commit-sha>"
 }
 ```
 

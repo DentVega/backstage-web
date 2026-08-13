@@ -4,7 +4,7 @@
 > para quien integra: el host móvil (distribución), CI de una miniapp (publish) o un
 > operador humano (gestión vía UI/API).
 >
-> Base URL: **`https://backstage-web-blond.vercel.app`** (o tu propio deploy).
+> Base URL: **`https://<tu-proyecto>.vercel.app`** (o tu propio deploy).
 > Todos los endpoints son JSON salvo `upload`, que es `multipart/form-data`.
 > Todos corren en `runtime = "nodejs"`.
 
@@ -89,7 +89,7 @@ Con `platform=ios`, la respuesta usa el chunk iOS (`iosUrl`) y **pisa**
 todo lo demás — iOS nunca crea un manifest propio).
 
 ```bash
-curl "https://backstage-web-blond.vercel.app/api/resolve?id=acc&range=%5E1.0.0&platform=ios"
+curl "https://<tu-proyecto>.vercel.app/api/resolve?id=acc&range=%5E1.0.0&platform=ios"
 ```
 
 **Errores**
@@ -211,7 +211,7 @@ integrity viaja aparte (`iosIntegrity`) y `/api/resolve?platform=ios` lo inyecta
 el Android de esa misma versión (Android es canónico, iOS se adjunta).
 
 ```bash
-curl -X POST "https://backstage-web-blond.vercel.app/api/miniapps/acc/upload" \
+curl -X POST "https://<tu-proyecto>.vercel.app/api/miniapps/acc/upload" \
   -H "Authorization: Bearer $PUBLISH_TOKEN" \
   -F "file=@build.zip" \
   -F "version=1.2.0" \

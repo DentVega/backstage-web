@@ -6,6 +6,8 @@ export interface DocItem {
   /** Path del .md relativo a la raíz del repo (process.cwd()). */
   readonly file: string;
   readonly blurb: string;
+  /** Runbook interno: requiere login para leerlo y se excluye del índice público de búsqueda. */
+  readonly protected?: boolean;
 }
 
 export interface DocGroup {
@@ -91,6 +93,7 @@ export const DOC_GROUPS: readonly DocGroup[] = [
         title: "Compat gates",
         file: "docs/activar-compat-gates.md",
         blurb: "Encender los gates de compatibilidad (WARN vs ENFORCE).",
+        protected: true,
       },
       {
         slug: "actualizar-miniapp",

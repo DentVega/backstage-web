@@ -109,8 +109,8 @@ escribir nada de pipeline.
 > [!NOTE]
 > El publish sube a storage con integridad **sha256**. Verificá que quedó:
 > ```bash
-> curl "https://backstage-web-blond.vercel.app/api/resolve?id=<id>"
-> curl "https://backstage-web-blond.vercel.app/api/resolve?id=<id>&platform=ios"
+> curl "https://<tu-proyecto>.vercel.app/api/resolve?id=<id>"
+> curl "https://<tu-proyecto>.vercel.app/api/resolve?id=<id>&platform=ios"
 > ```
 
 ---

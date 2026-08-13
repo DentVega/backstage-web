@@ -22,7 +22,7 @@ El único acoplamiento web↔móvil es el contrato versionado `@org/miniapp-cont
 | Variable | Para qué | Nota |
 |---|---|---|
 | `AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` | Login GitHub (OAuth App) | Callback: `http://localhost:3999/api/auth/callback/github` |
-| `SCAFFOLD_ALLOWED_LOGINS` | Quién puede crear (CSV, case-insensitive) | Vacío = nadie (fail-closed). Ej. `DentVega` |
+| `SCAFFOLD_ALLOWED_LOGINS` | Quién puede crear (CSV, case-insensitive) | Vacío = nadie (fail-closed). Ej. `<tu-usuario>` |
 | `GITHUB_TOKEN` | Crear repos desde el template | PAT classic con scope `repo` |
 | `MINIAPP_TEMPLATE_REPO` | Repo template a clonar | Debe estar marcado **"Template repository"** en GitHub |
 | `PUBLISH_TOKEN` | Publicar desde CI | Solo para el flujo CI (la UI usa la sesión) |
@@ -47,7 +47,7 @@ Crea el **repo** (desde el template) y lo **registra** en el catálogo (aún sin
 ```bash
 curl -X POST http://localhost:3999/api/scaffold \
   -H "content-type: application/json" -b <cookie-de-sesión> \
-  -d '{"id":"cards_wallet","name":"Cards Wallet","owner":"DentVega"}'
+  -d '{"id":"cards_wallet","name":"Cards Wallet","owner":"<owner>"}'
 ```
 
 Resultado: la miniapp aparece en el catálogo; `GET /api/resolve?id=<id>` responde
