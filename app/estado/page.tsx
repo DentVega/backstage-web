@@ -78,9 +78,11 @@ export default async function EstadoPage() {
             <span className="tl a" /> <span className="tl" /> <span className="tl" />
             <span className="path">backstage · fleet</span>
           </div>
-          <div style={{ padding: "6px 0" }}>
+          <div>
             {s.fleet.length === 0 ? (
-              <p className="empty">No hay miniapps registradas todavía.</p>
+              <p className="empty" style={{ padding: "18px 16px" }}>
+                No hay miniapps registradas todavía.
+              </p>
             ) : (
               <ul className="fleet-list">
                 {s.fleet.map((f) => (
