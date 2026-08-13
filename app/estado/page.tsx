@@ -51,13 +51,15 @@ export default async function EstadoPage() {
             Lo que está corriendo ahora mismo — leído en vivo del registro al cargar.
           </p>
         </div>
-        <span className="live-dot" aria-hidden="true">● en vivo</span>
+        <span className="live-dot" role="status">
+          <span aria-hidden="true">●</span> en vivo
+        </span>
       </div>
 
       <ul className="estado-kpis">
-        <li className="kpi">
+        <li className="kpi kpi-hero">
           <span className="kpi-num">{s.totals.miniapps}</span>
-          <span className="kpi-label">miniapps</span>
+          <span className="kpi-label">miniapps en producción</span>
         </li>
         <li className="kpi">
           <span className="kpi-num">{s.totals.versions}</span>
@@ -67,59 +69,64 @@ export default async function EstadoPage() {
           <span className="kpi-num">{s.totals.iosAndAndroid}</span>
           <span className="kpi-label">iOS + Android</span>
         </li>
-        <li className="kpi">
-          <span className="kpi-num">
-            {s.contract.published ? `v${s.contract.contractVersion}` : "—"}
-          </span>
-          <span className="kpi-label">Host Contract</span>
-        </li>
-        <li className={`kpi kpi-gate ${s.gate}`}>
-          <span className="kpi-num">{s.gate === "enforce" ? "ENFORCE" : "WARN"}</span>
-          <span className="kpi-label">compat gate</span>
-        </li>
       </ul>
 
       <section className="estado-section">
         <h2>Flota</h2>
-        {s.fleet.length === 0 ? (
-          <p className="empty">No hay miniapps registradas todavía.</p>
-        ) : (
-          <ul className="fleet-list">
-            {s.fleet.map((f) => (
-              <li key={f.id} className="fleet-row">
-                <div className="fleet-main">
-                  <span className="fleet-name">{f.name}</span>
-                  <span className="fleet-owner">{f.owner}</span>
-                </div>
-                <div className="fleet-ver">
-                  <span className="fleet-served">
-                    {f.servedVersion ? `servida ${f.servedVersion}` : "sin versiones"}
-                  </span>
-                  {f.isRolledBack && (
-                    <span className="badge-rollback">rollback · última {f.latestVersion}</span>
-                  )}
-                </div>
-                <span className="fleet-count">{f.versionCount} vers</span>
-                <span className="plat-pills">
-                  {f.platforms.map((p) => (
-                    <span key={p} className={`plat-pill ${p}`}>
-                      {PLAT_LABEL[p]}
+        <div className="console">
+          <div className="console-top">
+            <span className="tl a" /> <span className="tl" /> <span className="tl" />
+            <span className="path">backstage · fleet</span>
+          </div>
+          <div style={{ padding: "6px 0" }}>
+            {s.fleet.length === 0 ? (
+              <p className="empty">No hay miniapps registradas todavía.</p>
+            ) : (
+              <ul className="fleet-list">
+                {s.fleet.map((f) => (
+                  <li key={f.id} className="fleet-row">
+                    <div className="fleet-main">
+                      <span className="fleet-name">{f.name}</span>
+                      <span className="fleet-owner">{f.owner}</span>
+                    </div>
+                    <div className="fleet-ver">
+                      <span className={f.servedVersion ? "fleet-served" : "fleet-served none"}>
+                        {f.servedVersion ? `servida ${f.servedVersion}` : "sin versiones"}
+                      </span>
+                      {f.isRolledBack && (
+                        <span className="badge-rollback">
+                          rollback · última {f.latestVersion}
+                        </span>
+                      )}
+                    </div>
+                    <span className="fleet-count">{f.versionCount} vers</span>
+                    <span className="plat-pills">
+                      {f.platforms.map((p) => (
+                        <span key={p} className={`plat-pill ${p}`}>
+                          {PLAT_LABEL[p]}
+                        </span>
+                      ))}
                     </span>
-                  ))}
-                </span>
-                {f.repoUrl ? (
-                  <a className="fleet-repo" href={f.repoUrl} target="_blank" rel="noreferrer">
-                    repo ↗
-                  </a>
-                ) : (
-                  <span className="fleet-repo" style={{ opacity: 0.4 }}>
-                    —
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+                    {f.repoUrl ? (
+                      <a
+                        className="fleet-repo"
+                        href={f.repoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        repo ↗
+                      </a>
+                    ) : (
+                      <span className="fleet-repo" style={{ opacity: 0.4 }}>
+                        —
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </section>
 
       <section className="estado-section">
