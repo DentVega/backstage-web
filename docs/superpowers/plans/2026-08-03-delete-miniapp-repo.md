@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Repo:** `/Volumes/SSDExterno/prodproyects/backstage-web`. Commits **locales** (push tras la review final). Directo a `main`.
+- **Owner:** DentVega. **Repo:** `backstage-web`. Commits **locales** (push tras la review final). Directo a `main`.
 - **Retrocompatible:** sin `?repo=true`, el DELETE hace exactamente lo de hoy (solo registry). Los tests existentes de `miniapp-delete-route.test.ts` siguen verdes.
 - **Orden repo→registry:** con `?repo=true`, se borra el repo primero; si falla (token sin `delete_repo`) → **403 con mensaje claro y registry intacto**. Repo ya borrado (404 GitHub) → no es error, sigue.
 - **Auth:** `canScaffold` (admin), igual que el DELETE actual.

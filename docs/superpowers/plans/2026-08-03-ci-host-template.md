@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Repos:** `backstagereactnative` en `/Volumes/SSDExterno/prodproyects/backstagereactnative`; `miniapp-template` en `/Volumes/SSDExterno/prodproyects/miniapp-template`.
+- **Repos:** `backstagereactnative` en `backstagereactnative`; `miniapp-template` en `miniapp-template`.
 - **`backstagereactnative/main` está PROTEGIDO** (`blast-radius` required, enforce_admins=true) → **no se puede push directo**; los cambios entran por **PR**.
 - **`miniapp-template/main` NO está protegido** → push directo permitido (se protege al final de este plan).
 - **Cero tests nuevos.** El único cambio de código es el script `test` del template. Si un task necesita escribir un test, algo salió mal — parar.
@@ -33,7 +33,7 @@
 
 - [ ] **Step 1: Crear el archivo con el contenido exacto**
 
-Crear `/Volumes/SSDExterno/prodproyects/backstagereactnative/.github/workflows/tests.yml`:
+Crear `backstagereactnative/.github/workflows/tests.yml`:
 
 ```yaml
 name: Tests
@@ -67,14 +67,14 @@ jobs:
 
 Run:
 ```bash
-ruby -ryaml -e "YAML.load_file('/Volumes/SSDExterno/prodproyects/backstagereactnative/.github/workflows/tests.yml'); puts 'YAML OK'"
+ruby -ryaml -e "YAML.load_file('backstagereactnative/.github/workflows/tests.yml'); puts 'YAML OK'"
 ```
 Expected: `YAML OK`.
 
 - [ ] **Step 3: Crear branch, commitear y abrir PR**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative
+cd backstagereactnative
 git checkout -b ci/tests-workflow
 git add .github/workflows/tests.yml
 git commit -m "ci: run test suites on PR (typecheck + jest + node:test)"
@@ -89,7 +89,7 @@ Expected: PR creado.
 
 Run:
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative
+cd backstagereactnative
 gh pr checks --repo DentVega/backstagereactnative --watch
 ```
 Expected: aparece el check **`test`** y termina en **success**; `blast-radius` también verde.
@@ -98,7 +98,7 @@ Expected: aparece el check **`test`** y termina en **success**; `blast-radius` t
 - [ ] **Step 5: Capturar el context name exacto y mergear**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative
+cd backstagereactnative
 HEAD_SHA=$(gh pr view --repo DentVega/backstagereactnative --json headRefOid --jq '.headRefOid')
 gh api repos/DentVega/backstagereactnative/commits/$HEAD_SHA/check-runs --jq '.check_runs[].name'   # anotar el context de tests (debería ser "test")
 gh pr merge --repo DentVega/backstagereactnative --squash --delete-branch
@@ -120,7 +120,7 @@ Expected: contexts listados (anotar `test`); PR mergeado a main.
 
 - [ ] **Step 1: Crear `tests.yml`**
 
-Crear `/Volumes/SSDExterno/prodproyects/miniapp-template/.github/workflows/tests.yml`:
+Crear `miniapp-template/.github/workflows/tests.yml`:
 
 ```yaml
 name: Tests
@@ -154,7 +154,7 @@ jobs:
 
 - [ ] **Step 2: Corregir el `test` script en `package.json`**
 
-En `/Volumes/SSDExterno/prodproyects/miniapp-template/package.json`, reemplazar la línea del script `test`:
+En `miniapp-template/package.json`, reemplazar la línea del script `test`:
 ```json
     "test": "jest"
 ```
@@ -165,7 +165,7 @@ por:
 
 - [ ] **Step 3: Agregar `tests.yml` a `.templatesyncignore`**
 
-En `/Volumes/SSDExterno/prodproyects/miniapp-template/.templatesyncignore`, agregar bajo el bloque de workflows (después de `.github/workflows/check-compat.yml`):
+En `miniapp-template/.templatesyncignore`, agregar bajo el bloque de workflows (después de `.github/workflows/check-compat.yml`):
 ```
 .github/workflows/tests.yml
 ```
@@ -174,7 +174,7 @@ En `/Volumes/SSDExterno/prodproyects/miniapp-template/.templatesyncignore`, agre
 
 Run:
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 ruby -ryaml -e "YAML.load_file('.github/workflows/tests.yml'); puts 'YAML OK'"
 node -e "require('./package.json').scripts.test.includes('node --test') && console.log('test-script OK')"
 grep -q 'tests.yml' .templatesyncignore && echo "ignore OK"
@@ -184,7 +184,7 @@ Expected: `YAML OK`, `test-script OK`, `ignore OK`.
 - [ ] **Step 5: Commit + push directo a main**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 git add .github/workflows/tests.yml package.json .templatesyncignore
 git commit -m "ci: run node:test suites on PR; fix test script; exclude tests.yml from sync"
 git push origin main
@@ -204,7 +204,7 @@ Expected: push OK (main no protegido).
 - [ ] **Step 1: Template — PR trivial para verificar el check + capturar context**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects
+cd <repos>
 R=miniapp-template; BR=ci/verify-tests
 MAIN=$(gh api repos/DentVega/$R/git/refs/heads/main --jq '.object.sha')
 gh api -X POST repos/DentVega/$R/git/refs -f ref="refs/heads/$BR" -f sha="$MAIN" >/dev/null
@@ -239,7 +239,7 @@ Expected: `template: required=[test] enforce_admins=false`.
 - [ ] **Step 3: Template — cerrar el PR throwaway**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects
+cd <repos>
 gh pr close "$(gh pr list --repo DentVega/miniapp-template --head ci/verify-tests --json number --jq '.[0].number')" --repo DentVega/miniapp-template --delete-branch
 ```
 Expected: PR cerrado, branch borrada.
@@ -248,7 +248,7 @@ Expected: PR cerrado, branch borrada.
 
 Leer la protección actual y re-aplicar con el context sumado:
 ```bash
-cd /Volumes/SSDExterno/prodproyects
+cd <repos>
 CUR=$(gh api repos/DentVega/backstagereactnative/branches/main/protection)
 STRICT=$(echo "$CUR" | python3 -c "import json,sys;print(str(json.load(sys.stdin)['required_status_checks']['strict']).lower())")
 ADMINS=$(echo "$CUR" | python3 -c "import json,sys;print(str(json.load(sys.stdin)['enforce_admins']['enabled']).lower())")
@@ -270,7 +270,7 @@ Expected: `host: required=[blast-radius,test] enforce_admins=true strict=...`.
 - [ ] **Step 5: Confirmar protección en ambos**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects
+cd <repos>
 for R in backstagereactnative miniapp-template; do
   gh api repos/DentVega/$R/branches/main/protection --jq '"'"'\(env.R): required=[\(.required_status_checks.contexts|join(","))]"'"'"' 2>/dev/null || \
   gh api repos/DentVega/$R/branches/main/protection --jq '.required_status_checks.contexts'

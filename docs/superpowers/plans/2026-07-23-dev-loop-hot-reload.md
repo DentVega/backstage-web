@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Host repo: `/Volumes/SSDExterno/prodproyects/backstagereactnative` (`apps/host` + `packages/host-runtime`). Owner DentVega. Docs in `/Volumes/SSDExterno/prodproyects/backstage-web/docs/LOCAL-DEV.md`.
+- Host repo: `backstagereactnative` (`apps/host` + `packages/host-runtime`). Owner DentVega. Docs in `backstage-web/docs/LOCAL-DEV.md`.
 - **Additive + `__DEV__`-gated:** nothing may change the release path. The alias falls back to `NoMiniapp` when `DEV_MINIAPP_PATH` is unset; `devResolveClient`/`noopVerifier`/the DevMount nav entry are used only under `__DEV__`.
 - `noopVerifier` ALREADY EXISTS in `packages/host-runtime/src/integrity.ts` (exported from `index.ts`) — Mode 2 imports it, does not build it.
 - Types: `ResolveResponse = { id: MiniappId; version: SemVer; url: string; manifest: Manifest }`; `Manifest = { id; version; entry; shared: SharedDepSpec[]; capabilities: Capability[]; integrity? }`; `MiniappEntryProps = { capabilities: CapabilityGrant }`; `createScopedGrant(caps): { grant }`.
@@ -25,7 +25,7 @@
 
 ## Task 1: Mode 1 rspack wiring — alias, DefinePlugin, NoMiniapp, globals
 
-**Files (in `/Volumes/SSDExterno/prodproyects/backstagereactnative/apps/host`):**
+**Files (in `backstagereactnative/apps/host`):**
 - Modify: `rspack.config.mjs`
 - Create: `src/dev/NoMiniapp.tsx`
 - Modify: `src/globals.d.ts`
@@ -123,13 +123,13 @@ declare const __DEV_REMOTES__: string;
 
 - [ ] **Step 4: Typecheck**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/backstagereactnative && pnpm --filter @app/host typecheck`
+Run: `cd backstagereactnative && pnpm --filter @app/host typecheck`
 Expected: no type errors. (`NoMiniapp` satisfies `MiniappEntryProps`; globals declared.)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative
+cd backstagereactnative
 git add apps/host/rspack.config.mjs apps/host/src/dev/NoMiniapp.tsx apps/host/src/globals.d.ts
 git commit -m "feat(host/dev): @dev-miniapp alias + dev globals + NoMiniapp placeholder"
 ```
@@ -227,13 +227,13 @@ In `src/screens/HomeScreen.tsx`, add a dev-only button that navigates to `DevMou
 
 - [ ] **Step 5: Typecheck**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/backstagereactnative && pnpm --filter @app/host typecheck`
+Run: `cd backstagereactnative && pnpm --filter @app/host typecheck`
 Expected: no type errors.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative
+cd backstagereactnative
 git add apps/host/src/dev/DevMountScreen.tsx apps/host/src/navigation.ts apps/host/App.tsx apps/host/src/screens/HomeScreen.tsx
 git commit -m "feat(host/dev): DevMount screen + dev-gated nav entry (Mode 1)"
 ```
@@ -251,7 +251,7 @@ Not automatable. To verify Fast Refresh: `DEV_MINIAPP_PATH=../miniapp-account-da
 - [ ] **Step 1: Serve a miniapp's dev container**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-account-dashboard
+cd miniapp-account-dashboard
 pnpm start &   # react-native webpack-start --port 9000 (or its configured port)
 sleep 20
 ```
@@ -334,7 +334,7 @@ describe('devResolveClient', () => {
 
 - [ ] **Step 2: Run it — fails**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/backstagereactnative && pnpm --filter @dentvega/host-runtime test devResolveClient`
+Run: `cd backstagereactnative && pnpm --filter @dentvega/host-runtime test devResolveClient`
 Expected: FAIL — cannot find `../devResolveClient`.
 
 - [ ] **Step 3: Implement `devResolveClient.ts`**
@@ -404,13 +404,13 @@ export { parseDevRemotes, devResolveClient, isDevRemote } from "./devResolveClie
 
 - [ ] **Step 5: Run tests — pass**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/backstagereactnative && pnpm --filter @dentvega/host-runtime test devResolveClient`
+Run: `cd backstagereactnative && pnpm --filter @dentvega/host-runtime test devResolveClient`
 Expected: PASS (all cases).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative
+cd backstagereactnative
 git add packages/host-runtime/src/devResolveClient.ts packages/host-runtime/src/__tests__/devResolveClient.test.ts packages/host-runtime/src/index.ts
 git commit -m "feat(host-runtime): devResolveClient + parseDevRemotes (Mode 2, dev-only)"
 ```
@@ -468,7 +468,7 @@ Then in the component's returned JSX, choose the verifier per id:
 
 - [ ] **Step 2: Typecheck**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/backstagereactnative && pnpm --filter @app/host typecheck`
+Run: `cd backstagereactnative && pnpm --filter @app/host typecheck`
 Expected: no type errors.
 
 - [ ] **Step 3: Manual verification note (controller/user)**
@@ -478,7 +478,7 @@ Not automatable. Verify: miniapp `pnpm start` (:9000); host `DEV_REMOTES="accoun
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative
+cd backstagereactnative
 git add apps/host/src/screens/MiniappScreen.tsx
 git commit -m "feat(host/dev): MiniappScreen consumes dev remotes under __DEV__ (Mode 2)"
 ```
@@ -488,7 +488,7 @@ git commit -m "feat(host/dev): MiniappScreen consumes dev remotes under __DEV__ 
 ## Task 6: Docs — LOCAL-DEV.md "Hot reload / dev-loop rápido"
 
 **Files:**
-- Modify: `/Volumes/SSDExterno/prodproyects/backstage-web/docs/LOCAL-DEV.md`
+- Modify: `backstage-web/docs/LOCAL-DEV.md`
 
 - [ ] **Step 1: Add a section**
 
@@ -503,7 +503,7 @@ Only if Tasks 4–5 were skipped (spike NO-GO), document Modo 1 only and note Mo
 - [ ] **Step 2: Verify fences balanced + commit**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstage-web
+cd backstage-web
 test $(( $(grep -c '```' docs/LOCAL-DEV.md) % 2 )) -eq 0 && echo "fences ok"
 git add docs/LOCAL-DEV.md
 git commit -m "docs(local-dev): hot reload dev-loop (Modo 1 dev-mount + Modo 2 dev server)"

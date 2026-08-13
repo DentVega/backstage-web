@@ -16,7 +16,7 @@
 - **Storage iOS:** subfolder `${id}/${version}/ios/` (evita colisión con Android; el `containerName` es el mismo `${id}.container.js.bundle`).
 - **Resolve iOS:** override `manifest.integrity ← iosIntegrity`; si falta `iosUrl` → `NoCompatibleVersionError`.
 - **Platform del host:** `Platform.OS === "ios" ? "ios" : "android"` (nunca mandar otros valores).
-- **Repos:** backstage-web `/Volumes/SSDExterno/prodproyects/backstage-web` (commits **directo a main**, patrón de la sesión). backstagereactnative `/Volumes/SSDExterno/prodproyects/backstagereactnative` (**vía PR**, branch protection: check `blast-radius` + `test`). miniapp-hellow_widget `/Volumes/SSDExterno/prodproyects/miniapp-hellow_widget`.
+- **Repos:** backstage-web `backstage-web` (commits **directo a main**, patrón de la sesión). backstagereactnative `backstagereactnative` (**vía PR**, branch protection: check `blast-radius` + `test`). miniapp-hellow_widget `miniapp-hellow_widget`.
 - **Contrato:** `ResolveRequest.platform?` vive en el paquete de contrato del host-repo; backstage-web NO depende de ese tipo (lee `?platform=` del querystring) → sin republish cross-repo.
 
 ---
@@ -494,7 +494,7 @@ git add app/api/resolve/route.ts app/api/__tests__/resolve-route.test.ts
 git commit -m "feat(resolve): /api/resolve?platform=ios (#13)"
 ```
 
-> **Deploy:** el push a `main` de backstage-web redeploya Vercel. Antes de seguir, verificá no-regresión Android en prod: `GET https://backstage-web-blond.vercel.app/api/resolve?id=hellow_widget` sigue devolviendo el chunk Android igual que antes.
+> **Deploy:** el push a `main` de backstage-web redeploya Vercel. Antes de seguir, verificá no-regresión Android en prod: `GET https://<tu-proyecto>.vercel.app/api/resolve?id=hellow_widget` sigue devolviendo el chunk Android igual que antes.
 
 ---
 
@@ -514,7 +514,7 @@ git commit -m "feat(resolve): /api/resolve?platform=ios (#13)"
 - [ ] **Step 0: Crear branch**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative
+cd backstagereactnative
 git checkout -b feat/ios-resolve-platform
 ```
 
@@ -552,7 +552,7 @@ describe('httpResolveClient — platform', () => {
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run (desde `/Volumes/SSDExterno/prodproyects/backstagereactnative`): `pnpm --filter @dentvega/host-runtime test ResolveClient`
+Run (desde `backstagereactnative`): `pnpm --filter @dentvega/host-runtime test ResolveClient`
 Expected: FAIL (no incluye platform) o error de tipo (`platform` no existe en ResolveRequest).
 
 - [ ] **Step 3: `ResolveRequest += platform`** — in `packages/miniapp-contract/src/types.ts`, dentro de `ResolveRequest` (después de `version?`):
@@ -728,7 +728,7 @@ git commit -m "feat(publish): bundle:ios + publish android+ios a la misma versio
 - [ ] **Step 1: Buildear ambos chunks localmente**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-hellow_widget
+cd miniapp-hellow_widget
 pnpm bundle:android && (cd build && zip -j android.zip hellow_widget.container.js.bundle)
 pnpm bundle:ios && (cd build/ios && zip -j ../ios.zip hellow_widget.container.js.bundle)
 ```
@@ -736,7 +736,7 @@ pnpm bundle:ios && (cd build/ios && zip -j ../ios.zip hellow_widget.container.js
 - [ ] **Step 2: Publicar ambos a una nueva versión (misma V)**
 
 ```bash
-BACKSTAGE_URL=https://backstage-web-blond.vercel.app PUBLISH_TOKEN=<token> \
+BACKSTAGE_URL=https://<tu-proyecto>.vercel.app PUBLISH_TOKEN=<token> \
   node scripts/publish.mjs build/android.zip build/ios.zip
 ```
 
@@ -745,7 +745,7 @@ Expected: dos líneas `published hellow_widget@X.Y.Z [android]` y `[ios]` a la M
 - [ ] **Step 3: Verificar el resolve iOS en prod**
 
 ```bash
-curl -s "https://backstage-web-blond.vercel.app/api/resolve?id=hellow_widget&platform=ios" | jq '{url, integrity: .manifest.integrity}'
+curl -s "https://<tu-proyecto>.vercel.app/api/resolve?id=hellow_widget&platform=ios" | jq '{url, integrity: .manifest.integrity}'
 ```
 
 Expected: `url` termina en `/ios/hellow_widget.container.js.bundle`; `integrity` presente. Y sin `platform` → el chunk Android (no-regresión).
@@ -753,7 +753,7 @@ Expected: `url` termina en `/ios/hellow_widget.container.js.bundle`; `integrity`
 - [ ] **Step 4: Firma en Xcode**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative/apps/host/ios && pod install
+cd backstagereactnative/apps/host/ios && pod install
 open host.xcworkspace
 ```
 
@@ -762,7 +762,7 @@ En Xcode: target `host` → Signing & Capabilities → seleccionar **Team** (tu 
 - [ ] **Step 5: Simulador (sin firma) — valida el pipeline**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative/apps/host && pnpm ios
+cd backstagereactnative/apps/host && pnpm ios
 ```
 
 Expected: la app arranca en el Simulador iOS; abrir `hellow_widget` → **monta** (resuelve el chunk iOS, verifica integrity iOS, renderiza).

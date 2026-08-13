@@ -6,7 +6,7 @@
 
 ## Global Constraints
 
-- **Repo:** `backstage-web`, `/Volumes/SSDExterno/prodproyects/backstage-web`. Tests = **vitest**. `main` acepta push directo (dispara redeploy de Vercel).
+- **Repo:** `backstage-web`, `backstage-web`. Tests = **vitest**. `main` acepta push directo (dispara redeploy de Vercel).
 - **Freeze**: publicar NO despina. `publishVersion` no se toca.
 - El pin solo gobierna el branch por defecto de `resolveMiniapp`; `?version=`/`?range=` explícito manda.
 - Espeja el patrón de storage-provider (`setMiniappStorageProvider`, `PUT /storage-provider`, `MiniappStorageControl`).

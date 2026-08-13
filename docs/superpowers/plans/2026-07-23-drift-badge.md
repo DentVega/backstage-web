@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Repo: `/Volumes/SSDExterno/prodproyects/backstage-web`. Owner DentVega. Direct to `main`.
+- Repo: `backstage-web`. Owner DentVega. Direct to `main`.
 - `DriftStatus = "up_to_date" | "drift" | "untracked" | "unknown"`.
 - Token: the drift provider reads GitHub with the scaffolder `githubToken()` (from `@/lib/config`) — NOT a session token. The template repo is `TEMPLATE_REPO` (from `@/lib/config`, = `process.env.MINIAPP_TEMPLATE_REPO`). Never hardcode `DentVega/miniapp-template`.
 - **Provider throws on error** (unlike the CI provider which never throws): `getBaseSha` returns `null` on 404 (untracked) but THROWS on other failures, so `resolve` can distinguish `untracked` (null) from `unknown` (throw). `resolveDriftStatuses` catches per-item → `unknown` (fail-soft; never breaks the render).
@@ -85,7 +85,7 @@ describe("resolveDriftStatuses", () => {
 
 - [ ] **Step 2: Run it — fails**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/backstage-web && npx vitest run lib/drift/__tests__/resolve.test.ts`
+Run: `cd backstage-web && npx vitest run lib/drift/__tests__/resolve.test.ts`
 Expected: FAIL — cannot resolve `@/lib/drift/resolve` / `@/lib/drift/mock`.
 
 - [ ] **Step 3: Create `lib/drift/types.ts`**
@@ -239,7 +239,7 @@ export function getDriftProvider(): never {
 
 - [ ] **Step 7: Run tests — pass**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/backstage-web && npx vitest run lib/drift/__tests__/resolve.test.ts`
+Run: `cd backstage-web && npx vitest run lib/drift/__tests__/resolve.test.ts`
 Expected: PASS (3 tests) — the mock is injected, so the `getDriftProvider` stub is never called.
 
 - [ ] **Step 8: Typecheck + commit**

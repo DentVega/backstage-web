@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Repo:** `/Volumes/SSDExterno/prodproyects/backstage-web`. Commits **locales** (push tras la review final). Directo a `main`.
+- **Owner:** DentVega. **Repo:** `backstage-web`. Commits **locales** (push tras la review final). Directo a `main`.
 - **Precedencia:** override de la miniapp (si su provider está en `availableProviders()`) → default global (`getStorageProviderState().active`) → env-order[0]. Fallback seguro en cada nivel.
 - **`StorageProvider = "r2" | "blob" | "fs"`** (ya existe en `lib/storage/provider.ts`). En `registry` importarlo **type-only** (`import type`), sin acoplar runtime.
 - **Auth:** el PUT exige `canScaffold(session?.githubLogin, scaffoldAllowedLogins())` (403 si no); lazy `await import("@/auth")`.

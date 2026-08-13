@@ -20,7 +20,7 @@
   Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_01MPXCf3ev2d17B2N5RgKVJS
   ```
-- Repo: `/Volumes/SSDExterno/prodproyects/backstagereactnative` (paquete en `packages/miniapp-contract`). Trabajar desde ahí. Commits **locales**; NO publicar el paquete (el republish es un paso operacional posterior).
+- Repo: `backstagereactnative` (paquete en `packages/miniapp-contract`). Trabajar desde ahí. Commits **locales**; NO publicar el paquete (el republish es un paso operacional posterior).
 - Correr los tests con el runner del paquete: `pnpm --filter @dentvega/miniapp-contract test` (o `pnpm test` dentro de `packages/miniapp-contract`). Typecheck: `pnpm typecheck` ahí mismo.
 
 ---

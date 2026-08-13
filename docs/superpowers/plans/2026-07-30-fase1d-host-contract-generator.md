@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Owner:** DentVega. **Sin dependencias nuevas.**
-- **Repo:** `/Volumes/SSDExterno/prodproyects/backstagereactnative`, todo bajo `apps/host`. Trabajar desde ahí. Commits **locales** (no push; el controller pushea tras la review final).
+- **Repo:** `backstagereactnative`, todo bajo `apps/host`. Trabajar desde ahí. Commits **locales** (no push; el controller pushea tras la review final).
 - **Behavior-preserving:** el refactor del `shared` NO debe cambiar el objeto que recibe `ModuleFederationPluginV2` — `buildMfShared(SHARED_DEPS, pkgVersion)` tiene que producir **exactamente** el bloque actual (snapshot-test lo bloquea).
 - **FUERA DE ALCANCE (diferido): natives-as-singletons.** Agregar `react-native-screens`/`safe-area-context`/`reanimated` al `shared` cambia el runtime del host y **necesita validación en device** — NO va en este plan. El generador emite `nativeModules: []` (se puebla en Fase 2). Este plan usa el set de shared ACTUAL.
 - Tests de scripts con `node --test` (jest usa preset `react-native`, no sirve para scripts Node puros). Jest debe **ignorar** `scripts/`.

@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Owner:** DentVega. **Sin dependencias nuevas.**
-- **Repo:** `/Volumes/SSDExterno/prodproyects/backstage-web`. Commits **locales** (no push).
+- **Repo:** `backstage-web`. Commits **locales** (no push).
 - **NO rompe el publish:** la apertura de pedidos es best-effort dentro del bloque warn-mode del `/upload` — cualquier fallo → warn, sigue 201.
 - **Dedup:** `ensureIssue` NO crea un segundo issue si ya hay uno abierto con el mismo título.
 - Al agregar `ensureIssue` al `GitProvider`, **actualizar `lib/git/mock.ts` Y cualquier literal `GitProvider` inline en tests** (si no, no compila) — grep `createFromTemplate:` en tests.

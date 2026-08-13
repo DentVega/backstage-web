@@ -16,7 +16,7 @@
 - Miniapp-owned files (never overwritten): `src/Screen.tsx`, `manifest.json`, `README.md`, `README.es.md`, `.template-sync`.
 - Marker file `.template-sync` shape: `{ "templateRepo": "DentVega/miniapp-template", "baseSha": "<40-hex>" }`.
 - Current template HEAD (baseSha for backfill): `d5cc652c5a9abc48567d470534ee06e94da12435`.
-- Backstage repo: `/Volumes/SSDExterno/prodproyects/backstage-web`. Template repo: `/Volumes/SSDExterno/prodproyects/miniapp-template`.
+- Backstage repo: `backstage-web`. Template repo: `miniapp-template`.
 - Commit trailer for every commit:
   ```
   Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -408,7 +408,7 @@ git commit -m "feat(ui): 'Actualizar desde template' button on the miniapp detai
 
 ## Task 3: Template merge engine (`template-sync.yml` + `.templatesyncignore`)
 
-**Files (in `/Volumes/SSDExterno/prodproyects/miniapp-template`):**
+**Files (in `miniapp-template`):**
 - Create: `.github/workflows/template-sync.yml`
 - Create: `.templatesyncignore`
 
@@ -551,7 +551,7 @@ Expected: `yaml ok`.
 - [ ] **Step 4: Commit + push the template**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 git add .github/workflows/template-sync.yml .templatesyncignore
 git commit -m "feat(template): template-sync.yml (3-way merge PR) + .templatesyncignore"
 git push origin main
@@ -563,7 +563,7 @@ Note: pushing a new workflow file needs a token with `workflow` scope; use the r
 
 ## Task 4: New scaffolds self-record `.template-sync`
 
-**Files (in `/Volumes/SSDExterno/prodproyects/miniapp-template`):**
+**Files (in `miniapp-template`):**
 - Modify: `.github/workflows/init-template.yml`
 
 **Interfaces:**
@@ -594,7 +594,7 @@ Expected: `yaml ok`.
 - [ ] **Step 3: Commit + push**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 git add .github/workflows/init-template.yml
 git commit -m "feat(template): init writes .template-sync marker for new scaffolds"
 git push origin main
@@ -616,7 +616,7 @@ Both repos are already at the current template state, so their baseSha is the te
 
 ```bash
 SCR=/private/tmp/claude-501/-Volumes-SSDExterno-prodproyects-backstage-web/5db4d988-16f5-4dce-84c0-b911146cb07f/scratchpad
-TPL=/Volumes/SSDExterno/prodproyects/miniapp-template
+TPL=miniapp-template
 BASE="$(git -C "$TPL" rev-parse origin/main)"
 for R in miniapp-hellow_widget miniapp-cards_wallet; do
   D="$SCR/backfill-$R"
@@ -655,7 +655,7 @@ Expected: each prints a `.template-sync` JSON with the template HEAD sha and `te
 
 After Tasks 1–2 are pushed to `backstage-web` main, Vercel redeploys. Confirm:
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstage-web
+cd backstage-web
 vercel ls backstage-web --prod 2>&1 | sed -n '5,7p'
 ```
 Expected: latest Production deployment shows `Ready`.
@@ -664,7 +664,7 @@ Expected: latest Production deployment shows `Ready`.
 
 Add a harmless comment to a template-owned file so the sync has something to merge:
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 printf '\n// template-sync smoke test %s\n' "$(git rev-parse --short HEAD)" >> babel.config.cjs
 git commit -am "chore: template smoke change for sync test"
 git push origin main
@@ -696,7 +696,7 @@ Merge the PR (`gh pr merge "$PR" --repo DentVega/miniapp-cards_wallet --squash`)
 - [ ] **Step 6: Clean up the smoke change**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 git revert --no-edit HEAD   # revert the babel.config.cjs smoke comment
 git push origin main
 ```

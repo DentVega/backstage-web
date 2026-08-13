@@ -30,7 +30,7 @@
 ## Task 1: backstage-web CI workflow (#5)
 
 **Files:**
-- Create: `.github/workflows/ci.yml` (in `/Volumes/SSDExterno/prodproyects/backstage-web`)
+- Create: `.github/workflows/ci.yml` (in `backstage-web`)
 
 **Interfaces:**
 - Produces: a `CI` workflow running `tsc --noEmit` + `vitest run` on `pull_request` and `push` to `main`.
@@ -91,7 +91,7 @@ Expected: tsc clean; `Tests  135 passed` (or current count, all passing).
 - [ ] **Step 4: Commit + push**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstage-web
+cd backstage-web
 git add .github/workflows/ci.yml
 git commit -m "ci: run tsc + vitest on PRs and pushes to main"
 git push origin main
@@ -107,7 +107,7 @@ Expected: the run for the push completes with `success` (allow ~1–2 min; re-ch
 ## Task 2: `version.mjs` pure functions + `node:test` (#4 core)
 
 **Files:**
-- Create: `scripts/version.mjs` (in `/Volumes/SSDExterno/prodproyects/miniapp-template`)
+- Create: `scripts/version.mjs` (in `miniapp-template`)
 - Test: `scripts/publish.test.mjs`
 
 **Interfaces:**
@@ -153,7 +153,7 @@ test("nextVersion: honors an intentional dev bump (want > latest)", () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/miniapp-template && node --test scripts/publish.test.mjs`
+Run: `cd miniapp-template && node --test scripts/publish.test.mjs`
 Expected: FAIL — cannot resolve `./version.mjs`.
 
 - [ ] **Step 3: Implement `version.mjs`**
@@ -199,13 +199,13 @@ export function nextVersion(latest, want) {
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/miniapp-template && node --test scripts/publish.test.mjs`
+Run: `cd miniapp-template && node --test scripts/publish.test.mjs`
 Expected: PASS — `# pass 6`, `# fail 0`.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 git add scripts/version.mjs scripts/publish.test.mjs
 git commit -m "feat(publish): pure version helpers (parseVer/cmpVer/bumpPatch/nextVersion) + tests"
 ```
@@ -217,7 +217,7 @@ git commit -m "feat(publish): pure version helpers (parseVer/cmpVer/bumpPatch/ne
 ## Task 3: Wire auto-bump into `publish.mjs` (#4)
 
 **Files:**
-- Modify: `scripts/publish.mjs` (in `/Volumes/SSDExterno/prodproyects/miniapp-template`)
+- Modify: `scripts/publish.mjs` (in `miniapp-template`)
 
 **Interfaces:**
 - Consumes: `nextVersion` from `./version.mjs` (Task 2).
@@ -301,18 +301,18 @@ console.log(`published ${id}@${version} (latest was ${latest ?? "none"}): ${body
 
 - [ ] **Step 2: Syntax-check the script**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/miniapp-template && node --check scripts/publish.mjs`
+Run: `cd miniapp-template && node --check scripts/publish.mjs`
 Expected: no output (valid). Note: `node --check` does not support top-level `await` validation in all versions; if it errors on `await`, instead run `node -e "import('./scripts/publish.mjs').catch(()=>{})"` with no args and confirm it exits on the usage guard (`usage: node scripts/publish.mjs <build.zip>`) — proving the module parses and imports `version.mjs`.
 
 - [ ] **Step 3: Re-run the version tests (unchanged, still green)**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/miniapp-template && node --test scripts/publish.test.mjs`
+Run: `cd miniapp-template && node --test scripts/publish.test.mjs`
 Expected: PASS — `# pass 6`.
 
 - [ ] **Step 4: Commit + push (Tasks 2 + 3 together)**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 git add scripts/publish.mjs
 git commit -m "feat(publish): auto-bump version from registry latestVersion (no 409 on re-deploy)"
 git push origin main
@@ -374,7 +374,7 @@ Expected: `version.mjs` present; `publish.mjs` references `nextVersion`.
 - [ ] **Step 1: Record cards_wallet's current latest version**
 
 ```bash
-curl -s "https://backstage-web-blond.vercel.app/api/miniapps" \
+curl -s "https://<tu-proyecto>.vercel.app/api/miniapps" \
   | python3 -c "import sys,json;m=[x for x in json.load(sys.stdin)['miniapps'] if x['id']=='cards_wallet'][0];print('before:',m['latestVersion'],'count',m['versionCount'])"
 ```
 Record the value (e.g. `0.1.0`). Note: merging the sync PR in Task 4 already pushed to main, which triggers `ci.yml` (publish) once — that first auto-bump may have already advanced it.
@@ -392,7 +392,7 @@ Expected: run succeeds (no 409).
 - [ ] **Step 3: Confirm the version auto-incremented**
 
 ```bash
-curl -s "https://backstage-web-blond.vercel.app/api/miniapps" \
+curl -s "https://<tu-proyecto>.vercel.app/api/miniapps" \
   | python3 -c "import sys,json;m=[x for x in json.load(sys.stdin)['miniapps'] if x['id']=='cards_wallet'][0];print('after:',m['latestVersion'],'count',m['versionCount'])"
 ```
 Expected: `latestVersion` is one patch higher than the previous latest, `versionCount` +1 — and the run did NOT 409.

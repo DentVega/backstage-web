@@ -6,7 +6,7 @@
 
 ## Global Constraints
 
-- **Repo:** `backstagereactnative`, `/Volumes/SSDExterno/prodproyects/backstagereactnative`.
+- **Repo:** `backstagereactnative`, `backstagereactnative`.
 - **`main` protegido** (`blast-radius` + `test` required, enforce_admins) → entra por **PR**.
 - Solo `dependencies` (no devDeps). `native ⊆ dependencies` NO se exige.
 - El código completo está en el spec `2026-08-04-shared-deps-reconcile-design.md`.

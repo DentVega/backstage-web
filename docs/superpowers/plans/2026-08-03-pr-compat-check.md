@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Repo de trabajo:** `miniapp-template` en `/Volumes/SSDExterno/prodproyects/miniapp-template`. El spec vive en `backstage-web` pero **el código es todo en `miniapp-template`**.
+- **Repo de trabajo:** `miniapp-template` en `miniapp-template`. El spec vive en `backstage-web` pero **el código es todo en `miniapp-template`**.
 - **`miniapp-template/main` NO está protegido** → push directo a `main` permitido (patrón del proyecto).
 - **Cero cambios en `scripts/*.mjs` y en `publish.yml`.** Solo YAML nuevo/modificado. Si un task necesita tocar un `.mjs`, algo salió mal — parar y preguntar.
 - **`check-compat.yml` usa `COMPAT_ENFORCE: "1"` fijo** (literal string), NO `${{ vars.COMPAT_ENFORCE }}`. El enforce de rollout ya terminó; el PR check siempre bloquea/rojo.
@@ -25,7 +25,7 @@
 ### Task 1: Reusable workflow `check-compat.yml`
 
 **Files:**
-- Create: `/Volumes/SSDExterno/prodproyects/miniapp-template/.github/workflows/check-compat.yml`
+- Create: `miniapp-template/.github/workflows/check-compat.yml`
 
 **Interfaces:**
 - Consumes: los scripts existentes `scripts/gen-manifest-shared.mjs` y `scripts/check-compat.mjs` (sin cambios); el secreto `BACKSTAGE_URL`; el `secrets.GITHUB_TOKEN` automático (para leer `@dentvega/*` de GitHub Packages).
@@ -33,7 +33,7 @@
 
 - [ ] **Step 1: Crear el archivo con el contenido exacto**
 
-Crear `/Volumes/SSDExterno/prodproyects/miniapp-template/.github/workflows/check-compat.yml`:
+Crear `miniapp-template/.github/workflows/check-compat.yml`:
 
 ```yaml
 name: Compat check (reusable)
@@ -96,7 +96,7 @@ jobs:
 
 Run:
 ```bash
-ruby -ryaml -e "YAML.load_file('/Volumes/SSDExterno/prodproyects/miniapp-template/.github/workflows/check-compat.yml'); puts 'YAML OK'"
+ruby -ryaml -e "YAML.load_file('miniapp-template/.github/workflows/check-compat.yml'); puts 'YAML OK'"
 ```
 Expected: `YAML OK` (sin excepción de psych).
 
@@ -104,7 +104,7 @@ Expected: `YAML OK` (sin excepción de psych).
 
 Run:
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 grep -q 'COMPAT_ENFORCE: "1"' .github/workflows/check-compat.yml && echo "enforce-fijo OK"
 grep -q 'workflow_call' .github/workflows/check-compat.yml && echo "reusable OK"
 ! grep -q 'PUBLISH_TOKEN' .github/workflows/check-compat.yml && echo "sin-publish-token OK"
@@ -115,7 +115,7 @@ Expected: las 4 líneas `... OK`.
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 git add .github/workflows/check-compat.yml
 git commit -m "ci: reusable check-compat.yml (PR-time compat gate, no build/publish)"
 ```
@@ -125,7 +125,7 @@ git commit -m "ci: reusable check-compat.yml (PR-time compat gate, no build/publ
 ### Task 2: Wire `ci.yml` — trigger `pull_request` + job `compat` + guard en `publish`
 
 **Files:**
-- Modify: `/Volumes/SSDExterno/prodproyects/miniapp-template/.github/workflows/ci.yml`
+- Modify: `miniapp-template/.github/workflows/ci.yml`
 
 **Interfaces:**
 - Consumes: el reusable `check-compat.yml@main` de Task 1.
@@ -149,7 +149,7 @@ jobs:
 
 - [ ] **Step 1: Reemplazar el contenido completo de `ci.yml`**
 
-Escribir `/Volumes/SSDExterno/prodproyects/miniapp-template/.github/workflows/ci.yml` con:
+Escribir `miniapp-template/.github/workflows/ci.yml` con:
 
 ```yaml
 name: Publish miniapp
@@ -184,7 +184,7 @@ jobs:
 
 Run:
 ```bash
-ruby -ryaml -e "YAML.load_file('/Volumes/SSDExterno/prodproyects/miniapp-template/.github/workflows/ci.yml'); puts 'YAML OK'"
+ruby -ryaml -e "YAML.load_file('miniapp-template/.github/workflows/ci.yml'); puts 'YAML OK'"
 ```
 Expected: `YAML OK`.
 
@@ -192,7 +192,7 @@ Expected: `YAML OK`.
 
 Run:
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 grep -q 'pull_request:' .github/workflows/ci.yml && echo "trigger-pr OK"
 grep -q "if: github.event_name != 'pull_request'" .github/workflows/ci.yml && echo "publish-guard OK"
 grep -q 'check-compat.yml@main' .github/workflows/ci.yml && echo "llama-reusable OK"
@@ -202,7 +202,7 @@ Expected: las 3 líneas `... OK`.
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 git add .github/workflows/ci.yml
 git commit -m "ci: run compat gate on pull_request (shift-left); publish skips PRs"
 ```
@@ -221,7 +221,7 @@ git commit -m "ci: run compat gate on pull_request (shift-left); publish skips P
 - [ ] **Step 1: Push a `main` de `miniapp-template`**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 git push origin main
 ```
 Expected: push OK (main no protegido).
@@ -240,7 +240,7 @@ Expected: `hellow_widget synced OK`. Si falla: el sync aún no se mergeó — co
 
 PR #4 (`demo/miniapp-adds-native`, agrega `react-native-mmkv`) ya existe. Al estar `ci.yml` sincronizado con el trigger `pull_request`, empujar un commit vacío a su branch para re-disparar los checks:
 ```bash
-cd /Volumes/SSDExterno/prodproyects
+cd <repos>
 # refrescar el branch del PR para gatillar el nuevo trigger
 gh api repos/DentVega/miniapp-hellow_widget/git/refs/heads/demo/miniapp-adds-native --jq '.object.sha'
 gh pr checks 4 --repo DentVega/miniapp-hellow_widget --watch
@@ -255,7 +255,7 @@ Expected en el log del job `compat`: `check-compat: INCOMPATIBLE with host contr
 
 Crear un PR con un cambio inocuo (sin tocar deps):
 ```bash
-cd /Volumes/SSDExterno/prodproyects
+cd <repos>
 BR="demo/compat-green-check"
 gh api repos/DentVega/miniapp-hellow_widget/git/refs/heads/main --jq '.object.sha'   # base sha
 # crear branch + commit trivial (editar README) vía API o checkout local del repo hellow_widget
@@ -270,7 +270,7 @@ Expected: el check **`compat`** termina en **success (✓)** con `check-compat: 
 
 Marcar el PR compatible como Draft (como los otros demos) y confirmar que ninguno se mergea:
 ```bash
-cd /Volumes/SSDExterno/prodproyects
+cd <repos>
 gh pr ready "$(gh pr list --repo DentVega/miniapp-hellow_widget --head demo/compat-green-check --json number --jq '.[0].number')" --repo DentVega/miniapp-hellow_widget --undo
 ```
 Expected: PR compatible en Draft. Reportar al usuario los dos PRs (rojo #4 + verde nuevo) como evidencia e2e; **no mergear ninguno**.

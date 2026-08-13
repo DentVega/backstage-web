@@ -26,7 +26,7 @@
 
 ## Task 1: `bootstrap-lib.mjs` pure helpers + tests
 
-**Files (in `/Volumes/SSDExterno/prodproyects/backstage-web`):**
+**Files (in `backstage-web`):**
 - Create: `scripts/bootstrap-lib.mjs`
 - Test: `scripts/bootstrap.test.mjs`
 
@@ -101,7 +101,7 @@ test("isExcludedDir", () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/backstage-web && node --test scripts/bootstrap.test.mjs`
+Run: `cd backstage-web && node --test scripts/bootstrap.test.mjs`
 Expected: FAIL — cannot resolve `./bootstrap-lib.mjs`.
 
 - [ ] **Step 3: Implement `bootstrap-lib.mjs`**
@@ -163,13 +163,13 @@ export function shouldProcessFile(relPath) {
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/backstage-web && node --test scripts/bootstrap.test.mjs`
+Run: `cd backstage-web && node --test scripts/bootstrap.test.mjs`
 Expected: PASS — `# pass 10`, `# fail 0`.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstage-web
+cd backstage-web
 git add scripts/bootstrap-lib.mjs scripts/bootstrap.test.mjs
 git commit -m "feat(bootstrap): pure rename/guard/file-selection helpers + tests"
 ```
@@ -180,7 +180,7 @@ git commit -m "feat(bootstrap): pure rename/guard/file-selection helpers + tests
 
 ## Task 2: `bootstrap.mjs` CLI + self-test (backstage-web)
 
-**Files (in `/Volumes/SSDExterno/prodproyects/backstage-web`):**
+**Files (in `backstage-web`):**
 - Create: `scripts/bootstrap.mjs`
 
 **Interfaces:**
@@ -303,14 +303,14 @@ if (write) {
 
 - [ ] **Step 2: Syntax-check + usage guard**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/backstage-web && node --check scripts/bootstrap.mjs && node scripts/bootstrap.mjs`
+Run: `cd backstage-web && node --check scripts/bootstrap.mjs && node scripts/bootstrap.mjs`
 Expected: `node --check` exits 0 (no output); running with no args prints the `usage:` lines and exits 1.
 
 - [ ] **Step 3: Self-test — dry-run finds occurrences, writes nothing**
 
 Run:
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstage-web
+cd backstage-web
 node scripts/bootstrap.mjs --scope @acme --owner Acme
 git status --porcelain | grep -v "data/registry.json" | head
 ```
@@ -320,7 +320,7 @@ Expected: the summary line reports **nonzero** counts for `@dentvega→@acme`, `
 
 Run:
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstage-web
+cd backstage-web
 node scripts/bootstrap.mjs --scope @acme --owner Acme --yes; echo "exit=$?"
 git status --porcelain | grep -v "data/registry.json" | head
 ```
@@ -329,7 +329,7 @@ Expected: prints "Refusing to write: this looks like the origin repo …", `exit
 - [ ] **Step 5: Commit + push (Tasks 1 + 2)**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstage-web
+cd backstage-web
 git add scripts/bootstrap.mjs
 git commit -m "feat(bootstrap): CLI (dry-run default, --yes writes, origin-guard)"
 git push origin main
@@ -346,9 +346,9 @@ git push origin main
 - [ ] **Step 1: Copy the 3 files into both repos**
 
 ```bash
-SRC=/Volumes/SSDExterno/prodproyects/backstage-web/scripts
+SRC=backstage-web/scripts
 for R in backstagereactnative miniapp-template; do
-  D=/Volumes/SSDExterno/prodproyects/$R/scripts
+  D=$R/scripts
   mkdir -p "$D"
   cp "$SRC/bootstrap-lib.mjs" "$SRC/bootstrap.mjs" "$SRC/bootstrap.test.mjs" "$D/"
 done
@@ -358,7 +358,7 @@ done
 
 ```bash
 for R in backstagereactnative miniapp-template; do
-  cd /Volumes/SSDExterno/prodproyects/$R
+  cd $R
   echo "== $R =="
   node --test scripts/bootstrap.test.mjs 2>&1 | grep -E "# (pass|fail)"
   node scripts/bootstrap.mjs --scope @acme --owner Acme | tail -2
@@ -373,7 +373,7 @@ Expected: each repo → `# pass 10` / `# fail 0`; the dry-run summary reports no
 FOOTER="Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01MPXCf3ev2d17B2N5RgKVJS"
 for R in backstagereactnative miniapp-template; do
-  cd /Volumes/SSDExterno/prodproyects/$R
+  cd $R
   git add scripts/bootstrap-lib.mjs scripts/bootstrap.mjs scripts/bootstrap.test.mjs
   git commit -m "feat(bootstrap): adoption rename script (for a new company's template copy)" -m "$FOOTER"
   git push origin main
@@ -386,14 +386,14 @@ Expected: both push successfully.
 ## Task 4: `.gitignore` hardening (backstagereactnative)
 
 **Files:**
-- Modify: `/Volumes/SSDExterno/prodproyects/backstagereactnative/.gitignore`
+- Modify: `backstagereactnative/.gitignore`
 
 - [ ] **Step 1: Confirm it lacks an env pattern, then add one**
 
-Run: `grep -nE '(^|/)\.env' /Volumes/SSDExterno/prodproyects/backstagereactnative/.gitignore || echo "NO env pattern"`
+Run: `grep -nE '(^|/)\.env' backstagereactnative/.gitignore || echo "NO env pattern"`
 Expected: `NO env pattern`.
 
-Append to the end of `/Volumes/SSDExterno/prodproyects/backstagereactnative/.gitignore`:
+Append to the end of `backstagereactnative/.gitignore`:
 ```
 # local env / secrets (never commit)
 .env*
@@ -404,7 +404,7 @@ Append to the end of `/Volumes/SSDExterno/prodproyects/backstagereactnative/.git
 
 Run:
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative
+cd backstagereactnative
 printf 'SECRET=x\n' > .env.local && git check-ignore .env.local; rm -f .env.local
 ```
 Expected: prints `.env.local` (it is ignored). Then it's removed.
@@ -412,7 +412,7 @@ Expected: prints `.env.local` (it is ignored). Then it's removed.
 - [ ] **Step 3: Commit + push**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstagereactnative
+cd backstagereactnative
 git add .gitignore
 git commit -m "chore: gitignore .env* (never commit local secrets)"
 git push origin main
@@ -423,7 +423,7 @@ git push origin main
 ## Task 5: Update `SETUP.md §3.1` to use bootstrap
 
 **Files:**
-- Modify: `/Volumes/SSDExterno/prodproyects/backstage-web/docs/SETUP.md` (§3.1, currently lines ~86–106)
+- Modify: `backstage-web/docs/SETUP.md` (§3.1, currently lines ~86–106)
 
 - [ ] **Step 1: Replace the manual-rename block**
 
@@ -462,13 +462,13 @@ pnpm install
 
 - [ ] **Step 2: Verify the doc still renders (no broken code fences)**
 
-Run: `grep -c '```' /Volumes/SSDExterno/prodproyects/backstage-web/docs/SETUP.md`
+Run: `grep -c '```' backstage-web/docs/SETUP.md`
 Expected: an **even** number (all fenced blocks closed).
 
 - [ ] **Step 3: Commit + push**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/backstage-web
+cd backstage-web
 git add docs/SETUP.md
 git commit -m "docs(setup): §3.1 uses bootstrap.mjs instead of manual grep/sed rename"
 git push origin main

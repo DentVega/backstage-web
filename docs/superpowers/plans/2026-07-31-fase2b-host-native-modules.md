@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Owner:** DentVega. **Sin dependencias nuevas** (`react-native` CLI ya está).
-- **Repo:** `/Volumes/SSDExterno/prodproyects/backstagereactnative`, archivo `apps/host/scripts/gen-host-contract.mjs`. Trabajar desde ahí. Commits **locales** (no push).
+- **Repo:** `backstagereactnative`, archivo `apps/host/scripts/gen-host-contract.mjs`. Trabajar desde ahí. Commits **locales** (no push).
 - **Backward-compatible:** `buildHostContract` gana un `nativeModules` OPCIONAL (default `[]`) — el test existente (que no lo pasa y espera `[]`) debe seguir verde.
 - Tests con `node:test` (jest ignora `scripts/`, ya configurado en Fase 1-D).
 - Commits con **paths explícitos**; trailer:

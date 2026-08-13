@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Repo:** `/Volumes/SSDExterno/prodproyects/backstage-web`. Commits **locales** (push tras la review final). Directo a `main` (patrón de la sesión).
+- **Owner:** DentVega. **Repo:** `backstage-web`. Commits **locales** (push tras la review final). Directo a `main` (patrón de la sesión).
 - **Providers:** `StorageProvider = "r2" | "blob" | "fs"`. Orden por env: R2 → Blob → fs. `fs` siempre disponible (fallback dev).
 - **Fallback seguro:** una preferencia solo se aplica si su provider está en `availableProviders()`; si no, se usa `availableProviders()[0]`. Nunca se queda sin storage.
 - **Auth:** el **PUT** exige `canScaffold(session?.githubLogin, scaffoldAllowedLogins())` → si no, `ScaffoldForbiddenError` (mapea a 403 vía `statusForError`). El **GET** no lleva guard (no expone secretos). Guard con `await import("@/auth")` **lazy** (como `app/api/miniapps/[id]/route.ts`).

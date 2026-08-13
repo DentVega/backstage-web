@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Owner:** DentVega. **Única dep nueva:** `aws4fetch`. Nada más.
-- **Repo:** `/Volumes/SSDExterno/prodproyects/backstage-web`. Commits **locales** (push tras la review final).
+- **Repo:** `backstage-web`. Commits **locales** (push tras la review final).
 - **Comportamiento existente intacto:** si R2 no está configurado, `getStorage()` sigue eligiendo Blob (si hay token) o fs — igual que hoy.
 - **Dos URLs de R2:** escritura al endpoint S3 (`{accountId}.r2.cloudflarestorage.com`), lectura a la URL pública (`R2_PUBLIC_BASE_URL`). El adapter escribe en la primera y devuelve la segunda.
 - Commits con **paths explícitos** (no `data/*.json`); trailer en cada commit:

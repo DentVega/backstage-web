@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Repo:** `miniapp-template` en `/Volumes/SSDExterno/prodproyects/miniapp-template`.
+- **Repo:** `miniapp-template` en `miniapp-template`.
 - **`miniapp-template/main` está PROTEGIDO** (`test` required, enforce_admins=false) → los cambios del template entran por **PR** (el owner podría bypass, pero usamos PR para dogfoodear el `test` check con el nuevo test).
 - **Refactor behavior-preserving:** mismos comandos git que el shell inline. Sin cambiar el algoritmo.
 - **`bumpMarker` usa `JSON.parse/stringify`** (no depende de `jq`).
@@ -216,12 +216,12 @@ test("ignore-list: borra un archivo protegido que creó el template", () => {
 
 - [ ] **Step 3: Correr el test local**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/miniapp-template && node --test scripts/__tests__/template-merge.test.mjs`
+Run: `cd miniapp-template && node --test scripts/__tests__/template-merge.test.mjs`
 Expected: 5 tests pass. Si algo falla → iterar sobre el .mjs hasta verde.
 
 - [ ] **Step 4: Confirmar que el resto de los tests del template siguen verdes**
 
-Run: `cd /Volumes/SSDExterno/prodproyects/miniapp-template && node --test scripts/*.test.mjs scripts/__tests__/*.test.mjs`
+Run: `cd miniapp-template && node --test scripts/*.test.mjs scripts/__tests__/*.test.mjs`
 Expected: todo verde (los nuevos + los existentes).
 
 ---
@@ -265,13 +265,13 @@ Los pasos `Read marker` y `Fetch template` y el `if` del job NO se tocan.
 
 - [ ] **Step 2: Validar YAML**
 
-Run: `ruby -ryaml -e "YAML.load_file('/Volumes/SSDExterno/prodproyects/miniapp-template/.github/workflows/template-sync.yml'); puts 'YAML OK'"`
+Run: `ruby -ryaml -e "YAML.load_file('miniapp-template/.github/workflows/template-sync.yml'); puts 'YAML OK'"`
 Expected: `YAML OK`.
 
 - [ ] **Step 3: Branch, commit, PR**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 git checkout -b feat/merge-engine-test
 git add scripts/template-merge.mjs scripts/__tests__/template-merge.test.mjs .github/workflows/template-sync.yml
 git commit -m "test: extract Capa 2 merge engine to tested script (#6)"
@@ -284,7 +284,7 @@ gh pr create --repo DentVega/miniapp-template --base main --head feat/merge-engi
 - [ ] **Step 4: Confirmar `test` verde (ahora incluye el merge test) y mergear**
 
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 gh pr checks --repo DentVega/miniapp-template --watch   # el PR es de feat/merge-engine-test
 ```
 Expected: check `test` **success** (compat/publish skipped por el guard). Luego:
@@ -302,7 +302,7 @@ gh pr merge --repo DentVega/miniapp-template --squash --delete-branch
 
 Para cada `R` en `miniapp-hellow_widget`, `miniapp-cards_wallet`, `miniapp-account-dashboard`: PUT de `scripts/template-merge.mjs` y de `.github/workflows/template-sync.yml` (contenido = el del template mergeado) vía Contents API, en su `main`.
 ```bash
-cd /Volumes/SSDExterno/prodproyects/miniapp-template
+cd miniapp-template
 put_file() { # repo path
   local R="$1" P="$2"
   local SHA; SHA=$(gh api "repos/DentVega/$R/contents/$P" --jq '.sha' 2>/dev/null)
@@ -323,7 +323,7 @@ Expected: dos commits por repo. (Nota: `account-dashboard` está enrolado; si le
 
 Provocar drift (un cambio trivial en el template main ya existe si hay commits nuevos) y disparar el sync en `hellow_widget`:
 ```bash
-cd /Volumes/SSDExterno/prodproyects
+cd <repos>
 gh workflow run template-sync.yml --repo DentVega/miniapp-hellow_widget
 sleep 8
 RID=$(gh run list --repo DentVega/miniapp-hellow_widget --workflow "Template sync" -L 1 --json databaseId --jq '.[0].databaseId')

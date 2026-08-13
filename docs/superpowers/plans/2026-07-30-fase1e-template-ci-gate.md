@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Owner:** DentVega. **Única dep nueva:** `semver` (devDependency del template). Nada más.
-- **Repo:** `/Volumes/SSDExterno/prodproyects/miniapp-template`. Todo bajo ese repo. Commits **locales** (no push).
+- **Repo:** `miniapp-template`. Todo bajo ese repo. Commits **locales** (no push).
 - **ROLLOUT-SAFE (invariante):** el gate NO debe romper publishes existentes. Si `GET {BACKSTAGE_URL}/api/host-contract` falla o da 404 → **skip con warning, exit 0**. Incompatibilidad → **warn (exit 0) por defecto**; solo `COMPAT_ENFORCE=1` hace exit 1. gen-manifest-shared, si no hay contract, deja el `manifest.json` como está.
 - **`gen-manifest-shared` es quirúrgico:** solo reescribe el campo `shared` y agrega `minHostContract` en `manifest.json`; preserva `id`, `version`, `entry`, `capabilities`. En CI (efímero), no se commitea.
 - Los scripts se testean con `node --test <archivo>` (el arg de directorio tiene un quirk en Node 22). Jest debe **ignorar** `scripts/`.

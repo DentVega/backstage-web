@@ -6,7 +6,7 @@
 
 ## Global Constraints
 
-- Todo en **`backstagereactnative`** (`/Volumes/SSDExterno/prodproyects/backstagereactnative`). Tests = jest + node:test. `main` protegido → **PR** (checks `blast-radius` + `test`).
+- Todo en **`backstagereactnative`** (`backstagereactnative`). Tests = jest + node:test. `main` protegido → **PR** (checks `blast-radius` + `test`).
 - Solo cachear cuando el request trae `version` (determinístico/inmutable). Sin versión → pasa derecho. Fallos NO se cachean.
 - `backstage-web` no cambia (`/api/resolve` ya acepta `?version`).
 - In-memory por sesión (sin storage).

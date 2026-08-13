@@ -6,8 +6,8 @@
 
 ## Global Constraints
 
-- **backstage-web** (`/Volumes/SSDExterno/prodproyects/backstage-web`): vitest, push directo a main (Vercel deploy).
-- **backstagereactnative** (`/Volumes/SSDExterno/prodproyects/backstagereactnative`): jest, main **protegido** → entra por PR (checks `blast-radius` + `test`).
+- **backstage-web** (`backstage-web`): vitest, push directo a main (Vercel deploy).
+- **backstagereactnative** (`backstagereactnative`): jest, main **protegido** → entra por PR (checks `blast-radius` + `test`).
 - `servedVersion` es **requerido** en `CatalogEntry` (backend) pero **opcional** en `MiniappSummary` (host, fallback a `latestVersion`).
 - Solo arregla la etiqueta; `resolveMiniapp` no se toca.
 
