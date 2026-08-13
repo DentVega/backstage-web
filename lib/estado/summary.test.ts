@@ -12,17 +12,29 @@ const storage: StorageState = {
 /** Reloj fijo para determinismo. */
 const NOW = Date.parse("2026-08-13T00:00:00.000Z");
 
-function entry(p: Partial<CatalogEntry> & { id: string }): CatalogEntry {
+/** Input con strings planos; los tipos branded (MiniappId/SemVer) se castean al construir. */
+interface EntryInput {
+  id: string;
+  name?: string;
+  owner?: string;
+  latestVersion?: string | null;
+  servedVersion?: string | null;
+  versionCount?: number;
+  createdAt?: string;
+  repoUrl?: string;
+}
+
+function entry(p: EntryInput): CatalogEntry {
   return {
-    id: p.id,
+    id: p.id as CatalogEntry["id"],
     name: p.name ?? p.id,
     owner: p.owner ?? "team",
-    latestVersion: p.latestVersion ?? null,
-    servedVersion: p.servedVersion ?? null,
+    latestVersion: (p.latestVersion ?? null) as CatalogEntry["latestVersion"],
+    servedVersion: (p.servedVersion ?? null) as CatalogEntry["servedVersion"],
     versionCount: p.versionCount ?? 0,
     createdAt: p.createdAt,
     repoUrl: p.repoUrl,
-  } as CatalogEntry;
+  };
 }
 
 /** Registro mínimo: solo lo que buildEstadoSummary lee del record crudo (iosUrl, publishedAt). */
