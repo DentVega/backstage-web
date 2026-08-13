@@ -355,6 +355,32 @@ pnpm --filter @app/host android
   funciona limpio si el miniapp usa deps **compartidas** (ui-kit, RN, react); si
   agregó deps propias, instalalas también en el host o usá el Modo 2.
 
+#### Varias miniapps a la vez (Modo 1)
+
+`DEV_MINIAPP_PATHS` (CSV, hasta **6**) monta **varias** miniapps en el mismo bundle y
+agrega un **selector (tabs)** en la pantalla Dev Mount para elegir cuál ver. Como todas
+están en el bundle del host, **editar cualquiera Fast-Refreshea** al instante:
+
+```bash
+DEV_MINIAPP_PATHS="$PWD/../miniapp-hellow_widget,$PWD/../miniapp-cards_wallet" \
+  pnpm --filter @app/host start
+pnpm --filter @app/host android
+# → Home → "▶ Dev Mount" → tabs (hellow_widget | cards_wallet)
+#   → editá cualquiera → Fast Refresh en la que estés viendo
+```
+
+- `DEV_MINIAPP_PATHS` (CSV) tiene precedencia sobre `DEV_MINIAPP_PATH` (singular, back-compat).
+  Con una sola miniapp no aparece el selector (render directo, igual que antes).
+- El nombre de cada tab sale del `id` del `manifest.json`; el grant, de sus `capabilities`.
+
+> [!WARNING]
+> `rspack.config.mjs` y `DEV_MINIAPP_PATHS`/`DEV_MINIAPP_PATH` se leen **al arrancar el
+> dev server** — no se recargan en caliente. Si cambiás **qué** miniapps montás,
+> **reiniciá `pnpm start`** (si quedó cache raro, arrancá con
+> `pnpm --filter @app/host exec react-native start --reset-cache`). Editar el **código**
+> de una miniapp sí Fast-Refreshea sin reiniciar. Un `Cannot find module '@dev-miniapp-0'`
+> casi siempre es un dev server que no se reinició tras el cambio.
+
 ### Modo 2 — dev server (:9000, reload federado rápido, sin publish)
 
 El host consume el container **vivo** del `webpack-start` del miniapp. Editás →
