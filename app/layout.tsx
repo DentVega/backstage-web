@@ -7,6 +7,7 @@ import { canScaffold } from "@/lib/scaffold-authz";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { UserMenu } from "@/app/components/UserMenu";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
+import { NavLinks } from "@/app/components/NavLinks";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,24 +42,7 @@ export default async function RootLayout({
           </Link>
           <span className="header-sp" />
           <div className="header-actions">
-            {session?.user ? (
-              <>
-                <Link href="/catalog" className="nav-link">
-                  Catálogo
-                </Link>
-                <Link href="/metrics" className="nav-link">
-                  <span aria-hidden="true">📊</span> Métricas
-                </Link>
-                {canAdmin ? (
-                  <Link href="/estado" className="nav-link">
-                    Estado
-                  </Link>
-                ) : null}
-              </>
-            ) : null}
-            <Link href="/docs" className="nav-link">
-              Docs
-            </Link>
+            <NavLinks loggedIn={Boolean(session?.user)} canAdmin={canAdmin} />
             <ThemeToggle />
             <UserMenu user={session?.user} />
           </div>
