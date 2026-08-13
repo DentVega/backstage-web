@@ -73,62 +73,45 @@ export default async function EstadoPage() {
 
       <section className="estado-section">
         <h2>Flota</h2>
-        <div className="console">
-          <div className="console-top">
-            <span className="tl a" /> <span className="tl" /> <span className="tl" />
-            <span className="path">backstage · fleet</span>
-          </div>
-          <div>
-            {s.fleet.length === 0 ? (
-              <p className="empty" style={{ padding: "18px 16px" }}>
-                No hay miniapps registradas todavía.
-              </p>
-            ) : (
-              <ul className="fleet-list">
-                {s.fleet.map((f) => (
-                  <li key={f.id} className="fleet-row">
-                    <div className="fleet-main">
-                      <span className="fleet-name">{f.name}</span>
-                      <span className="fleet-owner">{f.owner}</span>
-                    </div>
-                    <div className="fleet-ver">
-                      <span className={f.servedVersion ? "fleet-served" : "fleet-served none"}>
-                        {f.servedVersion ? `servida ${f.servedVersion}` : "sin versiones"}
-                      </span>
-                      {f.isRolledBack && (
-                        <span className="badge-rollback">
-                          rollback · última {f.latestVersion}
-                        </span>
-                      )}
-                    </div>
-                    <span className="fleet-count">{f.versionCount} vers</span>
-                    <span className="plat-pills">
-                      {f.platforms.map((p) => (
-                        <span key={p} className={`plat-pill ${p}`}>
-                          {PLAT_LABEL[p]}
-                        </span>
-                      ))}
+        {s.fleet.length === 0 ? (
+          <p className="empty">No hay miniapps registradas todavía.</p>
+        ) : (
+          <ul className="fleet-list">
+            {s.fleet.map((f) => (
+              <li key={f.id} className="fleet-row">
+                <div className="fleet-main">
+                  <span className="fleet-name">{f.name}</span>
+                  <span className="fleet-owner">{f.owner}</span>
+                </div>
+                <div className="fleet-ver">
+                  <span className="fleet-served">
+                    {f.servedVersion ? `servida ${f.servedVersion}` : "sin versiones"}
+                  </span>
+                  {f.isRolledBack && (
+                    <span className="badge-rollback">rollback · última {f.latestVersion}</span>
+                  )}
+                </div>
+                <span className="fleet-count">{f.versionCount} vers</span>
+                <span className="plat-pills">
+                  {f.platforms.map((p) => (
+                    <span key={p} className={`plat-pill ${p}`}>
+                      {PLAT_LABEL[p]}
                     </span>
-                    {f.repoUrl ? (
-                      <a
-                        className="fleet-repo"
-                        href={f.repoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        repo ↗
-                      </a>
-                    ) : (
-                      <span className="fleet-repo" style={{ opacity: 0.4 }}>
-                        —
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+                  ))}
+                </span>
+                {f.repoUrl ? (
+                  <a className="fleet-repo" href={f.repoUrl} target="_blank" rel="noreferrer">
+                    repo ↗
+                  </a>
+                ) : (
+                  <span className="fleet-repo" style={{ opacity: 0.4 }}>
+                    —
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="estado-section">
