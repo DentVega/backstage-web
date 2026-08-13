@@ -1,6 +1,6 @@
 /** Which pathnames require an authenticated session (UI only; APIs are excluded). */
 
-const PROTECTED_PREFIXES = ["/catalog", "/miniapp", "/create"];
+const PROTECTED_PREFIXES = ["/catalog", "/miniapp", "/create", "/estado"];
 
 export function isProtectedPath(pathname: string): boolean {
   if (pathname === "/") return true;

@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { auth } from "@/auth";
+import { canScaffold } from "@/lib/scaffold-authz";
+import { scaffoldAllowedLogins } from "@/lib/config";
 import { UserMenu } from "@/app/components/UserMenu";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
 
@@ -27,6 +29,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+  const canAdmin = canScaffold(session?.githubLogin, scaffoldAllowedLogins());
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
@@ -46,6 +49,11 @@ export default async function RootLayout({
                 <Link href="/metrics" className="nav-link">
                   <span aria-hidden="true">📊</span> Métricas
                 </Link>
+                {canAdmin ? (
+                  <Link href="/estado" className="nav-link">
+                    Estado
+                  </Link>
+                ) : null}
               </>
             ) : null}
             <Link href="/docs" className="nav-link">
