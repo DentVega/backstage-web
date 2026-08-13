@@ -247,7 +247,14 @@ miniapp — hasta que sincroniza, el gate se saltea en vez de romper el publish)
 
 ---
 
-**Ver también:** [`LOCAL-DEV.md`](./LOCAL-DEV.md) · [`INTEGRATION-GUIDE.md`](./INTEGRATION-GUIDE.md) ·
-[`activar-compat-gates.md`](./activar-compat-gates.md) · [`actualizar-miniapp.md`](./actualizar-miniapp.md) ·
-[`QUICKSTART.md`](./QUICKSTART.md) · [`HOST-RUN.md`](./HOST-RUN.md) ·
-`backstagereactnative/docs/mounting-miniapps.md` (playbook + troubleshooting del lado host).
+**Ver también:**
+
+- [`LOCAL-DEV.md`](./LOCAL-DEV.md) — el inner loop completo, si el síntoma
+  aparece seguido y preferís entender el flujo entero en vez de parchar caso a caso.
+- [`INTEGRATION-GUIDE.md`](./INTEGRATION-GUIDE.md) — el contrato que evita
+  varios de estos síntomas de raíz (shared singletons, capabilities, manifest).
+- [API & Schemas](/docs/api-reference) — para confirmar el comportamiento
+  exacto de un endpoint o un código de error, más allá del síntoma observado.
+- [`activar-compat-gates.md`](./activar-compat-gates.md) · [`actualizar-miniapp.md`](./actualizar-miniapp.md) ·
+  [`QUICKSTART.md`](./QUICKSTART.md) · [`HOST-RUN.md`](./HOST-RUN.md) ·
+  `backstagereactnative/docs/mounting-miniapps.md` (playbook + troubleshooting del lado host).

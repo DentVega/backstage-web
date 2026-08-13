@@ -69,4 +69,13 @@ La comparación es timing-safe (no filtra el token por tiempo ni por longitud).
 - A futuro: token por-miniapp revocable (roadmap #1-futuro) — cerraría el problema de
   raíz (revocar uno sin rotar todos).
 
-Ver también: `docs/superpowers/specs/2026-07-23-publish-token-rotation-design.md`.
+**Ver también:**
+
+- [Setup](/docs/setup) — dónde se define el `PUBLISH_TOKEN` inicial (el que
+  esta guía te recomienda rotar apenas termines el setup).
+- [Compat gates](/docs/compat-gates) — otro runbook operativo con el mismo
+  patrón de rollout gradual y reversible (warn → enforce en vez de dual-token).
+- [Troubleshooting](/docs/troubleshooting) — sección "Publicar una miniapp"
+  si un `401`/`403` no se resuelve con la rotación de arriba.
+
+Detalle técnico del mecanismo: `docs/superpowers/specs/2026-07-23-publish-token-rotation-design.md`.

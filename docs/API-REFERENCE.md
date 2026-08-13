@@ -504,3 +504,15 @@ interface ResolveResponse {
 > handler, no errores de dominio tipados. Si tu integración necesita ramificar por
 > código de error, chequeá primero si el endpoint documentado arriba menciona un
 > `code` explícito; si no lo menciona, andá por el mensaje o el status HTTP solo.
+
+---
+
+## 9. Próximos pasos
+
+- [Integration Guide](/docs/integration-guide) — si estás implementando un
+  cliente contra estos endpoints, la guía completa te da el flujo y el
+  contrato detrás de cada uno, no solo la forma del request/response.
+- [Host Contract](/docs/host-contract) — el deep-dive del schema `HostContract`
+  de la Sección 8: qué significa cada campo y cómo se usa para el compat gate.
+- [Troubleshooting](/docs/troubleshooting) — si un endpoint te devuelve un
+  código de esta tabla y no sabés por qué, síntomas organizados por causa/fix.

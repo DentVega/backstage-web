@@ -717,3 +717,16 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 - [ ] Borrado de miniapp+repo verificado (con `delete_repo` en el token).
 - [ ] `PUBLISH_TOKEN` rotado desde el `dev-publish-secret`/valor inicial a uno
       fuerte (`openssl rand -hex 32`). Ver [`docs/rotar-publish-token.md`](./rotar-publish-token.md).
+
+---
+
+## 11. Próximos pasos
+
+- [Compat gates](/docs/compat-gates) — el runbook completo del ítem de
+  Endurecimiento de arriba: encender warn → enforce paso a paso.
+- [Rotar PUBLISH_TOKEN](/docs/rotar-publish-token) — el detalle del último
+  ítem del checklist, con el mecanismo dual-token para cero downtime.
+- [Quickstart](/docs/quickstart) — con todo levantado, el camino más corto
+  para crear y publicar tu primera miniapp real (~10 min).
+- [Troubleshooting](/docs/troubleshooting) — si algún paso de este setup no
+  te cerró, síntomas comunes organizados por área.

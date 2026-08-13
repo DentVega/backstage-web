@@ -496,3 +496,17 @@ Si algo de esta guía no coincide con lo que ves en la práctica, es señal de
 que el contrato cambió del lado del host — consultá el Host Contract vigente
 (`GET /api/host-contract`) como fuente de verdad y, si hace falta, abrí un
 issue en tu repo de miniapp o coordiná con el equipo de plataforma.
+
+---
+
+## 13. Próximos pasos
+
+- [Guía de miniapps](/docs/miniapps-guide) — el mismo ciclo crear → publicar →
+  usar pero visto desde Backstage (UI/API), útil si además vas a operar tu
+  miniapp desde ahí (pin, maintainers, borrado).
+- [Desarrollo local](/docs/local-dev) — el inner loop completo con hot-reload
+  (Modo 1/2) si vas a pasar más tiempo iterando en tu máquina.
+- [Compat gate](/docs/compat-gate) — el porqué y el detalle técnico del gate
+  que viste corriendo en la Sección 9, para entender qué exactamente valida.
+- [Troubleshooting](/docs/troubleshooting) — más síntomas y fixes que la
+  tabla rápida de arriba, organizados por área (publish, montaje, compat, dev-loop).

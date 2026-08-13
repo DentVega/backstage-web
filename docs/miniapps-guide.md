@@ -176,3 +176,15 @@ expone credenciales, solo el grant scoped y revocable.
 | La miniapp muestra "Acceso no autorizado" | Falta la capability requerida — inyecta el grant (ej. login → `accounts:read`). |
 | `useTheme must be used within a <ThemeProvider>` | `@org/ui-kit` no está en `shared` singleton (host **y** miniapp). |
 | El chunk da 404 en el device | Falta `adb reverse tcp:3999` (dev), o el zip no tenía el contenedor al raíz. |
+
+---
+
+## Próximos pasos
+
+- [Integration Guide](/docs/integration-guide) — el contrato completo que tu
+  código debe cumplir (manifest, shared singletons, capabilities) para que el
+  publish de la Sección 2 pase el compat gate.
+- [Desarrollo local](/docs/local-dev) — el inner loop con hot-reload (Modo
+  1/2), si vas a iterar más seguido que un build→publish por cambio.
+- [Actualizar desde template](/docs/actualizar-miniapp) — una vez publicada,
+  cómo tu miniapp sigue recibiendo mejoras del template con el tiempo.

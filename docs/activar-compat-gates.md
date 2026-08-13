@@ -205,5 +205,12 @@ No hace falta para enforce, pero mejora:
   `accept-breaking-contract` al PR (queda registrado quién aceptó el break).
 
 ## Ver también
-`docs/actualizar-miniapp.md` (sync de miniapps, Paso 2) · `docs/rotar-publish-token.md`
-(patrón de rotación) · el spec de compat para el detalle de cada gate.
+
+- [Actualizar desde template](/docs/actualizar-miniapp) — el Paso 2 de este
+  runbook (sync de la flota) depende de este mecanismo para llegar a cada miniapp.
+- [Compat gate](/docs/compat-gate) — el deep-dive conceptual: qué valida cada
+  gate y por qué, más allá de los pasos operativos de acá.
+- [Rotar PUBLISH_TOKEN](/docs/rotar-publish-token) — mismo patrón operativo
+  (rollout gradual y reversible) aplicado a otra rotación.
+- [Troubleshooting](/docs/troubleshooting) — sección "El compat gate te frena"
+  si algo de este runbook no te dio el resultado esperado.

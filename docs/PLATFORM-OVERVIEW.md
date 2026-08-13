@@ -369,6 +369,9 @@ host).
 
 ## 10. Ver también
 
+- [Tutorial](/docs/tutorial) — ejemplo de punta a punta con código real, para
+  practicar los conceptos de este mental model con las manos en el teclado
+  (próximamente).
 - [`docs/SETUP.md`](./SETUP.md) — levantar toda la plataforma desde cero
   para una empresa nueva (cuentas, provisioning, env vars, checklist final).
 - [`docs/LOCAL-DEV.md`](./LOCAL-DEV.md) — el inner loop de desarrollo local

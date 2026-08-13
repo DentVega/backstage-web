@@ -136,6 +136,8 @@ miniapp, ya está en la versión fijada.
 
 ## Y ahora qué
 
+- **[Tutorial](/docs/tutorial)** — un ejemplo de punta a punta con código real, para
+  afianzar lo que acabás de hacer con las manos en el teclado (próximamente).
 - **[Integration Guide](/docs/integration-guide)** — el contrato completo, el compat gate y cómo pasarlo.
 - **[Platform Overview](/docs/platform-overview)** — cómo funciona toda la plataforma.
 - **[Desarrollo local](/docs/local-dev)** — el inner loop en detalle.

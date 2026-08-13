@@ -431,9 +431,13 @@ Los dos modos andan igual en iOS — cambiá `pnpm --filter @app/host android` p
 ---
 
 **Ver también:**
-[`miniapps-guide.md`](./miniapps-guide.md) (ciclo de vida completo: crear → publicar
-→ usar, incluyendo el flujo vía CI/prod) ·
-[`SETUP.md`](./SETUP.md) (levantar toda la plataforma desde cero para una empresa
-nueva) · [`DEPLOY.md`](../DEPLOY.md) (deploy de Backstage a Vercel + selección de
-storage) · `backstagereactnative/docs/mounting-miniapps.md` (playbook de montaje +
-troubleshooting del lado host).
+
+- [`miniapps-guide.md`](./miniapps-guide.md) — el mismo ciclo pero cuando salís
+  del loop local: publicar de verdad y ver el flujo vía CI/prod.
+- [Integration Guide](/docs/integration-guide) — el contrato completo que tu
+  build local debe cumplir (shared singletons, capabilities, manifest).
+- [`SETUP.md`](./SETUP.md) — levantar toda la plataforma desde cero para una
+  empresa nueva, si el problema está más arriba (Backstage/host no levantan).
+- [`DEPLOY.md`](../DEPLOY.md) (deploy de Backstage a Vercel + selección de
+  storage) · `backstagereactnative/docs/mounting-miniapps.md` (playbook de
+  montaje + troubleshooting del lado host).

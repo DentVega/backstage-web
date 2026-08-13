@@ -169,7 +169,12 @@ Hace exactamente lo mismo (abre el PR).
 ---
 
 **Ver también:**
-[`miniapps-guide.md`](./miniapps-guide.md) (crear → publicar → usar una miniapp) ·
-[`LOCAL-DEV.md`](./LOCAL-DEV.md) (desarrollo local con hot reload) ·
-[`SETUP.md`](./SETUP.md) (levantar toda la plataforma). Detalle técnico del
-mecanismo: `docs/superpowers/specs/2026-07-21-template-sync-layer2-design.md`.
+
+- [`miniapps-guide.md`](./miniapps-guide.md) — crear → publicar → usar una miniapp.
+- [`LOCAL-DEV.md`](./LOCAL-DEV.md) — desarrollo local con hot reload.
+- [`SETUP.md`](./SETUP.md) — levantar toda la plataforma.
+- [Compat gates](/docs/compat-gates) — el sync también es el vehículo que
+  lleva los scripts del compat gate a tu miniapp; hasta que sincronizás, el
+  gate se saltea en vez de correr.
+
+Detalle técnico del mecanismo: `docs/superpowers/specs/2026-07-21-template-sync-layer2-design.md`.

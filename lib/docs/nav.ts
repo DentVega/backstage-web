@@ -24,6 +24,12 @@ export const DOC_GROUPS: readonly DocGroup[] = [
         blurb: "De cero a tu primera miniapp corriendo en la app, en ~10 minutos.",
       },
       {
+        slug: "tutorial",
+        title: "Tutorial: tu primera miniapp",
+        file: "docs/TUTORIAL.md",
+        blurb: "Worked-example de punta a punta con código real: de un botón a un feature publicado.",
+      },
+      {
         slug: "platform-overview",
         title: "Platform Overview",
         file: "docs/PLATFORM-OVERVIEW.md",
