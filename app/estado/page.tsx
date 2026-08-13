@@ -11,6 +11,16 @@ export const dynamic = "force-dynamic";
 
 const PLAT_LABEL: Record<"android" | "ios", string> = { android: "Android", ios: "iOS" };
 
+/** Fecha relativa compacta en español para "hace cuánto se publicó". */
+function relDays(d: number | null): string {
+  if (d === null) return "—";
+  if (d <= 0) return "hoy";
+  if (d === 1) return "ayer";
+  if (d < 30) return `hace ${d} d`;
+  const m = Math.floor(d / 30);
+  return m <= 1 ? "hace 1 mes" : `hace ${m} meses`;
+}
+
 export default async function EstadoPage() {
   const session = await auth();
   const canAdmin = canScaffold(session?.githubLogin, scaffoldAllowedLogins());
@@ -39,7 +49,7 @@ export default async function EstadoPage() {
   const contract = await getHostContractStore().load();
   const storage = await getStorageProviderState();
   const gateEnforce = process.env.COMPAT_ENFORCE === "1";
-  const s = buildEstadoSummary(entries, reg, contract, gateEnforce, storage);
+  const s = buildEstadoSummary(entries, reg, contract, gateEnforce, storage, Date.now());
 
   return (
     <main className="page">
@@ -69,6 +79,10 @@ export default async function EstadoPage() {
           <span className="kpi-num">{s.totals.iosAndAndroid}</span>
           <span className="kpi-label">iOS + Android</span>
         </li>
+        <li className="kpi">
+          <span className="kpi-num">{s.totals.publishedLast30d}</span>
+          <span className="kpi-label">publicaciones · 30 d</span>
+        </li>
       </ul>
 
       <section className="estado-section">
@@ -89,6 +103,9 @@ export default async function EstadoPage() {
                   </span>
                   {f.isRolledBack && (
                     <span className="badge-rollback">rollback · última {f.latestVersion}</span>
+                  )}
+                  {f.daysSincePublish !== null && (
+                    <span className="fleet-ago">actualizada {relDays(f.daysSincePublish)}</span>
                   )}
                 </div>
                 <span className="fleet-count">{f.versionCount} vers</span>
@@ -123,6 +140,10 @@ export default async function EstadoPage() {
               {s.contract.reactNative}. Esto es lo que toda miniapp debe satisfacer para
               montar en el host.
             </p>
+            <p className="hc-sublabel">
+              Singletons compartidos{" "}
+              <span className="hc-count">{s.contract.shared.length}</span>
+            </p>
             <ul className="shared-grid">
               {s.contract.shared.map(([name, ver]) => (
                 <li key={name} className="shared-item">
@@ -133,7 +154,9 @@ export default async function EstadoPage() {
             </ul>
             {s.contract.nativeModules.length > 0 && (
               <div className="native-chips">
-                <span className="native-label">nativos</span>
+                <span className="native-label">
+                  nativos <span className="hc-count">{s.contract.nativeModules.length}</span>
+                </span>
                 {s.contract.nativeModules.map((n) => (
                   <span key={n} className="chip">
                     {n}
@@ -165,9 +188,17 @@ export default async function EstadoPage() {
             <dt>Storage</dt>
             <dd>
               <span className="op-pill neutral">{s.storage.active.toUpperCase()}</span>
-              por {s.storage.source === "preference" ? "preferencia" : "entorno"} ·
-              disponibles: {s.storage.available.join(", ")}
+              <span className="op-sub">
+                por {s.storage.source === "preference" ? "preferencia" : "entorno"}
+              </span>
             </dd>
+            <div className="op-avail">
+              {s.storage.available.map((p) => (
+                <span key={p} className={p === s.storage.active ? "avail-chip on" : "avail-chip"}>
+                  {p}
+                </span>
+              ))}
+            </div>
           </div>
         </dl>
       </section>

@@ -8,6 +8,8 @@ import type { StorageProvider } from "@/lib/storage/provider";
 
 export type Platform = "android" | "ios";
 
+const DAY_MS = 86_400_000;
+
 export interface FleetItem {
   readonly id: string;
   readonly name: string;
@@ -19,6 +21,10 @@ export interface FleetItem {
   readonly versionCount: number;
   /** Plataformas soportadas: siempre "android" si hay versiones, + "ios" si alguna trae chunk iOS. */
   readonly platforms: readonly Platform[];
+  /** ISO de la publicación más reciente (cualquier versión), o null si no hay ninguna. */
+  readonly lastPublishedAt: string | null;
+  /** Días desde la última publicación (>= 0), o null si no hay ninguna. */
+  readonly daysSincePublish: number | null;
   readonly repoUrl?: string;
 }
 
@@ -44,6 +50,8 @@ export interface EstadoSummary {
     readonly miniapps: number;
     readonly versions: number;
     readonly iosAndAndroid: number;
+    /** Publicaciones (versiones) en los últimos 30 días, a lo largo de toda la flota. */
+    readonly publishedLast30d: number;
   };
   readonly contract: ContractSummary;
   readonly gate: "warn" | "enforce";
@@ -52,8 +60,9 @@ export interface EstadoSummary {
 
 /**
  * Arma el summary a partir de los datos crudos. `entries` viene de `listCatalog`
- * (served/latest/count ya resueltos); `reg` se usa solo para derivar el soporte iOS
- * por miniapp (las view-models no exponen `iosUrl`).
+ * (served/latest/count ya resueltos); `reg` se usa para derivar el soporte iOS y las
+ * fechas de publicación por miniapp (las view-models no exponen `iosUrl`/`publishedAt`).
+ * `now` (epoch ms) se inyecta para mantener la función pura/determinista.
  */
 export function buildEstadoSummary(
   entries: readonly CatalogEntry[],
@@ -61,6 +70,7 @@ export function buildEstadoSummary(
   contract: HostContract | null,
   gateEnforce: boolean,
   storage: StorageState,
+  now: number,
 ): EstadoSummary {
   const fleet: FleetItem[] = entries.map((e) => {
     const versions = reg[e.id]?.versions ?? [];
@@ -69,6 +79,16 @@ export function buildEstadoSummary(
       platforms.push("android");
       if (versions.some((v) => Boolean(v.iosUrl))) platforms.push("ios");
     }
+    let lastPublishedAt: string | null = null;
+    for (const v of versions) {
+      if (v.publishedAt && (lastPublishedAt === null || v.publishedAt > lastPublishedAt)) {
+        lastPublishedAt = v.publishedAt;
+      }
+    }
+    const daysSincePublish =
+      lastPublishedAt !== null
+        ? Math.max(0, Math.floor((now - Date.parse(lastPublishedAt)) / DAY_MS))
+        : null;
     const isRolledBack =
       e.servedVersion !== null &&
       e.latestVersion !== null &&
@@ -82,9 +102,19 @@ export function buildEstadoSummary(
       isRolledBack,
       versionCount: e.versionCount,
       platforms,
+      lastPublishedAt,
+      daysSincePublish,
       repoUrl: e.repoUrl,
     };
   });
+
+  const cutoff = now - 30 * DAY_MS;
+  let publishedLast30d = 0;
+  for (const e of entries) {
+    for (const v of reg[e.id]?.versions ?? []) {
+      if (v.publishedAt && Date.parse(v.publishedAt) >= cutoff) publishedLast30d++;
+    }
+  }
 
   const totals = {
     miniapps: fleet.length,
@@ -92,6 +122,7 @@ export function buildEstadoSummary(
     iosAndAndroid: fleet.filter(
       (f) => f.platforms.includes("ios") && f.platforms.includes("android"),
     ).length,
+    publishedLast30d,
   };
 
   const contractSummary: ContractSummary = contract
