@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Repo:** `backstage-web`. Commits **locales** (push tras la review final). Directo a `main`.
+- **Owner:** <owner>. **Repo:** `backstage-web`. Commits **locales** (push tras la review final). Directo a `main`.
 - **Retrocompatible:** sin `?repo=true`, el DELETE hace exactamente lo de hoy (solo registry). Los tests existentes de `miniapp-delete-route.test.ts` siguen verdes.
 - **Orden repo→registry:** con `?repo=true`, se borra el repo primero; si falla (token sin `delete_repo`) → **403 con mensaje claro y registry intacto**. Repo ya borrado (404 GitHub) → no es error, sigue.
 - **Auth:** `canScaffold` (admin), igual que el DELETE actual.
@@ -53,10 +53,10 @@ describe("githubProvider.deleteRepo", () => {
   it("204 → { deleted: true } y llama DELETE al repo correcto", async () => {
     const f = mockFetch(204);
     vi.stubGlobal("fetch", f);
-    const res = await githubProvider("tok").deleteRepo({ owner: "DentVega", repo: "miniapp-x" });
+    const res = await githubProvider("tok").deleteRepo({ owner: "<owner>", repo: "miniapp-x" });
     expect(res).toEqual({ deleted: true });
     expect(f).toHaveBeenCalledWith(
-      "https://api.github.com/repos/DentVega/miniapp-x",
+      "https://api.github.com/repos/<owner>/miniapp-x",
       expect.objectContaining({ method: "DELETE" }),
     );
   });
@@ -155,7 +155,7 @@ En el `beforeEach`, dar repoUrl a los records + resetear gitState + set token:
   state.reg = {
     test_prod: {
       id: "test_prod" as never, name: "Test", owner: "o", versions: [],
-      repoUrl: "https://github.com/DentVega/miniapp-test_prod",
+      repoUrl: "https://github.com/<owner>/miniapp-test_prod",
     },
     cards_wallet: { id: "cards_wallet" as never, name: "Cards", owner: "o", versions: [] },
   } as never;
@@ -179,7 +179,7 @@ Casos nuevos (los existentes NO se tocan):
     const res = await DELETE(reqRepo("test_prod"), params("test_prod"));
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ deleted: true, repoDeleted: true });
-    expect(gitState.calls[0]).toEqual({ owner: "DentVega", repo: "miniapp-test_prod" });
+    expect(gitState.calls[0]).toEqual({ owner: "<owner>", repo: "miniapp-test_prod" });
     expect(state.reg.test_prod).toBeUndefined();
   });
   it("?repo=true con repo ya borrado (deleted:false) → 200 y borra el registry igual", async () => {

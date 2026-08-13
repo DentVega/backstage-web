@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Sin dependencias nuevas.**
+- **Owner:** <owner>. **Sin dependencias nuevas.**
 - **Repo:** `backstage-web`. Commits **locales** (no push).
 - **NO rompe el publish:** la apertura de pedidos es best-effort dentro del bloque warn-mode del `/upload` — cualquier fallo → warn, sigue 201.
 - **Dedup:** `ensureIssue` NO crea un segundo issue si ya hay uno abierto con el mismo título.
@@ -54,7 +54,7 @@ import { githubProvider } from "@/lib/git/github";
 
 afterEach(() => vi.restoreAllMocks());
 
-const INPUT = { owner: "DentVega", repo: "backstagereactnative", title: "cap: x", body: "b", labels: ["capability-request"] };
+const INPUT = { owner: "<owner>", repo: "backstagereactnative", title: "cap: x", body: "b", labels: ["capability-request"] };
 
 describe("githubProvider.ensureIssue", () => {
   it("crea el issue cuando no hay uno abierto con ese título", async () => {
@@ -201,13 +201,13 @@ describe("openCapabilityRequests", () => {
   it("abre un pedido por cada lib faltante con el contexto", async () => {
     const provider = mockProvider();
     const spy = vi.spyOn(provider, "ensureIssue");
-    const r = await openCapabilityRequests(provider, "DentVega/backstagereactnative",
+    const r = await openCapabilityRequests(provider, "<owner>/backstagereactnative",
       ["react-native-svg", "react-native-mmkv"], { miniappId: "acc", version: "1.0.0" });
     expect(r.requested.sort()).toEqual(["react-native-mmkv", "react-native-svg"]);
     expect(r.failed).toEqual([]);
     expect(spy).toHaveBeenCalledTimes(2);
     const call = spy.mock.calls[0][0];
-    expect(call.owner).toBe("DentVega");
+    expect(call.owner).toBe("<owner>");
     expect(call.repo).toBe("backstagereactnative");
     expect(call.title).toContain("react-native-svg");
     expect(call.body).toContain("acc");
@@ -314,6 +314,6 @@ git commit  # feat(capability): auto-open native capability requests from /uploa
 3. **Push.**
 
 ## Operacional / follow-ups
-- Setear `HOST_REPO` en Vercel (ej. `DentVega/backstagereactnative`) — sin él usa el default `org/backstagereactnative`.
+- Setear `HOST_REPO` en Vercel (ej. `<owner>/backstagereactnative`) — sin él usa el default `org/backstagereactnative`.
 - El `GITHUB_TOKEN` del scaffolder necesita permiso de issues en el repo del host (ya tiene `repo` scope).
 - Fase 4 (gate de gobernanza del host / blast-radius) queda como último bloque de código.

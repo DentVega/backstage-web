@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A one-command `bootstrap.mjs` that renames the origin scope/owner (`@dentvega`/`DentVega`) to a new company's, so they can adopt the whole platform from GitHub template repos — without breaking our live repos.
+**Goal:** A one-command `bootstrap.mjs` that renames the origin scope/owner (`@dentvega`/`<owner>`) to a new company's, so they can adopt the whole platform from GitHub template repos — without breaking our live repos.
 
 **Architecture:** Pure, side-effect-free rename helpers (`bootstrap-lib.mjs`) tested with `node:test`; a thin CLI (`bootstrap.mjs`) that walks the repo, previews by default, and writes only with `--yes` (guarded against running on the origin repos). The identical three files ship in each of the 3 repos. Plus a `.gitignore` hardening, a `SETUP.md` update, and marking the repos as GitHub templates.
 
@@ -10,12 +10,12 @@
 
 ## Global Constraints
 
-- **Additive only:** the live repos stay literal `@dentvega` / `DentVega` — never placeholder-ize (would break the build). The bootstrap renames a COPY.
-- Origin literals (verified): `@dentvega` (scope), `DentVega` (owner, PascalCase), `dentvega` (login, lowercase standalone).
+- **Additive only:** the live repos stay literal `@dentvega` / `<owner>` — never placeholder-ize (would break the build). The bootstrap renames a COPY.
+- Origin literals (verified): `@dentvega` (scope), `<owner>` (owner, PascalCase), `dentvega` (login, lowercase standalone).
 - Replacement order is **scope → owner → login** (avoids corrupting `@dentvega`, which contains `dentvega`).
 - The bootstrap's OWN files (`bootstrap.mjs`, `bootstrap-lib.mjs`, `bootstrap.test.mjs`) and lockfiles are excluded from the walk.
 - Write happens ONLY with `--yes`; otherwise always dry-run. `--force` bypasses the origin-guard (only meaningful with `--yes`).
-- The 3 identical script files live at `scripts/` in each repo: `backstage-web`, `backstagereactnative`, `miniapp-template`. Owner `DentVega`.
+- The 3 identical script files live at `scripts/` in each repo: `backstage-web`, `backstagereactnative`, `miniapp-template`. Owner `<owner>`.
 - Commit trailer for every commit:
   ```
   Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -53,11 +53,11 @@ test("renameContent: scope import", () => {
   assert.equal(renameContent("import x from '@dentvega/ui-kit'", NEW), "import x from '@acme/ui-kit'");
 });
 test("renameContent: owner URL", () => {
-  assert.equal(renameContent("github.com/DentVega/miniapp-template", NEW), "github.com/Acme/miniapp-template");
+  assert.equal(renameContent("github.com/<owner>/miniapp-template", NEW), "github.com/Acme/miniapp-template");
 });
 test("renameContent: workflow uses", () => {
   assert.equal(
-    renameContent("uses: DentVega/miniapp-template/.github/workflows/publish.yml@main", NEW),
+    renameContent("uses: <owner>/miniapp-template/.github/workflows/publish.yml@main", NEW),
     "uses: Acme/miniapp-template/.github/workflows/publish.yml@main",
   );
 });
@@ -65,15 +65,15 @@ test("renameContent: login fixture", () => {
   assert.equal(renameContent('const ADMIN = "dentvega";', NEW), 'const ADMIN = "acme";');
 });
 test("renameContent: all three together, no corruption", () => {
-  assert.equal(renameContent("@dentvega/ui-kit DentVega dentvega", NEW), "@acme/ui-kit Acme acme");
+  assert.equal(renameContent("@dentvega/ui-kit <owner> dentvega", NEW), "@acme/ui-kit Acme acme");
 });
 test("renameContent: no-op when nothing matches", () => {
   assert.equal(renameContent("nothing here", NEW), "nothing here");
 });
 
 test("isOriginRepo", () => {
-  assert.equal(isOriginRepo("https://github.com/DentVega/backstage-web.git"), true);
-  assert.equal(isOriginRepo("git@github.com:DentVega/x.git"), true);
+  assert.equal(isOriginRepo("https://github.com/<owner>/backstage-web.git"), true);
+  assert.equal(isOriginRepo("git@github.com:<owner>/x.git"), true);
   assert.equal(isOriginRepo("https://github.com/Acme/backstage-web"), false);
   assert.equal(isOriginRepo(""), false);
   assert.equal(isOriginRepo(undefined), false);
@@ -122,18 +122,18 @@ const EXCLUDE_FILES = new Set([
 
 /**
  * Replace the origin scope/owner/login literals with the new ones, in an order
- * that avoids corruption: scope (@dentvega) first, then owner (DentVega), then
+ * that avoids corruption: scope (@dentvega) first, then owner (<owner>), then
  * the bare lowercase login (dentvega) — after the first two the only remaining
  * "dentvega" is the standalone login.
  */
 export function renameContent(text, { scope, owner, login }) {
   return text
     .replaceAll("@dentvega", scope)
-    .replaceAll("DentVega", owner)
+    .replaceAll("<owner>", owner)
     .replaceAll("dentvega", login);
 }
 
-/** true if the git remote origin URL points at the DentVega origin repos. */
+/** true if the git remote origin URL points at the <owner> origin repos. */
 export function isOriginRepo(remoteUrl) {
   if (!remoteUrl) return false;
   return /github\.com[:/]dentvega\//i.test(remoteUrl);
@@ -193,7 +193,7 @@ Create `scripts/bootstrap.mjs`:
 ```js
 #!/usr/bin/env node
 /**
- * Adoption bootstrap: rename @dentvega/DentVega to a new company's scope/owner
+ * Adoption bootstrap: rename @dentvega/<owner> to a new company's scope/owner
  * across this repo (a template copy). Dry-run by default; --yes writes.
  *
  * Usage:
@@ -231,7 +231,7 @@ if (!args.scope || !args.owner || !args.scope.startsWith("@")) {
 const opts = { scope: args.scope, owner: args.owner, login: args.login ?? args.owner.toLowerCase() };
 const write = Boolean(args.yes);
 
-// Origin guard: refuse to WRITE on the DentVega origin repos unless --force.
+// Origin guard: refuse to WRITE on the <owner> origin repos unless --force.
 if (write && !args.force) {
   let remote = "";
   try {
@@ -279,7 +279,7 @@ for (const rel of walk(root, "")) {
   const after = renameContent(before, opts);
   if (after === before) continue;
   const cScope = count(before, /@dentvega/g);
-  const cOwner = count(before, /DentVega/g);
+  const cOwner = count(before, /<owner>/g);
   const cLogin = count(before, /dentvega/g) - cScope; // standalone lowercase login
   changed.push({ rel, cScope, cOwner, cLogin });
   totals.scope += cScope;
@@ -289,10 +289,10 @@ for (const rel of walk(root, "")) {
 }
 
 for (const c of changed) {
-  console.log(`  ${c.rel}  (@dentvega:${c.cScope} DentVega:${c.cOwner} dentvega:${c.cLogin})`);
+  console.log(`  ${c.rel}  (@dentvega:${c.cScope} <owner>:${c.cOwner} dentvega:${c.cLogin})`);
 }
 console.log(
-  `\n${changed.length} archivos · @dentvega→${opts.scope}: ${totals.scope} · DentVega→${opts.owner}: ${totals.owner} · dentvega→${opts.login}: ${totals.login}`,
+  `\n${changed.length} archivos · @dentvega→${opts.scope}: ${totals.scope} · <owner>→${opts.owner}: ${totals.owner} · dentvega→${opts.login}: ${totals.login}`,
 );
 if (write) {
   console.log("Hecho. Ahora corré `pnpm install` para regenerar el lockfile, y seguí SETUP.md desde §3.2.");
@@ -314,7 +314,7 @@ cd backstage-web
 node scripts/bootstrap.mjs --scope @acme --owner Acme
 git status --porcelain | grep -v "data/registry.json" | head
 ```
-Expected: the summary line reports **nonzero** counts for `@dentvega→@acme`, `DentVega→Acme`, and `dentvega→acme` (dozens each), ends with "dry-run: nada escrito"; and `git status` shows **no modified tracked files** (dry-run wrote nothing). (Exact counts drift as docs change — assert only that all three are > 0 and nothing was written.)
+Expected: the summary line reports **nonzero** counts for `@dentvega→@acme`, `<owner>→Acme`, and `dentvega→acme` (dozens each), ends with "dry-run: nada escrito"; and `git status` shows **no modified tracked files** (dry-run wrote nothing). (Exact counts drift as docs change — assert only that all three are > 0 and nothing was written.)
 
 - [ ] **Step 4: Self-test — origin-guard blocks `--yes`**
 
@@ -324,7 +324,7 @@ cd backstage-web
 node scripts/bootstrap.mjs --scope @acme --owner Acme --yes; echo "exit=$?"
 git status --porcelain | grep -v "data/registry.json" | head
 ```
-Expected: prints "Refusing to write: this looks like the origin repo …", `exit=1`, and `git status` still shows **no modified files** (origin-guard prevented the write, because this repo's origin is `DentVega/backstage-web`).
+Expected: prints "Refusing to write: this looks like the origin repo …", `exit=1`, and `git status` still shows **no modified files** (origin-guard prevented the write, because this repo's origin is `<owner>/backstage-web`).
 
 - [ ] **Step 5: Commit + push (Tasks 1 + 2)**
 
@@ -431,7 +431,7 @@ In `docs/SETUP.md`, replace the §3.1 body — the `grep/sed` code block and the
 
 ```markdown
 El proyecto de referencia usa el scope npm `@dentvega` y el owner GitHub
-`DentVega`. Una empresa nueva **debe reemplazar ambos** — hay un script que lo
+`<owner>`. Una empresa nueva **debe reemplazar ambos** — hay un script que lo
 hace en un comando, en cada repo (corre desde la raíz del repo copiado):
 
 ```bash
@@ -448,16 +448,16 @@ pnpm install
 - `--scope` es tu scope npm (debe empezar con `@`); `--owner` tu usuario/org de
   GitHub. `--login` es opcional (default: el owner en minúscula) y solo afecta
   fixtures de test.
-- Reemplaza `@dentvega`→tu scope, `DentVega`→tu owner y `dentvega`→tu login en
+- Reemplaza `@dentvega`→tu scope, `<owner>`→tu owner y `dentvega`→tu login en
   `package.json`, `.npmrc`, `rspack.config.mjs`, `.github/workflows/*`, `src`,
   `docs`, etc. Excluye lockfiles (por eso el `pnpm install`) y sus propios
   archivos.
 - Tiene un **guard**: se niega a escribir si detecta que corres sobre los repos
-  origen (`DentVega/*`); usá `--force` solo si sabés lo que hacés.
+  origen (`<owner>/*`); usá `--force` solo si sabés lo que hacés.
 
 > `docs/miniapps-guide.md` usa `@org/...` como placeholder genérico (ya pensado
 > para sustituirse). Lo **literal** que el bootstrap renombra es `@dentvega` /
-> `DentVega`.
+> `<owner>`.
 ```
 
 - [ ] **Step 2: Verify the doc still renders (no broken code fences)**
@@ -484,7 +484,7 @@ git push origin main
 
 ```bash
 for R in backstage-web backstagereactnative miniapp-template; do
-  gh api -X PATCH "repos/DentVega/$R" -F is_template=true --jq '.name + " isTemplate=" + (.is_template|tostring)'
+  gh api -X PATCH "repos/<owner>/$R" -F is_template=true --jq '.name + " isTemplate=" + (.is_template|tostring)'
 done
 ```
 Expected: each prints `<repo> isTemplate=true`. (`miniapp-template` was already true — idempotent.)
@@ -493,7 +493,7 @@ Expected: each prints `<repo> isTemplate=true`. (`miniapp-template` was already 
 
 ```bash
 for R in backstage-web backstagereactnative miniapp-template; do
-  gh repo view "DentVega/$R" --json name,isTemplate --jq '.name + ": " + (.isTemplate|tostring)'
+  gh repo view "<owner>/$R" --json name,isTemplate --jq '.name + ": " + (.isTemplate|tostring)'
 done
 ```
 Expected: all three `: true`.

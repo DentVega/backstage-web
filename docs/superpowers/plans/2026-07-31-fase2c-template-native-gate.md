@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Sin dependencias nuevas.**
+- **Owner:** <owner>. **Sin dependencias nuevas.**
 - **Repo:** `miniapp-template`. Commits **locales** (no push).
 - **ROLLOUT-SAFE + WARN-FIRST (invariante, se mantiene):** sin contract → skip; `react-native config` que falla → `nativeModules: []` (best-effort, no rompe); incompatible (skew O nativo) → warn por defecto, exit 1 solo con `COMPAT_ENFORCE=1`.
 - **Self-contained:** `checkNatives`/`parseAutolinkedNatives` inline (set-difference / filtro) — NO importar el contract package (no acoplar al republish).

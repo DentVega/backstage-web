@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Owner DentVega. Template repo: `DentVega/miniapp-template`.
+- Owner <owner>. Template repo: `<owner>/miniapp-template`.
 - Spec of record: `docs/superpowers/specs/2026-07-22-cicd-autobump-ci-design.md`.
 - `GET {BACKSTAGE_URL}/api/miniapps` returns `{ miniapps: [{ id, latestVersion, ... }] }`; `latestVersion` is a semver string or `null`.
 - Auto-bump is **patch-only**; a minor/major bump is a manual edit to `manifest.json` (honored when `manifest.version > latest`).
@@ -99,7 +99,7 @@ git push origin main
 
 - [ ] **Step 5: Confirm the workflow ran green**
 
-Run: `gh run list --repo DentVega/backstage-web --workflow ci.yml --limit 1`
+Run: `gh run list --repo <owner>/backstage-web --workflow ci.yml --limit 1`
 Expected: the run for the push completes with `success` (allow ~1–2 min; re-check).
 
 ---
@@ -332,12 +332,12 @@ git push origin main
 
 ```bash
 for R in miniapp-hellow_widget miniapp-cards_wallet; do
-  gh workflow run template-sync.yml --repo "DentVega/$R" --ref main
+  gh workflow run template-sync.yml --repo "<owner>/$R" --ref main
 done
 sleep 8
 for R in miniapp-hellow_widget miniapp-cards_wallet; do
-  RID=$(gh run list --repo "DentVega/$R" --workflow template-sync.yml --limit 1 --json databaseId -q '.[0].databaseId')
-  gh run watch "$RID" --repo "DentVega/$R" --exit-status
+  RID=$(gh run list --repo "<owner>/$R" --workflow template-sync.yml --limit 1 --json databaseId -q '.[0].databaseId')
+  gh run watch "$RID" --repo "<owner>/$R" --exit-status
 done
 ```
 Expected: both runs succeed and open a sync PR.
@@ -347,9 +347,9 @@ Expected: both runs succeed and open a sync PR.
 For each repo, inspect the PR (it should bring `scripts/version.mjs` + the updated `scripts/publish.mjs`, and bump `.template-sync`; it must NOT touch `src/Screen.tsx` / `manifest.json`), then merge:
 ```bash
 for R in miniapp-hellow_widget miniapp-cards_wallet; do
-  PR=$(gh pr list --repo "DentVega/$R" --state open --json number -q '.[0].number')
-  gh pr diff "$PR" --repo "DentVega/$R" --name-only
-  gh pr merge "$PR" --repo "DentVega/$R" --squash --delete-branch
+  PR=$(gh pr list --repo "<owner>/$R" --state open --json number -q '.[0].number')
+  gh pr diff "$PR" --repo "<owner>/$R" --name-only
+  gh pr merge "$PR" --repo "<owner>/$R" --squash --delete-branch
 done
 ```
 Expected: each PR's files include `scripts/version.mjs` + `scripts/publish.mjs` + `.template-sync`; merges succeed.
@@ -359,8 +359,8 @@ Expected: each PR's files include `scripts/version.mjs` + `scripts/publish.mjs` 
 ```bash
 for R in miniapp-hellow_widget miniapp-cards_wallet; do
   echo "== $R =="
-  gh api "repos/DentVega/$R/contents/scripts/version.mjs" --jq .name
-  gh api "repos/DentVega/$R/contents/scripts/publish.mjs" --jq .content | base64 -d | grep -c "nextVersion" | sed 's/^/  publish.mjs uses nextVersion x/'
+  gh api "repos/<owner>/$R/contents/scripts/version.mjs" --jq .name
+  gh api "repos/<owner>/$R/contents/scripts/publish.mjs" --jq .content | base64 -d | grep -c "nextVersion" | sed 's/^/  publish.mjs uses nextVersion x/'
 done
 ```
 Expected: `version.mjs` present; `publish.mjs` references `nextVersion`.
@@ -382,10 +382,10 @@ Record the value (e.g. `0.1.0`). Note: merging the sync PR in Task 4 already pus
 - [ ] **Step 2: Trigger a deploy (auto-bump) once**
 
 ```bash
-gh workflow run ci.yml --repo DentVega/miniapp-cards_wallet --ref main
+gh workflow run ci.yml --repo <owner>/miniapp-cards_wallet --ref main
 sleep 5
-RID=$(gh run list --repo DentVega/miniapp-cards_wallet --workflow ci.yml --limit 1 --json databaseId -q '.[0].databaseId')
-gh run watch "$RID" --repo DentVega/miniapp-cards_wallet --exit-status
+RID=$(gh run list --repo <owner>/miniapp-cards_wallet --workflow ci.yml --limit 1 --json databaseId -q '.[0].databaseId')
+gh run watch "$RID" --repo <owner>/miniapp-cards_wallet --exit-status
 ```
 Expected: run succeeds (no 409).
 

@@ -16,7 +16,7 @@
 - **`check-compat.yml` usa `COMPAT_ENFORCE: "1"` fijo** (literal string), NO `${{ vars.COMPAT_ENFORCE }}`. El enforce de rollout ya terminó; el PR check siempre bloquea/rojo.
 - **El reusable solo recibe el secreto `BACKSTAGE_URL`** (URL pública). NO `PUBLISH_TOKEN`.
 - **El job `publish` NO debe correr en PRs:** lleva `if: github.event_name != 'pull_request'`.
-- **Referencias reusables:** `uses: DentVega/miniapp-template/.github/workflows/<file>.yml@main`.
+- **Referencias reusables:** `uses: <owner>/miniapp-template/.github/workflows/<file>.yml@main`.
 - **Rollout-safe (copiar el patrón de `publish.yml`):** si `scripts/gen-manifest-shared.mjs` o `scripts/check-compat.mjs` no existen (miniapp no sincronizada) → `echo ... skipping`, no romper.
 - **Setup del job** (pnpm v10 + node 20 + install con `~/.npmrc` de GitHub Packages usando `secrets.GITHUB_TOKEN`) se copia **verbatim** de `publish.yml` para consistencia.
 
@@ -29,7 +29,7 @@
 
 **Interfaces:**
 - Consumes: los scripts existentes `scripts/gen-manifest-shared.mjs` y `scripts/check-compat.mjs` (sin cambios); el secreto `BACKSTAGE_URL`; el `secrets.GITHUB_TOKEN` automático (para leer `@dentvega/*` de GitHub Packages).
-- Produces: workflow reusable `check-compat.yml` con `on: workflow_call` que declara `secrets.BACKSTAGE_URL` (required). Lo invoca Task 2 con `uses: DentVega/miniapp-template/.github/workflows/check-compat.yml@main` + `secrets: inherit`.
+- Produces: workflow reusable `check-compat.yml` con `on: workflow_call` que declara `secrets.BACKSTAGE_URL` (required). Lo invoca Task 2 con `uses: <owner>/miniapp-template/.github/workflows/check-compat.yml@main` + `secrets: inherit`.
 
 - [ ] **Step 1: Crear el archivo con el contenido exacto**
 
@@ -143,7 +143,7 @@ on:
 
 jobs:
   publish:
-    uses: DentVega/miniapp-template/.github/workflows/publish.yml@main
+    uses: <owner>/miniapp-template/.github/workflows/publish.yml@main
     secrets: inherit
 ```
 
@@ -170,13 +170,13 @@ on:
 jobs:
   # Corre en PRs: chequea compat contra el host contract SIN buildear/publicar.
   compat:
-    uses: DentVega/miniapp-template/.github/workflows/check-compat.yml@main
+    uses: <owner>/miniapp-template/.github/workflows/check-compat.yml@main
     secrets: inherit
 
   publish:
     # El publish NO corre en PRs — solo en push a main / tag / botón Deploy.
     if: github.event_name != 'pull_request'
-    uses: DentVega/miniapp-template/.github/workflows/publish.yml@main
+    uses: <owner>/miniapp-template/.github/workflows/publish.yml@main
     secrets: inherit
 ```
 
@@ -232,7 +232,7 @@ El reusable `check-compat.yml` ya está live `@main`, pero el caller `ci.yml` (c
 
 Verificar que el `ci.yml` de `hellow_widget` en su `main` ya tiene el trigger:
 ```bash
-gh api repos/DentVega/miniapp-hellow_widget/contents/.github/workflows/ci.yml --jq '.content' | base64 -d | grep -q 'pull_request:' && echo "hellow_widget synced OK"
+gh api repos/<owner>/miniapp-hellow_widget/contents/.github/workflows/ci.yml --jq '.content' | base64 -d | grep -q 'pull_request:' && echo "hellow_widget synced OK"
 ```
 Expected: `hellow_widget synced OK`. Si falla: el sync aún no se mergeó — completar el sync antes de seguir.
 
@@ -242,12 +242,12 @@ PR #4 (`demo/miniapp-adds-native`, agrega `react-native-mmkv`) ya existe. Al est
 ```bash
 cd <repos>
 # refrescar el branch del PR para gatillar el nuevo trigger
-gh api repos/DentVega/miniapp-hellow_widget/git/refs/heads/demo/miniapp-adds-native --jq '.object.sha'
-gh pr checks 4 --repo DentVega/miniapp-hellow_widget --watch
+gh api repos/<owner>/miniapp-hellow_widget/git/refs/heads/demo/miniapp-adds-native --jq '.object.sha'
+gh pr checks 4 --repo <owner>/miniapp-hellow_widget --watch
 ```
 Expected: aparece el check **`compat`** y termina en **fail (✗)**. Ver el log:
 ```bash
-gh run list --repo DentVega/miniapp-hellow_widget --workflow "Publish miniapp" --event pull_request -L 1
+gh run list --repo <owner>/miniapp-hellow_widget --workflow "Publish miniapp" --event pull_request -L 1
 ```
 Expected en el log del job `compat`: `check-compat: INCOMPATIBLE with host contract v0.1.0 — react-native-mmkv (native module not in host)` y el job falla. Confirmar además que el job `publish` **no corrió** (skipped/ausente en ese run).
 
@@ -257,12 +257,12 @@ Crear un PR con un cambio inocuo (sin tocar deps):
 ```bash
 cd <repos>
 BR="demo/compat-green-check"
-gh api repos/DentVega/miniapp-hellow_widget/git/refs/heads/main --jq '.object.sha'   # base sha
+gh api repos/<owner>/miniapp-hellow_widget/git/refs/heads/main --jq '.object.sha'   # base sha
 # crear branch + commit trivial (editar README) vía API o checkout local del repo hellow_widget
-gh pr create --repo DentVega/miniapp-hellow_widget --head "$BR" --base main \
+gh pr create --repo <owner>/miniapp-hellow_widget --head "$BR" --base main \
   --title "[DEMO · NO MERGEAR] PR compatible — el gate lo deja pasar ✅" \
   --body "Cambio trivial sin tocar deps. El check compat debe salir verde."
-gh pr checks --repo DentVega/miniapp-hellow_widget --watch
+gh pr checks --repo <owner>/miniapp-hellow_widget --watch
 ```
 Expected: el check **`compat`** termina en **success (✓)** con `check-compat: OK vs host contract v0.1.0`; `publish` no corre.
 
@@ -271,7 +271,7 @@ Expected: el check **`compat`** termina en **success (✓)** con `check-compat: 
 Marcar el PR compatible como Draft (como los otros demos) y confirmar que ninguno se mergea:
 ```bash
 cd <repos>
-gh pr ready "$(gh pr list --repo DentVega/miniapp-hellow_widget --head demo/compat-green-check --json number --jq '.[0].number')" --repo DentVega/miniapp-hellow_widget --undo
+gh pr ready "$(gh pr list --repo <owner>/miniapp-hellow_widget --head demo/compat-green-check --json number --jq '.[0].number')" --repo <owner>/miniapp-hellow_widget --undo
 ```
 Expected: PR compatible en Draft. Reportar al usuario los dos PRs (rojo #4 + verde nuevo) como evidencia e2e; **no mergear ninguno**.
 

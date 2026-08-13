@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-07-29
 **Estado:** Diseño aprobado — listo para plan de implementación
-**Owner:** DentVega
+**Owner:** <owner>
 **Roadmap:** nuevo (🔴 estabilidad de plataforma) — complementa la estrategia anti-drift
 
 ## 1. Contexto y objetivo

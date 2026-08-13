@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Sin dependencias nuevas** (usar `node:crypto`, builtin).
+- **Owner:** <owner>. **Sin dependencias nuevas** (usar `node:crypto`, builtin).
 - **Nunca** escribir valores reales de token en el repo, docs, tests ni memoria. Los tests usan valores ficticios (`"new-strong"`, `"old-weak"`); el runbook usa placeholders (`<nuevo>`, `<viejo>`).
 - Commits con **paths explícitos** (no `git add -A`); **no** commitear `data/registry.json` (artefacto local de dev).
 - Cada commit termina con el trailer:
@@ -107,8 +107,8 @@ describe("requirePublishToken — dual token", () => {
 
 describe("authorizeUpload", () => {
   it("pasa con sesión allowlisted (sin token)", async () => {
-    process.env.SCAFFOLD_ALLOWED_LOGINS = "DentVega";
-    authMock.mockResolvedValue({ githubLogin: "DentVega" });
+    process.env.SCAFFOLD_ALLOWED_LOGINS = "<owner>";
+    authMock.mockResolvedValue({ githubLogin: "<owner>" });
     await expect(authorizeUpload(req())).resolves.toBeUndefined();
   });
 
@@ -385,7 +385,7 @@ import { POST } from "@/app/api/admin/reseed-secrets/route";
 import { auth } from "@/auth";
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
-const ADMIN = "DentVega";
+const ADMIN = "<owner>";
 
 function post(): Request {
   return new Request("http://x/api/admin/reseed-secrets", { method: "POST" });
@@ -582,8 +582,8 @@ describe("POST /api/miniapps/:id/publish — auth", () => {
   });
 
   it("pasa con sesión allowlisted (flujo UI)", async () => {
-    process.env.SCAFFOLD_ALLOWED_LOGINS = "DentVega";
-    authMock.mockResolvedValue({ githubLogin: "DentVega" });
+    process.env.SCAFFOLD_ALLOWED_LOGINS = "<owner>";
+    authMock.mockResolvedValue({ githubLogin: "<owner>" });
     const res = await POST(publishReq(), params);
     expect(res.status).toBe(201);
   });
@@ -621,8 +621,8 @@ Agregar el mock de `@/auth` junto a los otros `vi.mock` del archivo, y autentica
    ```
 2. En el `beforeEach` del archivo (crear uno si no existe, o extender el actual) agregar:
    ```ts
-   process.env.SCAFFOLD_ALLOWED_LOGINS = "DentVega";
-   authMock.mockResolvedValue({ githubLogin: "DentVega" });
+   process.env.SCAFFOLD_ALLOWED_LOGINS = "<owner>";
+   authMock.mockResolvedValue({ githubLogin: "<owner>" });
    ```
    y en `afterEach`: `delete process.env.SCAFFOLD_ALLOWED_LOGINS;` + `vi.restoreAllMocks();` (si no está).
 

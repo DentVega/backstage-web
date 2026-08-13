@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-09
 **Estado:** Aprobado (listo para plan)
 **Repos:** `backstage-web` (ingest + KV + dashboard) + `backstagereactnative` (host reporta)
-**Owner:** DentVega
+**Owner:** <owner>
 **Roadmap:** #12. Habilitado por el cache host-side (el server ya no ve los mounts cacheados → la verdad de "qué se monta" está en el host).
 
 ---

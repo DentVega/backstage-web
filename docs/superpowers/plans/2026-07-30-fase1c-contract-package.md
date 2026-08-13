@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Única dep nueva permitida:** `semver` (runtime) + `@types/semver` (dev), justificada en el spec §2.4. Ninguna otra.
+- **Owner:** <owner>. **Única dep nueva permitida:** `semver` (runtime) + `@types/semver` (dev), justificada en el spec §2.4. Ninguna otra.
 - **`minHostContract` es OPCIONAL** en `Manifest` — los manifests existentes (sin él) deben seguir pasando `isManifest`.
 - **No romper consumidores:** `satisfiesShared` mantiene su firma `(hostProvided: Record<string,SemVer>, miniappShared: SharedDepSpec[]) => SkewResult` y su semántica (compatible ⇔ todos los required satisfechos). Solo cambia el motor de rangos.
 - `satisfiesRange` (mínimo) **NO se borra** — sigue exportado para el badge.

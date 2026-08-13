@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-03
 **Estado:** Aprobado (listo para plan)
 **Repos afectados:** `miniapp-template` (código + test) + las 3 miniapps (rollout out-of-band)
-**Owner:** DentVega
+**Owner:** <owner>
 **Roadmap:** #6.
 
 ---

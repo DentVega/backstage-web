@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-07-23
 **Estado:** Diseño aprobado — listo para plan de implementación
-**Owner:** DentVega
+**Owner:** <owner>
 
 ## 1. Contexto y objetivo
 
@@ -12,7 +12,7 @@ Una empresa nueva debe poder adoptar toda la plataforma "Spotify-for-miniapps"
 comando**, en vez del rename manual (grep/sed) que hoy documenta `SETUP.md §3.1`.
 
 **Restricción dura (verificada en análisis de riesgo):** aditivo. Los repos
-vivos **siguen literales** (`@dentvega`, `DentVega`) — no se placeholder-izan
+vivos **siguen literales** (`@dentvega`, `<owner>`) — no se placeholder-izan
 (rompería el build). El bootstrap hace find-replace literal sobre la **copia**
 de la empresa. Marcar "Template repository" es un toggle de settings sin impacto
 runtime. Los repos ya son públicos y no tienen secretos committeados (historial
@@ -25,7 +25,7 @@ Tres literales, reemplazo **case-sensitive**:
 | Literal | Reemplazo | Ocurrencias (bw / host / template) | Obligatorio |
 |---|---|---|---|
 | `@dentvega` (scope npm) | `--scope` (ej. `@acme`) | 23 / 51 / 10 | **Sí** (imports/deps reales) |
-| `DentVega` (owner GitHub) | `--owner` (ej. `Acme`) | 74 / 29 / 12 | **Sí** (URLs, `uses:`, API) |
+| `<owner>` (owner GitHub) | `--owner` (ej. `Acme`) | 74 / 29 / 12 | **Sí** (URLs, `uses:`, API) |
 | `dentvega` (login minúscula, suelto) | `--login` (default: `owner` en minúscula) | 5 / 0 / 0 | Opcional (fixtures de test en backstage-web) |
 
 No hay otros usos de `dentvega` fuera de esas tres formas.
@@ -54,10 +54,10 @@ sale con código 1.
 
 La función pura `renameContent(text, { scope, owner, login })` aplica, **en este
 orden** (crítico para no corromperse, porque `@dentvega` contiene `dentvega` y
-`DentVega` no):
+`<owner>` no):
 
 1. `text.replaceAll("@dentvega", scope)`
-2. `.replaceAll("DentVega", owner)`
+2. `.replaceAll("<owner>", owner)`
 3. `.replaceAll("dentvega", login)`
 
 Tras los pasos 1–2, el único `dentvega` restante es el login suelto (minúscula),
@@ -75,7 +75,7 @@ Walk recursivo desde la raíz del repo:
 ### 3.4 Guardas de seguridad
 
 - **Origin-guard:** `isOriginRepo(remoteUrl)` devuelve `true` si el `git remote
-  get-url origin` matchea `github.com[:/]DentVega/` (case-insensitive). Si es el
+  get-url origin` matchea `github.com[:/]<owner>/` (case-insensitive). Si es el
   repo origen y NO hay `--force`, el script **rehúsa escribir** (imprime aviso y
   sale 1). El **dry-run igual corre** (para previsualizar sin riesgo). Si no hay
   remote (repo copiado sin origin), no bloquea.
@@ -94,7 +94,7 @@ Walk recursivo desde la raíz del repo:
 ## 4. Otros entregables
 
 - **Template repos:** marcar los 3 como template — `gh api -X PATCH
-  repos/DentVega/<repo> --field is_template=true` (o Settings → "Template
+  repos/<owner>/<repo> --field is_template=true` (o Settings → "Template
   repository"). Toggle de settings; no cambia código/CI/deploys/visibilidad.
 - **Hardening `.gitignore` (backstagereactnative):** agregar `.env*` (hoy no
   tiene patrón de env; sin fuga actual, pero previene que una empresa nueva
@@ -119,12 +119,12 @@ Por cada repo (`backstage-web`, `backstagereactnative`, `miniapp-template`):
 
 - **`renameContent`:**
   - `import '@dentvega/ui-kit'` → `import '@acme/ui-kit'`
-  - `github.com/DentVega/miniapp-template` → `github.com/Acme/miniapp-template`
-  - `uses: DentVega/miniapp-template/.github/workflows/publish.yml@main` → `uses: Acme/...`
+  - `github.com/<owner>/miniapp-template` → `github.com/Acme/miniapp-template`
+  - `uses: <owner>/miniapp-template/.github/workflows/publish.yml@main` → `uses: Acme/...`
   - `const ADMIN = "dentvega"` → `const ADMIN = "acme"` (login)
   - **orden/no-corrupción:** un texto con las tres formas juntas produce exactamente scope+owner+login, sin residuos ni doble-reemplazo.
   - texto sin ninguna forma → devuelto sin cambios.
-- **`isOriginRepo`:** `https://github.com/DentVega/backstage-web.git` → true; `git@github.com:DentVega/x.git` → true; `https://github.com/Acme/backstage-web` → false; `""`/undefined → false.
+- **`isOriginRepo`:** `https://github.com/<owner>/backstage-web.git` → true; `git@github.com:<owner>/x.git` → true; `https://github.com/Acme/backstage-web` → false; `""`/undefined → false.
 - **`shouldProcessFile`:** `package.json`/`x.ts`/`.npmrc` → true; `pnpm-lock.yaml`/`node_modules/x.js`/`x.png` → false.
 - **Self-test dry-run (integración):** correr `node scripts/bootstrap.mjs
   --scope @acme --owner Acme` (sin `--yes`) en nuestro propio repo → NO escribe

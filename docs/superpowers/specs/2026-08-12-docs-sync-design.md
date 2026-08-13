@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-12
 **Estado:** Aprobado (listo para plan)
 **Repo:** `backstage-web` (el `.claude/` vive acá; el hook mira también repos hermanos)
-**Owner:** DentVega
+**Owner:** <owner>
 
 ---
 

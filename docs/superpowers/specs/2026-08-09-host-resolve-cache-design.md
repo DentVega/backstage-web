@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-09
 **Estado:** Aprobado (listo para plan)
 **Repo:** `backstagereactnative` (host) — `backstage-web` NO cambia.
-**Owner:** DentVega
+**Owner:** <owner>
 **Roadmap:** cache host-side (flagged en #9). Enabler de #12 (métricas).
 
 ---

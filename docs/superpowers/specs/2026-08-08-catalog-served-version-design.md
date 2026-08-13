@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-08
 **Estado:** Aprobado (listo para plan)
 **Repos:** `backstage-web` (backend + catálogo web) + `backstagereactnative` (host)
-**Owner:** DentVega
+**Owner:** <owner>
 **Contexto:** follow-up de #10. Hoy el catálogo (web y host) muestra `latestVersion`, pero al montar se sirve `servedVersion` (pinned). Cuando hay rollback, la card **miente** (dice v0.1.13 pero monta v0.1.12).
 
 ---

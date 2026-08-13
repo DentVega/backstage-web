@@ -10,9 +10,9 @@
 
 ## Global Constraints
 
-- Repo: `backstage-web`. Owner DentVega. Direct to `main`.
+- Repo: `backstage-web`. Owner <owner>. Direct to `main`.
 - `DriftStatus = "up_to_date" | "drift" | "untracked" | "unknown"`.
-- Token: the drift provider reads GitHub with the scaffolder `githubToken()` (from `@/lib/config`) — NOT a session token. The template repo is `TEMPLATE_REPO` (from `@/lib/config`, = `process.env.MINIAPP_TEMPLATE_REPO`). Never hardcode `DentVega/miniapp-template`.
+- Token: the drift provider reads GitHub with the scaffolder `githubToken()` (from `@/lib/config`) — NOT a session token. The template repo is `TEMPLATE_REPO` (from `@/lib/config`, = `process.env.MINIAPP_TEMPLATE_REPO`). Never hardcode `<owner>/miniapp-template`.
 - **Provider throws on error** (unlike the CI provider which never throws): `getBaseSha` returns `null` on 404 (untracked) but THROWS on other failures, so `resolve` can distinguish `untracked` (null) from `unknown` (throw). `resolveDriftStatuses` catches per-item → `unknown` (fail-soft; never breaks the render).
 - Reuse `repoFullNameFor` from `@/lib/ci` (do not duplicate it).
 - Labels: `up_to_date`="Al día", `drift`="Actualización disponible", `untracked`="Sin sync", `unknown`="Desconocido".
@@ -278,7 +278,7 @@ function b64(obj: unknown): string {
 
 beforeEach(() => {
   process.env.GITHUB_TOKEN = "test-token";
-  process.env.MINIAPP_TEMPLATE_REPO = "DentVega/miniapp-template";
+  process.env.MINIAPP_TEMPLATE_REPO = "<owner>/miniapp-template";
 });
 
 describe("githubDriftProvider", () => {

@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-07-23
 **Estado:** Diseño aprobado — listo para plan de implementación
-**Owner:** DentVega
+**Owner:** <owner>
 
 ## 1. Contexto y objetivo
 
@@ -13,7 +13,7 @@ El badge muestra, por miniapp, si está **al día** con el template o si tiene u
 
 **Mecanismo:** comparar el `baseSha` del marcador `.template-sync` de cada miniapp
 (el commit del template al que está sincronizada) contra el **HEAD actual** del
-template (`DentVega/miniapp-template` main). Igual → al día; distinto → drift.
+template (`<owner>/miniapp-template` main). Igual → al día; distinto → drift.
 
 **Decisión tomada:** el cálculo usa el **`githubToken()` del scaffolder**
 (server-side, siempre disponible) — es un chequeo de plataforma, no depende de la
@@ -46,7 +46,7 @@ export interface DriftProvider {
 (Reusa `repoFullNameFor` de `lib/ci/types` — misma forma `{id, owner, repoUrl}`.)
 
 ### 3.2 `github.ts` (provider real)
-- `getTemplateHead()`: `GET https://api.github.com/repos/DentVega/miniapp-template/commits/main` (Bearer `githubToken()`) → `.sha`. El repo del template sale de `MINIAPP_TEMPLATE_REPO` (config) — no hardcodear `DentVega/miniapp-template`.
+- `getTemplateHead()`: `GET https://api.github.com/repos/<owner>/miniapp-template/commits/main` (Bearer `githubToken()`) → `.sha`. El repo del template sale de `MINIAPP_TEMPLATE_REPO` (config) — no hardcodear `<owner>/miniapp-template`.
 - `getBaseSha(repoFullName)`: `GET /repos/{repoFullName}/contents/.template-sync` → si 404 → `null` (untracked); si 200 → base64-decode `content` → `JSON.parse(...).baseSha`.
 - Ambos con los headers estándar (`Accept: application/vnd.github+json`, `X-GitHub-Api-Version`).
 

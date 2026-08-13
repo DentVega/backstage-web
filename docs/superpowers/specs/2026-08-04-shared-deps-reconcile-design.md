@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-04
 **Estado:** Aprobado (listo para plan)
 **Repo:** `backstagereactnative` (host)
-**Owner:** DentVega
+**Owner:** <owner>
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-07-22
 **Estado:** Diseño aprobado — listo para plan de implementación
-**Owner:** DentVega
+**Owner:** <owner>
 
 Dos mejoras independientes de CI/CD, agrupadas en un spec por ser el mismo tema
 (endurecer el pipeline). Cada una es un deliverable separado.

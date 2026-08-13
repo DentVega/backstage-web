@@ -158,7 +158,7 @@ function setupFixture({ miniapp, template, ignore = "manifest.json\n.template-sy
   g(cwd, "add", "-A"); g(cwd, "commit", "-qm", "template changes");
   const templateHead = g(cwd, "rev-parse", "HEAD");
   g(cwd, "switch", "-q", "main");
-  write(cwd, ".template-sync", `${JSON.stringify({ templateRepo: "DentVega/miniapp-template", baseSha: base }, null, 2)}\n`);
+  write(cwd, ".template-sync", `${JSON.stringify({ templateRepo: "<owner>/miniapp-template", baseSha: base }, null, 2)}\n`);
   miniapp(cwd);
   g(cwd, "add", "-A"); g(cwd, "commit", "-qm", "miniapp changes");
   return { cwd, base, templateHead };
@@ -276,7 +276,7 @@ git checkout -b feat/merge-engine-test
 git add scripts/template-merge.mjs scripts/__tests__/template-merge.test.mjs .github/workflows/template-sync.yml
 git commit -m "test: extract Capa 2 merge engine to tested script (#6)"
 git push -u origin feat/merge-engine-test
-gh pr create --repo DentVega/miniapp-template --base main --head feat/merge-engine-test \
+gh pr create --repo <owner>/miniapp-template --base main --head feat/merge-engine-test \
   --title "test: motor de merge de Capa 2 extraído + testeado (#6)" \
   --body "Extrae el 3-way merge de template-sync.yml a scripts/template-merge.mjs (behavior-preserving) + test node:test. Cierra roadmap #6."
 ```
@@ -285,11 +285,11 @@ gh pr create --repo DentVega/miniapp-template --base main --head feat/merge-engi
 
 ```bash
 cd miniapp-template
-gh pr checks --repo DentVega/miniapp-template --watch   # el PR es de feat/merge-engine-test
+gh pr checks --repo <owner>/miniapp-template --watch   # el PR es de feat/merge-engine-test
 ```
 Expected: check `test` **success** (compat/publish skipped por el guard). Luego:
 ```bash
-gh pr merge --repo DentVega/miniapp-template --squash --delete-branch
+gh pr merge --repo <owner>/miniapp-template --squash --delete-branch
 ```
 
 ---
@@ -305,9 +305,9 @@ Para cada `R` en `miniapp-hellow_widget`, `miniapp-cards_wallet`, `miniapp-accou
 cd miniapp-template
 put_file() { # repo path
   local R="$1" P="$2"
-  local SHA; SHA=$(gh api "repos/DentVega/$R/contents/$P" --jq '.sha' 2>/dev/null)
+  local SHA; SHA=$(gh api "repos/<owner>/$R/contents/$P" --jq '.sha' 2>/dev/null)
   local B64; B64=$(base64 -i "$P")
-  gh api -X PUT "repos/DentVega/$R/contents/$P" \
+  gh api -X PUT "repos/<owner>/$R/contents/$P" \
     -f message="chore: adopt tested Capa 2 merge engine (#6)" \
     -f content="$B64" ${SHA:+-f sha="$SHA"} --jq '.commit.sha' 2>&1 | tail -1
 }
@@ -324,11 +324,11 @@ Expected: dos commits por repo. (Nota: `account-dashboard` está enrolado; si le
 Provocar drift (un cambio trivial en el template main ya existe si hay commits nuevos) y disparar el sync en `hellow_widget`:
 ```bash
 cd <repos>
-gh workflow run template-sync.yml --repo DentVega/miniapp-hellow_widget
+gh workflow run template-sync.yml --repo <owner>/miniapp-hellow_widget
 sleep 8
-RID=$(gh run list --repo DentVega/miniapp-hellow_widget --workflow "Template sync" -L 1 --json databaseId --jq '.[0].databaseId')
-gh run watch "$RID" --repo DentVega/miniapp-hellow_widget --exit-status 2>&1 | tail -8
-gh pr list --repo DentVega/miniapp-hellow_widget --state open --json number,title --jq '.[] | "#\(.number) \(.title)"'
+RID=$(gh run list --repo <owner>/miniapp-hellow_widget --workflow "Template sync" -L 1 --json databaseId --jq '.[0].databaseId')
+gh run watch "$RID" --repo <owner>/miniapp-hellow_widget --exit-status 2>&1 | tail -8
+gh pr list --repo <owner>/miniapp-hellow_widget --state open --json number,title --jq '.[] | "#\(.number) \(.title)"'
 ```
 Expected: el run pasa; si había drift, abre un PR "Sync desde template @ …" (igual que antes del refactor). Si no hay drift → "Template unchanged / nothing to sync" (también válido). Confirmar que NO rompe.
 

@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-07-23
 **Estado:** Diseño aprobado — listo para plan de implementación
-**Owner:** DentVega
+**Owner:** <owner>
 **Roadmap:** #1 (🔴 seguridad / production-hardening)
 
 ## 1. Contexto y objetivo

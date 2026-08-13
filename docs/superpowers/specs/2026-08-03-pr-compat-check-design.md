@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-03
 **Estado:** Aprobado (listo para plan)
 **Repo principal afectado:** `miniapp-template` (los cambios se propagan a la flota vía template-sync)
-**Owner:** DentVega
+**Owner:** <owner>
 
 ---
 
@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
 jobs:
   publish:
-    uses: DentVega/miniapp-template/.github/workflows/publish.yml@main
+    uses: <owner>/miniapp-template/.github/workflows/publish.yml@main
     secrets: inherit
 ```
 
@@ -140,13 +140,13 @@ on:
 jobs:
   # NUEVO — corre en PRs (y no molesta en push: es barato y redundante con publish)
   compat:
-    uses: DentVega/miniapp-template/.github/workflows/check-compat.yml@main
+    uses: <owner>/miniapp-template/.github/workflows/check-compat.yml@main
     secrets: inherit
 
   publish:
     # El publish NO debe correr en PRs (solo push/tag/dispatch).
     if: github.event_name != 'pull_request'
-    uses: DentVega/miniapp-template/.github/workflows/publish.yml@main
+    uses: <owner>/miniapp-template/.github/workflows/publish.yml@main
     secrets: inherit
 ```
 

@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-10
 **Estado:** Aprobado (listo para plan)
 **Repos:** `backstage-web` (control-plane) · `backstagereactnative` (host) · `miniapp-hellow_widget` (miniapp piloto)
-**Owner:** DentVega
+**Owner:** <owner>
 
 ---
 

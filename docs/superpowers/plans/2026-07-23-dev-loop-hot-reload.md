@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Host repo: `backstagereactnative` (`apps/host` + `packages/host-runtime`). Owner DentVega. Docs in `backstage-web/docs/LOCAL-DEV.md`.
+- Host repo: `backstagereactnative` (`apps/host` + `packages/host-runtime`). Owner <owner>. Docs in `backstage-web/docs/LOCAL-DEV.md`.
 - **Additive + `__DEV__`-gated:** nothing may change the release path. The alias falls back to `NoMiniapp` when `DEV_MINIAPP_PATH` is unset; `devResolveClient`/`noopVerifier`/the DevMount nav entry are used only under `__DEV__`.
 - `noopVerifier` ALREADY EXISTS in `packages/host-runtime/src/integrity.ts` (exported from `index.ts`) — Mode 2 imports it, does not build it.
 - Types: `ResolveResponse = { id: MiniappId; version: SemVer; url: string; manifest: Manifest }`; `Manifest = { id; version; entry; shared: SharedDepSpec[]; capabilities: Capability[]; integrity? }`; `MiniappEntryProps = { capabilities: CapabilityGrant }`; `createScopedGrant(caps): { grant }`.

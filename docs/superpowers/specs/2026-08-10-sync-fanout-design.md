@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-10
 **Estado:** Aprobado (listo para plan)
 **Repo:** `backstage-web`
-**Owner:** DentVega
+**Owner:** <owner>
 **Roadmap:** #16.
 
 ---

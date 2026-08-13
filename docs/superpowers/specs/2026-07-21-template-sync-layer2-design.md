@@ -2,13 +2,13 @@
 
 **Fecha:** 2026-07-21
 **Estado:** Diseño aprobado — listo para plan de implementación
-**Owner:** DentVega (usuario GitHub, no org)
+**Owner:** <owner> (usuario GitHub, no org)
 
 ---
 
 ## 1. Contexto y objetivo
 
-Las miniapps se scaffoldean desde `DentVega/miniapp-template` y a partir de ahí
+Las miniapps se scaffoldean desde `<owner>/miniapp-template` y a partir de ahí
 evolucionan solas (pantallas propias, deps nuevas, features). Cuando el template
 cambia algo **de infraestructura o core** (bump de React Native, fix de config de
 Re.Pack, versión de una librería compartida), esas miniapps quedan **congeladas**
@@ -59,7 +59,7 @@ lo tocó.
 **Solución — marca de base explícita.** Cada miniapp guarda `.template-sync`:
 
 ```json
-{ "templateRepo": "DentVega/miniapp-template", "baseSha": "<sha>" }
+{ "templateRepo": "<owner>/miniapp-template", "baseSha": "<sha>" }
 ```
 
 `baseSha` = el commit del template del que salió (o del último sync mergeado). Con
@@ -135,7 +135,7 @@ Reusa el patrón exacto del botón **Deploy** (que hace `dispatchWorkflow` de
 `.templatesyncignore` al template. `init-template.yml` (que ya corre y commitea en
 cada scaffold fresco) además escribe `.template-sync` con
 `baseSha = HEAD del template` (lo resuelve vía API:
-`GET /repos/DentVega/miniapp-template/commits/main` con el `GITHUB_TOKEN`). Toda
+`GET /repos/<owner>/miniapp-template/commits/main` con el `GITHUB_TOKEN`). Toda
 miniapp nueva nace enrolada.
 
 **Repos existentes (backfill una vez, headless con `gh`):** `hello_widget` y

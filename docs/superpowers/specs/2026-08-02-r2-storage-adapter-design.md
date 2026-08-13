@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-08-02
 **Estado:** Diseño aprobado — listo para plan de implementación
-**Owner:** DentVega
+**Owner:** <owner>
 
 ## 1. Contexto y objetivo
 

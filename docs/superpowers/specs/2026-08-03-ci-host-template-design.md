@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-03
 **Estado:** Aprobado (listo para plan)
 **Repos afectados:** `backstagereactnative` (host monorepo) y `miniapp-template`
-**Owner:** DentVega
+**Owner:** <owner>
 **Roadmap:** #17 (CI en los otros repos). #6 (test del merge engine de Capa 2) **diferido** a un follow-up.
 
 ---

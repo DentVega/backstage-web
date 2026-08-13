@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Sin dependencias nuevas.**
+- **Owner:** <owner>. **Sin dependencias nuevas.**
 - **Dos repos:** Task 1 en `backstage-web` (vitest); Task 2 en `backstagereactnative` `apps/host` (node:test). Commits **locales** por repo.
 - **Definición de breaking (transición):** una miniapp cuenta como rota SOLO si es **compatible con el contract publicado** Y **incompatible con el candidato** (evita marcar las que ya estaban incompatibles/sin backfill).
 - **Rollout-safe:** sin contract publicado (404) → no hay baseline → skip (exit 0, warn). Override: env `ACCEPT_BREAKING=true` (del label `accept-breaking-contract`) → deja pasar dejando registro.

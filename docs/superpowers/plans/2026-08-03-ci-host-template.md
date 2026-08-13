@@ -79,7 +79,7 @@ git checkout -b ci/tests-workflow
 git add .github/workflows/tests.yml
 git commit -m "ci: run test suites on PR (typecheck + jest + node:test)"
 git push -u origin ci/tests-workflow
-gh pr create --repo DentVega/backstagereactnative --base main --head ci/tests-workflow \
+gh pr create --repo <owner>/backstagereactnative --base main --head ci/tests-workflow \
   --title "ci: test-gating en PRs (typecheck + jest + node:test)" \
   --body "Corre las suites existentes en cada PR. Los .mjs node:test hoy no los corría nadie. Cierra roadmap #17 (parte host)."
 ```
@@ -90,7 +90,7 @@ Expected: PR creado.
 Run:
 ```bash
 cd backstagereactnative
-gh pr checks --repo DentVega/backstagereactnative --watch
+gh pr checks --repo <owner>/backstagereactnative --watch
 ```
 Expected: aparece el check **`test`** y termina en **success**; `blast-radius` también verde.
 **Si `test` sale rojo:** hay un test que falla sobre main → PARAR, leer el log (`gh run view <id> --log-failed`), reportar. No mergear.
@@ -99,9 +99,9 @@ Expected: aparece el check **`test`** y termina en **success**; `blast-radius` t
 
 ```bash
 cd backstagereactnative
-HEAD_SHA=$(gh pr view --repo DentVega/backstagereactnative --json headRefOid --jq '.headRefOid')
-gh api repos/DentVega/backstagereactnative/commits/$HEAD_SHA/check-runs --jq '.check_runs[].name'   # anotar el context de tests (debería ser "test")
-gh pr merge --repo DentVega/backstagereactnative --squash --delete-branch
+HEAD_SHA=$(gh pr view --repo <owner>/backstagereactnative --json headRefOid --jq '.headRefOid')
+gh api repos/<owner>/backstagereactnative/commits/$HEAD_SHA/check-runs --jq '.check_runs[].name'   # anotar el context de tests (debería ser "test")
+gh pr merge --repo <owner>/backstagereactnative --squash --delete-branch
 ```
 Expected: contexts listados (anotar `test`); PR mergeado a main.
 
@@ -206,16 +206,16 @@ Expected: push OK (main no protegido).
 ```bash
 cd <repos>
 R=miniapp-template; BR=ci/verify-tests
-MAIN=$(gh api repos/DentVega/$R/git/refs/heads/main --jq '.object.sha')
-gh api -X POST repos/DentVega/$R/git/refs -f ref="refs/heads/$BR" -f sha="$MAIN" >/dev/null
-RM=$(gh api "repos/DentVega/$R/contents/README.md?ref=$BR" --jq '.sha')
-gh api "repos/DentVega/$R/contents/README.md?ref=$BR" --jq '.content' | base64 -d > /tmp/_t.md
+MAIN=$(gh api repos/<owner>/$R/git/refs/heads/main --jq '.object.sha')
+gh api -X POST repos/<owner>/$R/git/refs -f ref="refs/heads/$BR" -f sha="$MAIN" >/dev/null
+RM=$(gh api "repos/<owner>/$R/contents/README.md?ref=$BR" --jq '.sha')
+gh api "repos/<owner>/$R/contents/README.md?ref=$BR" --jq '.content' | base64 -d > /tmp/_t.md
 printf '\n<!-- verify tests CI -->\n' >> /tmp/_t.md
-gh api -X PUT "repos/DentVega/$R/contents/README.md" -f message="chore: verify tests CI" \
+gh api -X PUT "repos/<owner>/$R/contents/README.md" -f message="chore: verify tests CI" \
   -f content="$(base64 -i /tmp/_t.md)" -f sha="$RM" -f branch="$BR" >/dev/null
-PR=$(gh pr create --repo DentVega/$R --head "$BR" --base main --title "chore: verify tests CI (throwaway)" --body "Se cierra al confirmar verde." | tail -1)
-gh pr checks "$(echo $PR|grep -oE '[0-9]+$')" --repo DentVega/$R --watch
-gh api repos/DentVega/$R/commits/$(gh api repos/DentVega/$R/git/refs/heads/$BR --jq '.object.sha')/check-runs --jq '.check_runs[].name'
+PR=$(gh pr create --repo <owner>/$R --head "$BR" --base main --title "chore: verify tests CI (throwaway)" --body "Se cierra al confirmar verde." | tail -1)
+gh pr checks "$(echo $PR|grep -oE '[0-9]+$')" --repo <owner>/$R --watch
+gh api repos/<owner>/$R/commits/$(gh api repos/<owner>/$R/git/refs/heads/$BR --jq '.object.sha')/check-runs --jq '.check_runs[].name'
 ```
 Expected: check **`test`** en **success**; anotar el context. **Si sale rojo:** PARAR, leer el log, reportar.
 
@@ -231,7 +231,7 @@ cat > /tmp/bp-template.json <<'JSON'
   "restrictions": null
 }
 JSON
-gh api -X PUT repos/DentVega/miniapp-template/branches/main/protection --input /tmp/bp-template.json \
+gh api -X PUT repos/<owner>/miniapp-template/branches/main/protection --input /tmp/bp-template.json \
   --jq '"template: required=[\(.required_status_checks.contexts|join(","))] enforce_admins=\(.enforce_admins.enabled)"'
 ```
 Expected: `template: required=[test] enforce_admins=false`.
@@ -240,7 +240,7 @@ Expected: `template: required=[test] enforce_admins=false`.
 
 ```bash
 cd <repos>
-gh pr close "$(gh pr list --repo DentVega/miniapp-template --head ci/verify-tests --json number --jq '.[0].number')" --repo DentVega/miniapp-template --delete-branch
+gh pr close "$(gh pr list --repo <owner>/miniapp-template --head ci/verify-tests --json number --jq '.[0].number')" --repo <owner>/miniapp-template --delete-branch
 ```
 Expected: PR cerrado, branch borrada.
 
@@ -249,7 +249,7 @@ Expected: PR cerrado, branch borrada.
 Leer la protección actual y re-aplicar con el context sumado:
 ```bash
 cd <repos>
-CUR=$(gh api repos/DentVega/backstagereactnative/branches/main/protection)
+CUR=$(gh api repos/<owner>/backstagereactnative/branches/main/protection)
 STRICT=$(echo "$CUR" | python3 -c "import json,sys;print(str(json.load(sys.stdin)['required_status_checks']['strict']).lower())")
 ADMINS=$(echo "$CUR" | python3 -c "import json,sys;print(str(json.load(sys.stdin)['enforce_admins']['enabled']).lower())")
 echo "actual: strict=$STRICT enforce_admins=$ADMINS contexts=$(echo "$CUR"|python3 -c "import json,sys;print(json.load(sys.stdin)['required_status_checks']['contexts'])")"
@@ -261,7 +261,7 @@ cat > /tmp/bp-host.json <<JSON
   "restrictions": null
 }
 JSON
-gh api -X PUT repos/DentVega/backstagereactnative/branches/main/protection --input /tmp/bp-host.json \
+gh api -X PUT repos/<owner>/backstagereactnative/branches/main/protection --input /tmp/bp-host.json \
   --jq '"host: required=[\(.required_status_checks.contexts|join(","))] enforce_admins=\(.enforce_admins.enabled) strict=\(.required_status_checks.strict)"'
 ```
 Expected: `host: required=[blast-radius,test] enforce_admins=true strict=...`.
@@ -272,8 +272,8 @@ Expected: `host: required=[blast-radius,test] enforce_admins=true strict=...`.
 ```bash
 cd <repos>
 for R in backstagereactnative miniapp-template; do
-  gh api repos/DentVega/$R/branches/main/protection --jq '"'"'\(env.R): required=[\(.required_status_checks.contexts|join(","))]"'"'"' 2>/dev/null || \
-  gh api repos/DentVega/$R/branches/main/protection --jq '.required_status_checks.contexts'
+  gh api repos/<owner>/$R/branches/main/protection --jq '"'"'\(env.R): required=[\(.required_status_checks.contexts|join(","))]"'"'"' 2>/dev/null || \
+  gh api repos/<owner>/$R/branches/main/protection --jq '.required_status_checks.contexts'
 done
 ```
 Expected: host → `[blast-radius, test]`; template → `[test]`.
@@ -288,7 +288,7 @@ El CI hizo su trabajo y destapó 3 cosas (todas resueltas):
 
 1. **Host — conflicto de versión de pnpm:** `pnpm/action-setup` con `version: 10` choca con `packageManager: pnpm@10.14.0` del `package.json` del host. Fix: sacar el `version:` (lee del `packageManager`). Solo aplica al host (el template no tiene `packageManager` → mantiene `version: 10`).
 2. **Host — workspace packages sin buildear:** `packages/host-runtime` typecheck fallaba (`Cannot find module '@dentvega/miniapp-contract'`) porque los workspace packages necesitan su `dist/.d.ts`. Fix: agregar `pnpm build:packages` antes del typecheck. El `tests.yml` real del host quedó: install → **build:packages** → typecheck → jest → node:test. (~5m51s, jest RN es lento.)
-3. **Template — `compat / compat` rojo en los PRs del propio template:** efecto colateral del feature anterior (el trigger `pull_request` en el `ci.yml` del template corría el gate sobre su manifest **placeholder**). Fix (commit `ced1219`): guardar los jobs `compat` **y** `publish` del `ci.yml` del template con `if: github.repository != 'DentVega/miniapp-template'` — el template no es una miniapp, no corre compat ni se publica a sí mismo. En las miniapps ambos jobs siguen corriendo normal.
+3. **Template — `compat / compat` rojo en los PRs del propio template:** efecto colateral del feature anterior (el trigger `pull_request` en el `ci.yml` del template corría el gate sobre su manifest **placeholder**). Fix (commit `ced1219`): guardar los jobs `compat` **y** `publish` del `ci.yml` del template con `if: github.repository != '<owner>/miniapp-template'` — el template no es una miniapp, no corre compat ni se publica a sí mismo. En las miniapps ambos jobs siguen corriendo normal.
 
 Evidencia e2e: host PR #12 (`test` verde 5m51s → mergeado `03f9ffa`); template PR #1 throwaway (`test` verde, `compat`/`publish` skipped tras el guard → cerrado). Branch protection final: host `[blast-radius, test]` (enforce_admins=true), template `[test]` (enforce_admins=false).
 

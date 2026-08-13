@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Sin dependencias nuevas.**
+- **Owner:** <owner>. **Sin dependencias nuevas.**
 - **Repo:** `backstagereactnative`, paquete en `packages/miniapp-contract`. Trabajar desde ahí. Commits **locales** (no push; no publicar).
 - Estilo del paquete: imports ESM con `.js`, inglés, tests con `pnpm --filter @dentvega/miniapp-contract test` (jest).
 - `checkCompatibility` reusa `satisfiesShared` (no reimplementar). El `contract.shared` es `Record<string,string>`; `satisfiesShared` espera `Record<string,SemVer>` (branded) → castear con un comentario (mismo patrón ya usado en el gate de backstage-web; `SemVer` es brand compile-time, sin efecto runtime).

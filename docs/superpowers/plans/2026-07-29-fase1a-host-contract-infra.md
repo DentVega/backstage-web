@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Owner:** DentVega. **Sin dependencias nuevas** (la lib `semver` entra en el plan del contract package, no acá; el warn-mode usa el `satisfiesShared` ya publicado).
+- **Owner:** <owner>. **Sin dependencias nuevas** (la lib `semver` entra en el plan del contract package, no acá; el warn-mode usa el `satisfiesShared` ya publicado).
 - **Modo warn:** el gate de `/upload` **loguea pero NUNCA rechaza** en este plan (el 422 se activa en un plan posterior, §8.5 del spec).
 - **`HostContract` type** se define local en `lib/host-contract/types.ts` (el contract package lo adopta después; no bloquear en un publish de paquete).
 - **Regla at-risk (§2.7):** un `manifest.shared` vacío/ausente se loguea como *at-risk*, no como compatible.

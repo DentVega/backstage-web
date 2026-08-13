@@ -10,11 +10,11 @@
 
 ## Global Constraints
 
-- Owner is **DentVega** (GitHub user, not org). Template repo: `DentVega/miniapp-template`.
+- Owner is **<owner>** (GitHub user, not org). Template repo: `<owner>/miniapp-template`.
 - **No new secrets.** The sync workflow uses the automatic `GITHUB_TOKEN` (`contents: write`, `pull-requests: write`). Template is public → fetch without auth.
 - Spec of record: `docs/superpowers/specs/2026-07-21-template-sync-layer2-design.md`.
 - Miniapp-owned files (never overwritten): `src/Screen.tsx`, `manifest.json`, `README.md`, `README.es.md`, `.template-sync`.
-- Marker file `.template-sync` shape: `{ "templateRepo": "DentVega/miniapp-template", "baseSha": "<40-hex>" }`.
+- Marker file `.template-sync` shape: `{ "templateRepo": "<owner>/miniapp-template", "baseSha": "<40-hex>" }`.
 - Current template HEAD (baseSha for backfill): `d5cc652c5a9abc48567d470534ee06e94da12435`.
 - Backstage repo: `backstage-web`. Template repo: `miniapp-template`.
 - Commit trailer for every commit:
@@ -79,9 +79,9 @@ beforeEach(() => {
     acc: {
       id: "acc" as never,
       name: "Acc",
-      owner: "DentVega",
+      owner: "<owner>",
       versions: [],
-      repoUrl: "https://github.com/DentVega/miniapp-acc",
+      repoUrl: "https://github.com/<owner>/miniapp-acc",
     },
   } as unknown as Registry;
 });
@@ -96,7 +96,7 @@ describe("POST /api/miniapps/:id/sync-template", () => {
     const res = await POST(req(), params);
     expect(res.status).toBe(202);
     expect(dispatchSpy).toHaveBeenCalledWith({
-      owner: "DentVega",
+      owner: "<owner>",
       repo: "miniapp-acc",
       workflow: "template-sync.yml",
       ref: "main",
@@ -579,8 +579,8 @@ In `.github/workflows/init-template.yml`, add this step between the "Substitute 
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          BASE="$(gh api repos/DentVega/miniapp-template/commits/main --jq .sha)"
-          printf '{\n  "templateRepo": "DentVega/miniapp-template",\n  "baseSha": "%s"\n}\n' "$BASE" > .template-sync
+          BASE="$(gh api repos/<owner>/miniapp-template/commits/main --jq .sha)"
+          printf '{\n  "templateRepo": "<owner>/miniapp-template",\n  "baseSha": "%s"\n}\n' "$BASE" > .template-sync
           echo "wrote .template-sync baseSha=$BASE"
 ```
 
@@ -621,10 +621,10 @@ BASE="$(git -C "$TPL" rev-parse origin/main)"
 for R in miniapp-hellow_widget miniapp-cards_wallet; do
   D="$SCR/backfill-$R"
   rm -rf "$D"
-  git clone "https://github.com/DentVega/$R.git" "$D"
+  git clone "https://github.com/<owner>/$R.git" "$D"
   cp "$TPL/.github/workflows/template-sync.yml" "$D/.github/workflows/template-sync.yml"
   cp "$TPL/.templatesyncignore" "$D/.templatesyncignore"
-  printf '{\n  "templateRepo": "DentVega/miniapp-template",\n  "baseSha": "%s"\n}\n' "$BASE" > "$D/.template-sync"
+  printf '{\n  "templateRepo": "<owner>/miniapp-template",\n  "baseSha": "%s"\n}\n' "$BASE" > "$D/.template-sync"
   git -C "$D" add -A
   git -C "$D" commit -m "chore: enroll for template sync (Capa 2)"
   git -C "$D" push origin main
@@ -639,8 +639,8 @@ Run:
 ```bash
 for R in miniapp-hellow_widget miniapp-cards_wallet; do
   echo "== $R =="
-  gh api "repos/DentVega/$R/contents/.template-sync" --jq '.content' | base64 -d
-  gh api "repos/DentVega/$R/contents/.github/workflows/template-sync.yml" --jq '.name'
+  gh api "repos/<owner>/$R/contents/.template-sync" --jq '.content' | base64 -d
+  gh api "repos/<owner>/$R/contents/.github/workflows/template-sync.yml" --jq '.name'
 done
 ```
 Expected: each prints a `.template-sync` JSON with the template HEAD sha and `template-sync.yml`.
@@ -673,25 +673,25 @@ git push origin main
 - [ ] **Step 3: Dispatch the sync for cards_wallet**
 
 ```bash
-gh workflow run template-sync.yml --repo DentVega/miniapp-cards_wallet --ref main
+gh workflow run template-sync.yml --repo <owner>/miniapp-cards_wallet --ref main
 sleep 5
-RID=$(gh run list --repo DentVega/miniapp-cards_wallet --workflow template-sync.yml --limit 1 --json databaseId -q '.[0].databaseId')
-gh run watch "$RID" --repo DentVega/miniapp-cards_wallet --exit-status
+RID=$(gh run list --repo <owner>/miniapp-cards_wallet --workflow template-sync.yml --limit 1 --json databaseId -q '.[0].databaseId')
+gh run watch "$RID" --repo <owner>/miniapp-cards_wallet --exit-status
 ```
 Expected: run succeeds.
 
 - [ ] **Step 4: Verify the PR is correct**
 
 ```bash
-gh pr list --repo DentVega/miniapp-cards_wallet --state open
-PR=$(gh pr list --repo DentVega/miniapp-cards_wallet --state open --json number -q '.[0].number')
-gh pr diff "$PR" --repo DentVega/miniapp-cards_wallet
+gh pr list --repo <owner>/miniapp-cards_wallet --state open
+PR=$(gh pr list --repo <owner>/miniapp-cards_wallet --state open --json number -q '.[0].number')
+gh pr diff "$PR" --repo <owner>/miniapp-cards_wallet
 ```
 Expected: the diff shows the `babel.config.cjs` comment **and** the `.template-sync` baseSha bump, and does **not** touch `src/Screen.tsx` or `manifest.json`.
 
 - [ ] **Step 5: Merge and confirm it still mounts**
 
-Merge the PR (`gh pr merge "$PR" --repo DentVega/miniapp-cards_wallet --squash`), then follow the emulator flow from the session (relaunch host, open Cards Wallet) to confirm it still renders. Optionally re-deploy via the Deploy button to publish a fresh chunk.
+Merge the PR (`gh pr merge "$PR" --repo <owner>/miniapp-cards_wallet --squash`), then follow the emulator flow from the session (relaunch host, open Cards Wallet) to confirm it still renders. Optionally re-deploy via the Deploy button to publish a fresh chunk.
 
 - [ ] **Step 6: Clean up the smoke change**
 
