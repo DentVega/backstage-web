@@ -349,6 +349,18 @@ pnpm dev            # ← levanta todo (dashboard mprocs)
 - Procesos on-demand en el dashboard: `app-android` / `app-ios` para (re)instalar la app.
 - `DEV_DRY=1 pnpm dev` imprime el plan + el YAML generado sin arrancar nada (para inspeccionar).
 
+> [!IMPORTANT]
+> Cada miniapp del config tiene que estar **`pnpm install`ada** (es un repo aparte; al
+> montarla en el host sus deps resuelven desde su carpeta). `pnpm dev` corre un
+> **preflight** y, si falta, corta con un mensaje claro en vez del error críptico de
+> rspack (`resolving fallback for shared module react`, `Can't resolve @swc/helpers`…):
+> ```
+> ✗ Miniapps sin listo (el dev-mount rompería el bundle del host):
+>   • cards_wallet: falta node_modules — corré: cd ../miniapp-cards_wallet && pnpm install
+> ```
+> `mount` sin instalar → **error** (rompe el bundle); `remote` sin instalar → **warning**
+> (solo falla si prendés su dev server).
+
 > [!NOTE]
 > El config y los env vars se leen **al arrancar** (ver más abajo). Cambiar *qué*
 > miniapps montás = reiniciar `pnpm dev`; editar el *código* de una miniapp Fast-Refreshea
