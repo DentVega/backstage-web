@@ -15,6 +15,17 @@ export interface DocGroup {
 
 export const DOC_GROUPS: readonly DocGroup[] = [
   {
+    group: "El proceso",
+    items: [
+      {
+        slug: "proceso",
+        title: "Cómo se implementa una super-app",
+        file: "docs/PROCESO.md",
+        blurb: "La vista de negocio: el proceso en 8 pasos, de la app anfitriona a operar la flota.",
+      },
+    ],
+  },
+  {
     group: "Empezar",
     items: [
       {
