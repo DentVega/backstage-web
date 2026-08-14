@@ -122,6 +122,10 @@ Sin `BACKSTAGE_URL` seteado al buildear, el host apunta por defecto a
 
 ## 3. Arrancar los servicios
 
+> **Atajo:** todo esto (Backstage + host + dev servers + `adb reverse`) lo levanta
+> **`pnpm dev`** con un solo comando, desde un config declarativo — ver [§6b](#un-comando-pnpm-dev-recomendado).
+> Abajo está el detalle **manual**, pieza por pieza (útil para entender qué hace cada una o para device).
+
 Layout recomendado: **3 terminales**.
 
 | Terminal | Comando | Desde | Qué hace |
@@ -375,7 +379,9 @@ pnpm dev            # ← levanta todo (dashboard mprocs)
 > miniapps montás = reiniciar `pnpm dev`; editar el *código* de una miniapp Fast-Refreshea
 > (mount) o se refresca con RR (remote), sin reiniciar. Para **iPhone/Android físico por
 > LAN**: `pnpm dev --device` (auto-detecta la IP de la Mac, o `--ip=<x>` / `DEVICE_IP=<x>`)
-> — pone los dev servers en `0.0.0.0`, apunta el bundle a la IP LAN y usa `run-ios --device`.
+> — pone los dev servers en `0.0.0.0` y apunta el bundle a la IP LAN. En **iPhone físico**
+> hay pasos manuales del lado del device (instalar por Xcode + apuntar el bundler) — ver
+> "iOS — simulador e iPhone físico" más abajo.
 
 Si preferís entender/hacer cada paso a mano, o para device, acá están los dos modos:
 
@@ -482,15 +488,30 @@ pnpm --filter @app/host android
   con otras publicadas.
 - Para una sola miniapp, dejás una entrada; para varias, las separás con coma.
 
-#### iOS (Modo 1 y 2)
+#### iOS — simulador e iPhone físico
 
-Los dos modos andan igual en iOS — cambiá `pnpm --filter @app/host android` por
-`ios`. La diferencia es la red:
+**iOS Simulator:** corré `pnpm dev` (o manual con `pnpm --filter @app/host ios`).
+`localhost` apunta a tu Mac → **no** hace falta `adb reverse` ni port-forward; todo directo.
 
-- **iOS Simulator:** `localhost` apunta a tu Mac → **no** hace falta `adb reverse` ni
-  el port-forward de los `:9000x`. Funcionan directo.
-- **iPhone real:** `localhost` es el teléfono → usá la **IP LAN de tu Mac** en las URLs
-  de `DEV_REMOTES` (`http://192.168.x.x:9000`), no `localhost`.
+**iPhone físico:** del lado servidor, `pnpm dev --device` deja todo listo (Metro y los dev
+servers en `0.0.0.0`, la IP LAN de la Mac en `DEV_REMOTES` y `BACKSTAGE_URL`). Pero hay dos
+pasos **del lado del device que son manuales** (RN/Xcode, no los automatiza el orquestador):
+
+- **Instalar la app:** `react-native run-ios --device` (el proc `app-ios`) suele **colgarse
+  en "Installing and launching…"** en iPhones físicos — limitación conocida del RN CLI.
+  **Instalá/lanzá por Xcode** (Product → Run) con el scheme en **Debug** (Edit Scheme → Run →
+  Build Configuration = Debug), así la app **se conecta a Metro** en vez de embeber el bundle
+  (Release embebe → sin Fast Refresh). Dejá el proc `app-ios` **apagado** en el dashboard.
+- **Apuntar la app a Metro:** por default busca Metro en `localhost` (= el teléfono). Agitá el
+  iPhone → menú de dev → **"Debug server host & port for device"** → poné
+  **`<IP-LAN-de-tu-Mac>:8081`** (ej. `192.168.0.7:8081`) → **Reload**. Verificá **Fast Refresh
+  ON** y que el iPhone esté en la **misma Wi-Fi**. (Para Modo 2, `DEV_REMOTES` ya usa esa IP.)
+
+> [!TIP]
+> Tu IP LAN: `ipconfig getifaddr en0` (o `en1`). Si el firewall de macOS está activo,
+> permití entrantes al `:8081` (System Settings → Network → Firewall).
+> Si la miniapp **carga pero no refresca** al editar, casi siempre es el bundler apuntando a
+> `localhost`: reseteá el "Debug server host & port" a la IP LAN.
 
 ### Qué modo para qué tarea
 
