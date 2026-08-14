@@ -28,24 +28,33 @@ El proceso completo se organiza en **8 pasos**, agrupados en 3 etapas.
 
 ### 1. La app anfitriona (el host)
 
-**Qué es:** la app que la gente instala. Provee lo común a todas las mini-apps: navegación,
-sesión, identidad del usuario y el sistema de diseño compartido.
+**Qué es:** es lo único que el usuario instala y actualiza desde la tienda; todo lo demás
+—&nbsp;las mini-apps— entra y sale sin tocar esa instalación. El host provee lo común a todas:
+navegación, sesión, identidad del usuario y el sistema de diseño compartido. Definir el host
+es, en el fondo, decidir qué queda *fijo* (lo estable y común) y qué queda *móvil* (las
+mini-apps que evolucionan por su cuenta).
 
 - **Beneficio:** una sola app para el usuario; los equipos no rehacen lo básico una y otra vez.
 - **Cómo queda resuelto:** un host listo para alojar cualquier mini-app, con librerías y servicios compartidos.
 
 ### 2. La torre de control (el control-plane)
 
-**Qué es:** un panel central donde se registran, publican, versionan y gobiernan todas las
-mini-apps: qué existe, qué versión está viva y quién puede publicar.
+**Qué es:** sin un lugar central, cada equipo publicaría por su cuenta y nadie sabría con
+certeza qué versión está viva ni quién la subió. La torre de control es ese lugar único: un
+catálogo de todas las mini-apps, el historial de versiones de cada una, y los permisos de
+quién puede publicar qué. Es también desde donde se ordena una vuelta atrás o se congela una
+versión cuando hace falta.
 
 - **Beneficio:** visibilidad y control desde un solo lugar; se sabe qué está en producción y por quién.
 - **Cómo queda resuelto:** un panel web con catálogo, publicación, historial de versiones y estado de cada mini-app.
 
 ### 3. El contrato (las reglas de convivencia)
 
-**Qué es:** un contrato explícito que define qué provee el host y qué debe cumplir una
-mini-app para vivir adentro sin romper la aplicación.
+**Qué es:** es el punto más importante y el menos obvio. Cuando muchas mini-apps comparten la
+misma app, tienen que ponerse de acuerdo en las piezas comunes —&nbsp;por ejemplo, usar la
+misma versión de las librerías de base. El contrato pone eso por escrito: qué ofrece el host y
+qué puede dar por sentado una mini-app. Sin contrato, dos equipos que evolucionan por separado
+tarde o temprano chocan y rompen la app para todos.
 
 - **Beneficio:** mini-apps de distintos equipos conviven sin romperse entre sí ni tirar abajo la app.
 - **Cómo queda resuelto:** un contrato versionado, única fuente de verdad compartida entre el host y las mini-apps.
@@ -58,17 +67,22 @@ mini-app para vivir adentro sin romper la aplicación.
 
 ### 4. La línea de publicación
 
-**Qué es:** el camino de "código listo" a "vivo en el teléfono del usuario", sin tener que
-reenviar la app a la tienda cada vez que cambia una mini-app.
+**Qué es:** normalmente, cambiar cualquier cosa en una app móvil implica reenviarla a la
+tienda y esperar la revisión —&nbsp;días. Acá, como las mini-apps viajan por separado del host,
+se publican directo: se suben, quedan registradas con su número de versión, y el teléfono las
+trae la próxima vez que el usuario entra. La app instalada no cambia; cambia el contenido que
+baja. Ese es el corazón de por qué una super-app se mueve tan rápido.
 
 - **Beneficio:** funcionalidades y arreglos en minutos, no en la cola de revisión de la tienda (actualización directa).
 - **Cómo queda resuelto:** publicación automatizada; el teléfono resuelve y trae la versión correcta en el momento.
 
 ### 5. El doble control de calidad
 
-**Qué es:** antes de que algo se publique, se verifica automáticamente en dos sentidos: que
-la mini-app es compatible con el host, y que un cambio del host no rompa las mini-apps que ya
-están publicadas.
+**Qué es:** el riesgo de una plataforma así es que una sola pieza rompa al resto. Por eso hay
+dos chequeos automáticos que corren solos: **(1)** cuando una mini-app se va a publicar, se
+verifica que cumple el contrato del host; **(2)** cuando el host va a cambiar algo compartido,
+se verifica que ese cambio no rompa ninguna mini-app ya publicada. Si algo no da, se frena ahí
+—&nbsp;antes de llegar al usuario, no después.
 
 - **Beneficio:** se evita el "actualicé y se cayó todo": el riesgo se detecta antes de llegar al usuario.
 - **Cómo queda resuelto:** chequeos automáticos en ambas direcciones que bloquean lo incompatible.
@@ -81,24 +95,32 @@ están publicadas.
 
 ### 6. Gobierno, seguridad e integridad
 
-**Qué es:** quién puede hacer qué (dueños responsables por cada mini-app), y la garantía de
-que lo que se ejecuta en el teléfono es exactamente lo que se publicó —&nbsp;nada alterado en el camino.
+**Qué es:** son dos cosas distintas que van juntas. **Gobierno:** quién es responsable de cada
+mini-app y quién puede publicar —&nbsp;para que no cualquiera suba cualquier cosa.
+**Integridad:** una garantía de que lo que corre en el teléfono es idéntico a lo que se
+publicó, sin nada alterado en el camino; si una pieza no coincide con su huella, no se ejecuta.
+Juntas dan control de acceso y confianza en cada actualización.
 
 - **Beneficio:** control de acceso claro y confianza en cada pieza que llega al usuario.
 - **Cómo queda resuelto:** permisos por mini-app + verificación de integridad de cada versión antes de ejecutarla.
 
 ### 7. La operación del día a día
 
-**Qué es:** volver atrás una versión al instante si algo sale mal, medir uso y fallas para
-decidir con datos, y servir iOS y Android desde el mismo proceso.
+**Qué es:** una vez en producción, la plataforma necesita herramientas de operación. Si una
+mini-app falla, se vuelve a la versión anterior al instante —&nbsp;sin reenviar nada a la
+tienda. Se miden los usos y las fallas para saber qué se usa de verdad y qué está fallando. Y
+todo el proceso sirve iOS y Android a la vez, sin duplicar el trabajo por plataforma.
 
 - **Beneficio:** si una mini-app falla, se revierte en segundos; decisiones con métricas; una sola operación para las dos plataformas.
 - **Cómo queda resuelto:** rollback por versión, métricas de uso y fallas, y publicación iOS + Android.
 
 ### 8. Escalar la organización
 
-**Qué es:** sumar equipos y mini-apps nuevas rápido, y mantener a toda la flota al día desde
-una plantilla común —&nbsp;para que una mejora de base llegue a todos sin trabajo manual repetido.
+**Qué es:** al principio son pocas mini-apps; el valor real aparece cuando son muchas y de
+muchos equipos. Para eso, sumar una mini-app nueva tiene que ser rápido y guiado, y las mejoras
+de base —&nbsp;seguridad, configuración común— deben propagarse a toda la flota desde una
+plantilla, en vez de repetirlas una por una. Se suma también un entorno local simple para que
+cada equipo itere rápido sin depender de la nube.
 
 - **Beneficio:** crecer sin multiplicar el trabajo manual; una mejora se propaga a toda la flota.
 - **Cómo queda resuelto:** alta guiada de mini-apps + sincronización con la plantilla + entorno local de un comando para los equipos.
@@ -128,8 +150,5 @@ Los tres primeros pasos son los cimientos —&nbsp;todo lo demás se apoya sobre
 3. **Fijar el contrato** — las reglas de convivencia.
 
 Con esos cimientos en su lugar, se suma la línea de publicación y los controles de calidad
-(Etapa 2), y por último la operación y la escala (Etapa 3).
-
-> [!TIP]
-> **Próximo paso:** una sesión de descubrimiento para mapear tu caso —&nbsp;áreas, equipos,
-> apps existentes— a este proceso y armar el plan de implementación por etapas.
+(Etapa 2), y por último la operación y la escala (Etapa 3). Cada etapa se apoya en la anterior:
+por eso el orden importa.
