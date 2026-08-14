@@ -121,6 +121,21 @@ El host importa **directo** el `Entry` de una miniapp clonada al lado y la rende
 un grant mock (de las capabilities de su `manifest.json`). Como es código del bundle del
 host, editar la miniapp da **Fast Refresh instantáneo**.
 
+**Con `pnpm dev`** (recomendado): en `apps/host/dev-miniapps.config.mjs`, marcá la(s)
+miniapp(s) con `mode: 'mount'`:
+
+```js
+export const devMiniapps = [
+  { id: 'hellow_widget', path: '../miniapp-hellow_widget', mode: 'mount', autostart: true },
+  // sumá más con mode: 'mount' → la pantalla Dev Mount muestra tabs para elegir cuál ver
+];
+```
+
+`pnpm dev` levanta el host y las monta; en la app entrá a **"▶ Dev Mount"**. Editar
+cualquiera → Fast Refresh al instante.
+
+**A mano** (sin el orquestador, para entender qué hace por dentro):
+
 ```bash
 # Terminal A — host dev server, apuntando a tu miniapp clonada al lado
 export BACKSTAGE_URL=https://<tu-proyecto>.vercel.app
@@ -131,9 +146,9 @@ DEV_MINIAPP_PATH=../miniapp-hellow_widget \
 pnpm --filter @app/host android      # o: pnpm --filter @app/host ios
 ```
 
-- En la app, entrá a la pantalla **"▶ Dev Mount"** (en el Home) → monta la miniapp de
-  `DEV_MINIAPP_PATH`. Editá su `src/…` → refresco al instante.
-- **Varias a la vez:** usá `DEV_MINIAPP_PATHS` (CSV, hasta 6) en vez de `DEV_MINIAPP_PATH` →
+- `pnpm dev` deriva `DEV_MINIAPP_PATHS` de las entradas `mode: 'mount'` del config; a mano
+  lo pasás vos: entrá a **"▶ Dev Mount"** (en el Home) → monta la miniapp de `DEV_MINIAPP_PATH`.
+- **Varias a la vez (a mano):** usá `DEV_MINIAPP_PATHS` (CSV, hasta 6) en vez de `DEV_MINIAPP_PATH` →
   Dev Mount muestra un **selector (tabs)** para elegir cuál ver; editar cualquiera Fast-Refreshea.
 - Sin `DEV_MINIAPP_PATH`/`DEV_MINIAPP_PATHS`, "Dev Mount" muestra un placeholder (y en release ni se registra).
 - **Límite:** no prueba la federación. Y solo anda limpio si la miniapp usa las deps
@@ -145,6 +160,21 @@ pnpm --filter @app/host android      # o: pnpm --filter @app/host ios
 Cada miniapp corre **su propio dev server** en un puerto distinto; el host las rutea por
 id. El host baja el container **vivo**; editás → rebuildea → **RR** (recargar) en el host
 trae el fresco.
+
+**Con `pnpm dev`** (recomendado): marcá cada miniapp con `mode: 'remote'` y su `port`:
+
+```js
+export const devMiniapps = [
+  { id: 'hellow_widget', path: '../miniapp-hellow_widget', mode: 'remote', port: 9000, autostart: true },
+  { id: 'cards_wallet',  path: '../miniapp-cards_wallet',  mode: 'remote', port: 9001, autostart: true },
+];
+```
+
+`pnpm dev` arranca el host + **un dev server por remote** + los `adb reverse` de cada
+puerto. Editás la miniapp → **RR** en el host trae el container fresco. Prendés/apagás cada
+dev server en vivo desde el TUI.
+
+**A mano** (sin el orquestador, para entender qué hace por dentro):
 
 **Una sola miniapp:**
 
