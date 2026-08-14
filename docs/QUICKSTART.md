@@ -63,8 +63,13 @@ provee** (no las bundlees vos):
 
 ## 4. Probarla local (opcional pero recomendado)
 
-Montá tu miniapp contra el host antes de publicar. La forma más rápida es el
-**dev-mount** (Fast Refresh). En una terminal, el dev server del host montando tu
+Montá tu miniapp contra el host antes de publicar con **dev-mount** (Fast Refresh).
+
+**Recomendado — un comando:** agregá tu miniapp al `apps/host/dev-miniapps.config.mjs`
+con `mode: 'mount'` y corré **`pnpm dev`** (levanta el host, la monta y arranca todo).
+Detalle en [Desarrollo local](/docs/local-dev#un-comando-pnpm-dev-recomendado).
+
+**A mano** (sin el orquestador): en una terminal, el dev server del host montando tu
 miniapp local:
 
 ```bash

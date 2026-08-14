@@ -272,6 +272,7 @@ Qué cambió, y por qué es código "real" del kit (no inventado):
 > ```bash
 > DEV_MINIAPP_PATH=../miniapp-hello_counter pnpm --filter @app/host start
 > ```
+> (o, con un comando, agregala al `dev-miniapps.config.mjs` con `mode: 'mount'` y corré `pnpm dev`.)
 > Está detallado en [Desarrollo local](/docs/local-dev) y en la Integration Guide §6.
 > No es un paso obligatorio para este tutorial — seguimos directo al build estático.
 
