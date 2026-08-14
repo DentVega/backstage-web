@@ -373,8 +373,9 @@ pnpm dev            # ← levanta todo (dashboard mprocs)
 > [!NOTE]
 > El config y los env vars se leen **al arrancar** (ver más abajo). Cambiar *qué*
 > miniapps montás = reiniciar `pnpm dev`; editar el *código* de una miniapp Fast-Refreshea
-> (mount) o se refresca con RR (remote), sin reiniciar. iPhone físico (DEVICE_IP) aún no
-> está en el orquestador — usá los comandos manuales de abajo para device.
+> (mount) o se refresca con RR (remote), sin reiniciar. Para **iPhone/Android físico por
+> LAN**: `pnpm dev --device` (auto-detecta la IP de la Mac, o `--ip=<x>` / `DEVICE_IP=<x>`)
+> — pone los dev servers en `0.0.0.0`, apunta el bundle a la IP LAN y usa `run-ios --device`.
 
 Si preferís entender/hacer cada paso a mano, o para device, acá están los dos modos:
 
