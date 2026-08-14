@@ -10,6 +10,7 @@ import rehypePrettyCode from "rehype-pretty-code";
 import rehypeStringify from "rehype-stringify";
 import { registryDark, registryLight } from "./shiki-theme";
 import { rehypeCallouts } from "./rehype-callouts";
+import { rehypeDocLinks } from "./rehype-doc-links";
 import { remarkTabs } from "./remark-tabs";
 
 export interface TocItem {
@@ -31,6 +32,7 @@ const processor = unified()
   .use(remarkRehype, { allowDangerousHtml: true })
   .use(rehypeRaw)
   .use(rehypeCallouts)
+  .use(rehypeDocLinks)
   .use(rehypeSlug)
   .use(rehypeAutolinkHeadings, {
     behavior: "append",
