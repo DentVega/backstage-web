@@ -324,7 +324,38 @@ troubleshooting del lado host): `backstagereactnative/docs/mounting-miniapps.md`
 
 El inner loop de §4 (build → publish → reabrir) no tiene hot reload del remoto
 federado (el host carga por URL resuelta). Para iterar más rápido hay **dos modos
-de dev, `__DEV__`-only** (no afectan release):
+de dev, `__DEV__`-only** (no afectan release): **Modo 1** (dev-mount, Fast Refresh) y
+**Modo 2** (dev server federado). Podés levantarlos a mano (abajo), o con un comando:
+
+### Un comando: `pnpm dev` (recomendado)
+
+En vez de armar env vars + `adb reverse` + N dev servers a mano, un **config
+declarativo** por-miniapp + el orquestador `mprocs` lo levantan todo. Copiá la
+plantilla una vez y editá los paths a tus repos de miniapp:
+
+```bash
+cd backstagereactnative
+cp apps/host/dev-miniapps.config.example.mjs apps/host/dev-miniapps.config.mjs
+# editá apps/host/dev-miniapps.config.mjs (gitignored):
+#   [{ id, path, mode:'mount'|'remote', port?, autostart }]
+pnpm dev            # ← levanta todo (dashboard mprocs)
+```
+
+- **`mode:'mount'`** → dev-mount (Fast Refresh, va al bundle del host). **`mode:'remote'`**
+  → dev server federado en su `port`. Mezclables.
+- **`autostart`** decide qué arranca prendido; en el TUI de mprocs **prendés/apagás cada
+  dev server en caliente** (los remotes). `pnpm dev` deriva `DEV_MINIAPP_PATHS`,
+  `DEV_REMOTES` y los `adb reverse` del config, y arranca el Host + cada dev server.
+- Procesos on-demand en el dashboard: `app-android` / `app-ios` para (re)instalar la app.
+- `DEV_DRY=1 pnpm dev` imprime el plan + el YAML generado sin arrancar nada (para inspeccionar).
+
+> [!NOTE]
+> El config y los env vars se leen **al arrancar** (ver más abajo). Cambiar *qué*
+> miniapps montás = reiniciar `pnpm dev`; editar el *código* de una miniapp Fast-Refreshea
+> (mount) o se refresca con RR (remote), sin reiniciar. iPhone físico (DEVICE_IP) aún no
+> está en el orquestador — usá los comandos manuales de abajo para device.
+
+Si preferís entender/hacer cada paso a mano, o para device, acá están los dos modos:
 
 ### Modo 1 — dev-mount (Fast Refresh real, sin federación)
 
