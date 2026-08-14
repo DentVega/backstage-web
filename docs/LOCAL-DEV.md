@@ -506,6 +506,7 @@ pasos **del lado del device que son manuales** (RN/Xcode, no los automatiza el o
   iPhone → menú de dev → **"Debug server host & port for device"** → poné
   **`<IP-LAN-de-tu-Mac>:8081`** (ej. `192.168.0.7:8081`) → **Reload**. Verificá **Fast Refresh
   ON** y que el iPhone esté en la **misma Wi-Fi**. (Para Modo 2, `DEV_REMOTES` ya usa esa IP.)
+  `pnpm dev --device` **auto-detecta la IP y te imprime al arrancar** el valor exacto a poner acá.
 
 > [!TIP]
 > Tu IP LAN: `ipconfig getifaddr en0` (o `en1`). Si el firewall de macOS está activo,
