@@ -253,6 +253,7 @@ adb reverse tcp:9001 tcp:9001
 
 | Tarea | Modo |
 |---|---|
+| Arrancar el dev-loop (recomendado) | **`pnpm dev`** — un comando; levanta lo que declares en el config (mounts + remotes + Backstage) |
 | Construir/ajustar la UI de una miniapp (lo más frecuente) | **1** (Fast Refresh) |
 | Miniapp nueva, todavía sin publicar en el catálogo | **1** |
 | Probar que monta como remoto federado (boundary MF, capabilities) | **2** |
@@ -269,6 +270,8 @@ adb reverse tcp:9001 tcp:9001
   prod **antes** de buildear. Un release apuntando a `localhost` no carga el catálogo.
 - **Plataforma:** automática (`Platform.OS`) → iOS baja el chunk iOS, Android el android.
   Nada que configurar.
-- **¿Backstage 100% local?** en otra terminal `cd backstage-web && pnpm dev` (:3999), usá
-  `BACKSTAGE_URL=http://localhost:3999`, y para el emulador Android
-  `adb reverse tcp:3999 tcp:3999`.
+- **¿Backstage 100% local?** en otra terminal `cd backstage-web && pnpm exec next dev -p 3999`
+  (el host lo espera en `:3999`; el `pnpm dev` pelado de backstage-web es `next dev` → cae al
+  `:3000` de Next), usá `BACKSTAGE_URL=http://localhost:3999`, y para el emulador Android
+  `adb reverse tcp:3999 tcp:3999`. _(Con `pnpm dev` del orquestador + `backstage` en el config,
+  esto ya queda resuelto.)_
