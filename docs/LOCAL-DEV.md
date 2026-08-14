@@ -488,11 +488,12 @@ Los dos modos andan igual en iOS — cambiá `pnpm --filter @app/host android` p
 
 ### Qué modo para qué tarea
 
-| Tarea | Modo |
+| Tarea | Cómo |
 |---|---|
-| Construir/ajustar la UI de la pantalla (lo más frecuente) | **1** (Fast Refresh) |
-| Verificar que monta como remoto federado, capabilities, boundary MF | **2** (reload) |
-| Release / integridad / versionado | build→publish (§4) |
+| **Arrancar el dev-loop (recomendado)** | **`pnpm dev`** — un comando; levanta lo que declares en el config (mounts + remotes + Backstage) |
+| Construir/ajustar la UI de la pantalla (lo más frecuente) | Modo **1** — dev-mount, Fast Refresh · en `pnpm dev` = `mode: 'mount'` |
+| Verificar que monta como remoto federado, capabilities, boundary MF | Modo **2** — dev server, RR · en `pnpm dev` = `mode: 'remote'` |
+| Release / integridad / versionado | build → publish (§4) |
 
 ---
 
