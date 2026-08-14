@@ -354,6 +354,9 @@ pnpm dev            # ← levanta todo (dashboard mprocs)
   eligen device solos (con varios conectados usan el primero; `ANDROID_SERIAL=<serial> pnpm dev`
   para elegir otro; iOS con `IOS_SIMULATOR="<nombre>"` o `IOS_UDID`).
 - `DEV_DRY=1 pnpm dev` imprime el plan + el YAML generado sin arrancar nada (para inspeccionar).
+- **Armar el config rápido:** `pnpm dev:scan` detecta las miniapps hermanas (`../miniapp-*`
+  con `manifest.json`) y las agrega al config, preservando lo que ya tengas. Por defecto es
+  preview; `--write` aplica; `--remote` las agrega como remote con puerto auto.
 
 > [!IMPORTANT]
 > Cada miniapp del config tiene que estar **`pnpm install`ada** (es un repo aparte; al
