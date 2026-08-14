@@ -57,6 +57,12 @@ target **host** → **Signing & Capabilities** → seteá tu **Team** + un **Bun
 Identifier** propio → conectá el iPhone, seleccionalo y **Run** (con la Terminal A del
 dev server corriendo). ATS ya está resuelto; no toques `Info.plist`.
 
+> [!TIP]
+> Para **Fast Refresh en iPhone físico** (por Wi-Fi/LAN, sin `iproxy`): arrancá el dev server
+> con **`pnpm dev --device`** — bindea Metro a la IP LAN de la Mac (no `0.0.0.0`), así el
+> cliente de HMR del device conecta. En el iPhone: menú de dev → "Debug server host & port
+> for device" → `<IP-de-tu-Mac>:8081`. Detalle en `LOCAL-DEV.md` §6b.
+
 ---
 
 ## 3 · PROD — Android (release, JS dentro del binario)
@@ -90,15 +96,26 @@ Todo lo de arriba corre **el host**. Esto es para **desarrollar una o varias min
 contra ese host, en tu máquina, sin pasar por CI/prod. Hay dos modos (ambos son
 `__DEV__`-only — no afectan el release):
 
+> [!TIP]
+> **Un comando: `pnpm dev` (recomendado).** En vez de las N terminales + env vars +
+> `adb reverse` de abajo, un config declarativo (`apps/host/dev-miniapps.config.mjs`) +
+> `mprocs` levantan **todo** con un solo `pnpm dev`: el Host, un dev server por remote, el
+> Backstage opcional y los `adb reverse`. `pnpm dev:scan` arma el config solo desde las
+> miniapps hermanas. Para **iPhone/Android físico por LAN**: `pnpm dev --device` (Fast
+> Refresh sin `iproxy`). Guía completa:
+> [`LOCAL-DEV.md` §6b](https://github.com/DentVega/backstage-web/blob/main/docs/LOCAL-DEV.md)
+> en backstage-web. Lo de abajo es el detalle **manual**, pieza por pieza (útil para
+> entender qué hace cada modo, o cuando querés controlar cada proceso a mano).
+
 | | **Modo 1 — dev-mount** | **Modo 2 — remotes federados** |
 |---|---|---|
-| Cuántas miniapps | **1** | **1 o varias** |
+| Cuántas miniapps | **1 o varias** (con selector/tabs) | **1 o varias** |
 | Cómo carga | compilada dentro del bundle del host (alias `@dev-miniapp`) | como chunk remoto por HTTP desde el dev server de la miniapp (igual que prod, pero a `localhost`) |
 | Fast Refresh | **host + miniapp juntos** (el loop más ajustado) | dentro de la miniapp (editás → rebuildea → recargás el host) |
 | ¿Necesita estar en el catálogo? | **No** (ideal para una miniapp nueva) | Sí (aparece en el catálogo; el host redirige su resolución a tu dev server) |
 | Prueba la federación real (boundary MF, resolve, integridad) | No | **Sí** |
 
-### Modo 1 — UNA miniapp, Fast Refresh instantáneo
+### Modo 1 — una o varias miniapps, Fast Refresh instantáneo
 
 El host importa **directo** el `Entry` de una miniapp clonada al lado y la renderiza con
 un grant mock (de las capabilities de su `manifest.json`). Como es código del bundle del
@@ -116,7 +133,9 @@ pnpm --filter @app/host android      # o: pnpm --filter @app/host ios
 
 - En la app, entrá a la pantalla **"▶ Dev Mount"** (en el Home) → monta la miniapp de
   `DEV_MINIAPP_PATH`. Editá su `src/…` → refresco al instante.
-- Sin `DEV_MINIAPP_PATH`, "Dev Mount" muestra un placeholder (y en release ni se registra).
+- **Varias a la vez:** usá `DEV_MINIAPP_PATHS` (CSV, hasta 6) en vez de `DEV_MINIAPP_PATH` →
+  Dev Mount muestra un **selector (tabs)** para elegir cuál ver; editar cualquiera Fast-Refreshea.
+- Sin `DEV_MINIAPP_PATH`/`DEV_MINIAPP_PATHS`, "Dev Mount" muestra un placeholder (y en release ni se registra).
 - **Límite:** no prueba la federación. Y solo anda limpio si la miniapp usa las deps
   **compartidas** (ui-kit, react-native, react); si agregó deps propias, instalalas también
   en el host o usá el Modo 2.
