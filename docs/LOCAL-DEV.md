@@ -378,9 +378,11 @@ pnpm dev            # ← levanta todo (dashboard mprocs)
 > El config y los env vars se leen **al arrancar** (ver más abajo). Cambiar *qué*
 > miniapps montás = reiniciar `pnpm dev`; editar el *código* de una miniapp Fast-Refreshea
 > (mount) o se refresca con RR (remote), sin reiniciar. Para **iPhone/Android físico por
-> LAN**: `pnpm dev --device` (auto-detecta la IP de la Mac, o `--ip=<x>` / `DEVICE_IP=<x>`)
-> — pone los dev servers en `0.0.0.0` y apunta el bundle a la IP LAN. En **iPhone físico**
-> hay pasos manuales del lado del device (instalar por Xcode + apuntar el bundler) — ver
+> LAN**: `pnpm dev --device` **bindea los dev servers RN a la IP LAN de la Mac** (no a
+> `0.0.0.0`) — así el cliente de HMR del device físico apunta a esa IP y el **Fast Refresh
+> conecta**. La IP sale, por precedencia, de `--ip=<x>` > `DEVICE_IP=<x>` >
+> `device.ip` del config > auto-detección. En **iPhone físico** quedan dos pasos manuales
+> del lado del device (instalar por Xcode + apuntar el bundler) — ver
 > "iOS — simulador e iPhone físico" más abajo.
 
 Si preferís entender/hacer cada paso a mano, o para device, acá están los dos modos:
@@ -493,9 +495,14 @@ pnpm --filter @app/host android
 **iOS Simulator:** corré `pnpm dev` (o manual con `pnpm --filter @app/host ios`).
 `localhost` apunta a tu Mac → **no** hace falta `adb reverse` ni port-forward; todo directo.
 
-**iPhone físico:** del lado servidor, `pnpm dev --device` deja todo listo (Metro y los dev
-servers en `0.0.0.0`, la IP LAN de la Mac en `DEV_REMOTES` y `BACKSTAGE_URL`). Pero hay dos
-pasos **del lado del device que son manuales** (RN/Xcode, no los automatiza el orquestador):
+**iPhone físico:** del lado servidor, `pnpm dev --device` deja todo listo — **bindea Metro y
+los dev servers RN a la IP LAN de la Mac** (no a `0.0.0.0`) y pone esa IP en `DEV_REMOTES` y
+`BACKSTAGE_URL`. El bind-a-IP es clave: Re.Pack le pasa ese host al **cliente de HMR**, así que
+con `0.0.0.0` el websocket `/hot` del device intentaba `localhost` y moría (el Reload andaba
+pero el Fast Refresh no); con la IP concreta, el Fast Refresh conecta. La IP sale de
+`--ip=<x>` > `DEVICE_IP=<x>` > `device.ip` del config > auto-detección — fijala una vez en el
+config con `export const device = {ip: '192.168.0.7'}`. Quedan dos pasos **del lado del device
+que son manuales** (RN/Xcode, no los automatiza el orquestador):
 
 - **Instalar la app:** `react-native run-ios --device` (el proc `app-ios`) suele **colgarse
   en "Installing and launching…"** en iPhones físicos — limitación conocida del RN CLI.
