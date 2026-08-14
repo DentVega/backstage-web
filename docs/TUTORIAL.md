@@ -399,7 +399,7 @@ pasar por las tiendas para que vea tu versión nueva.
    scaffoldeaste; antes del primer publish mostraba "no disponible", ahora debería
    resolver bien.
 3. Entrá. El componente `<MiniappHost/>` del lado host corre el ciclo completo:
-   **resuelve** (`GET /api/resolve`) → **verifica** el sha256 → **descarga** el chunk →
+   **resuelve** (`GET /api/resolve`) → **descarga** el chunk → **verifica** el sha256 →
    **monta** tu `Entry`. Vas a ver tu pantalla con el contador en 0.
 4. Apretá **Sumar +1** un par de veces — es tu componente, corriendo dentro del host,
    compartiendo el mismo `ThemeProvider` (por eso el fondo/colores calzan con el resto

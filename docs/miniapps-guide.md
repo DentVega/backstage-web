@@ -80,8 +80,8 @@ Resultado: la miniapp aparece en el catálogo; `GET /api/resolve?id=<id>` respon
 - Empaquetar los chunks en un zip **por plataforma** (el contenedor y los sub-chunks al
   **raíz** del zip):
   ```bash
-  cd build/generated/android && zip -q /tmp/<id>.zip *.bundle
-  cd build/generated/ios && zip -q /tmp/<id>-ios.zip *.bundle   # solo si buildeaste iOS
+  cd build/generated/android && zip -qr /tmp/<id>.zip .
+  cd build/generated/ios && zip -qr /tmp/<id>-ios.zip .   # solo si buildeaste iOS
   ```
 
 ### 2b. Publicar (dos caminos)

@@ -132,7 +132,7 @@ Cuando los warn logs estén limpios (0 incompatibles), estás listo para enforce
 
 ### Resultado shadow validation — 2026-08-03 ✅
 
-Calculado contra el host contract live (`contractVersion 0.0.1`, RN 0.76.6):
+Calculado contra el host contract live (`contractVersion 0.1.0`, RN 0.76.6):
 
 | Miniapp | Veredicto vs contract |
 |---|---|
@@ -182,15 +182,14 @@ bloqueado (5.1/5.2); un POST directo a `/upload` con un manifest incompatible �
 
 ---
 
-## Paso 6 — (Opcional) Precisión y belt extra
+## Paso 6 — Precisión y belt extra
 
-No hace falta para enforce, pero mejora:
-
-- **Republish del contract package v0.3.0** + bump de la dep en `backstage-web` → el gate
-  warn de `/upload` pasa a usar el `satisfiesShared` con **semver real** (hoy usa el
-  mínimo de 0.1.0, que puede dar falsos incompatibles en warn logs con rangos raros).
-  El host y las miniapps ya usan la lógica correcta (workspace / self-contained).
-  _(El backstop server-side `/upload` → 422 ya está construido — ver Paso 5.3.)_
+- ✅ **Contract package v0.3.0 con semver real** — HECHO (2026-08-03). `backstage-web` ya
+  declara `"@dentvega/miniapp-contract": "^0.3.0"` y esa versión usa `semver.satisfies` real
+  en `satisfiesShared`, así que el gate warn de `/upload` compara rangos con precisión (no
+  más el mínimo de 0.1.0 que podía dar falsos incompatibles con rangos raros). El host y las
+  miniapps ya usaban la lógica correcta (workspace / self-contained).
+  _(El backstop server-side `/upload` → 422 también está construido — ver Paso 5.3.)_
 
 ---
 

@@ -134,6 +134,14 @@ Publica el contract. Solo el CI del host (token dedicado, no `PUBLISH_TOKEN`).
 **400** — JSON inválido o shape inválido (sin `code`).
 **401** — token ausente/incorrecto (`AuthError`).
 
+### `GET /api/manifests`
+
+Manifest vigente (el de la última versión) de **cada** miniapp registrada. Público. Lo
+consume el gate de gobernanza del host (blast-radius): `check-host-compat` compara un cambio
+de deps del host contra estos manifests para no romper la flota ya publicada.
+
+**200** — `{ "manifests": [ <Manifest>, … ] }` (ver el schema `Manifest` en §8).
+
 ---
 
 ## 3. Catálogo
@@ -245,6 +253,20 @@ issue en el repo del host — best-effort, nunca bloquea el publish.
 
 Tras publicar corre un **prune best-effort** (mantiene las últimas `PRUNE_KEEP`
 — default 5 — más la servida/pinneada); si falla, el publish ya quedó guardado.
+
+### `POST /api/miniapps/:id/publish`
+
+Variante **JSON** del `upload`: registra una versión cuyo chunk **ya está hospedado** en
+una URL (no sube el archivo). El `upload` de arriba es el camino normal del CI (recibe el
+zip y hostea el chunk); este sirve cuando el chunk ya vive en un CDN propio.
+
+**Auth**: igual que `upload` — sesión allowlisted (`canScaffold`) **o** `Bearer <PUBLISH_TOKEN>` (`authorizeUpload`).
+
+**Body**: `{ "version": string, "url": string, "manifest": Manifest }` — los 3 requeridos.
+
+**201** — `{ "id": "acc", "version": "1.2.0" }`
+**400** — falta `version`/`url`/`manifest` (sin `code`), o `INVALID_MANIFEST`.
+**409** — `VERSION_EXISTS`.
 
 ### `POST /api/scaffold`
 
@@ -414,6 +436,17 @@ convención).
 
 **200** — `{ "reseeded": ["acc"], "failed": [{ "id": "x", "error": "..." }] }`
 **500** (sin `code`) si `PUBLISH_TOKEN` no está seteado — se niega a fingir éxito.
+
+### `POST /api/seed`
+
+Siembra el registry con las entradas semilla (bootstrap). **Idempotente**: no pisa las
+entradas existentes. A diferencia del resto de §7, se autentica por **token de servicio**,
+no por sesión.
+
+**Auth**: `Authorization: Bearer <PUBLISH_TOKEN>` (`requirePublishToken`).
+
+**200** — `{ "seeded": true, "count": 3 }` (`count` = total de entradas tras el seed).
+**401** — token ausente/incorrecto (`AuthError`).
 
 ---
 
