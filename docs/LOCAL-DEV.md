@@ -350,7 +350,9 @@ pnpm dev            # ← levanta todo (dashboard mprocs)
   {path: '../backstage-web', port: 3999, autostart: true}` y `pnpm dev` también lo
   levanta (para que cargue el Home/catálogo) → dev-loop en **un solo comando**. Sin ese
   export, corré Backstage por tu cuenta.
-- Procesos on-demand en el dashboard: `app-android` / `app-ios` para (re)instalar la app.
+- Procesos on-demand en el dashboard: `app-android` / `app-ios` para (re)instalar la app —
+  eligen device solos (con varios conectados usan el primero; `ANDROID_SERIAL=<serial> pnpm dev`
+  para elegir otro; iOS con `IOS_SIMULATOR="<nombre>"` o `IOS_UDID`).
 - `DEV_DRY=1 pnpm dev` imprime el plan + el YAML generado sin arrancar nada (para inspeccionar).
 
 > [!IMPORTANT]
