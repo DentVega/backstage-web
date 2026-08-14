@@ -14,6 +14,30 @@ la plataforma y qué hay disponible hoy.
 
 ---
 
+## 2026-08-13 → 2026-08-14 · Dev-loop de un comando: `pnpm dev` + iPhone físico
+
+El dev-loop deja de ser "N terminales + env vars + `adb reverse` a mano". Un **config
+declarativo** por-miniapp (`dev-miniapps.config.mjs`) + un orquestador (`mprocs`) levantan
+todo con un solo `pnpm dev`. Ver [Desarrollo local](/docs/local-dev).
+
+- **`pnpm dev`** deriva del config `DEV_MINIAPP_PATHS` / `DEV_REMOTES` / los `adb reverse`, y
+  arranca en un dashboard: el Host (Metro/Re.Pack), un dev server por remote, el Backstage
+  opcional y procesos on-demand `app-android`/`app-ios`. `autostart` decide qué prende; el
+  resto se prende/apaga en caliente desde el TUI. `DEV_DRY=1` imprime el plan sin arrancar.
+- **Modo 1 multi-miniapp**: dev-mount de varias miniapps a la vez con un **selector (tabs)**
+  en la pantalla Dev Mount — editar cualquiera Fast-Refreshea.
+- **`pnpm dev:scan`** arma el config solo: detecta las miniapps hermanas (`../miniapp-*` con
+  `manifest.json`) y las agrega preservando lo tuyo (preview por default, `--write` aplica).
+- **Multi-device**: `app-android`/`app-ios` eligen device (o `ANDROID_SERIAL`/`IOS_UDID`), y
+  el `adb reverse` recorre **todos** los devices conectados (adiós "more than one device").
+- **Preflight**: si una miniapp no está `pnpm install`ada, corta con un mensaje claro en vez
+  del error críptico de rspack.
+- **iPhone / Android físico por LAN** (`pnpm dev --device`): los dev servers RN se bindean a
+  la **IP LAN de la Mac** (no `0.0.0.0`), así el cliente de HMR del device apunta a esa IP y
+  el **Fast Refresh anda por Wi-Fi, sin `iproxy`**. La IP sale de `--ip=` > `DEVICE_IP` >
+  `device.ip` del config > auto-detección. En discos externos (`/Volumes`) el file watching
+  cae a **polling** para que el HMR detecte las ediciones.
+
 ## 2026-08-12 · Sitio de docs: pulido final + mecanismo anti-drift
 
 Última pasada sobre `/docs`: variantes de contenido, referencia de API completa, y un mecanismo para
@@ -205,5 +229,5 @@ federado). Ese mismo día:
 
 ---
 
-*Rango cubierto por este changelog: 2026-07-10 (primer commit, los tres repos) → 2026-08-12 (último
+*Rango cubierto por este changelog: 2026-07-10 (primer commit, los tres repos) → 2026-08-14 (último
 commit al momento de escribir esto).*

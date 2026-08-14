@@ -15,6 +15,7 @@
     { "paths": ["../backstagereactnative/packages/miniapp-contract/src/types.ts"], "docs": ["docs/API-REFERENCE.md", "docs/PLATFORM-OVERVIEW.md", "docs/INTEGRATION-GUIDE.md", "docs/HOST-CONTRACT.md"], "why": "Manifest/contract" },
     { "paths": ["../backstagereactnative/apps/host/RUN.md"], "action": "pnpm sync:host-docs", "docs": ["docs/HOST-RUN.md"], "why": "espejo del host" },
     { "paths": ["../backstagereactnative/docs/mounting-miniapps.md"], "action": "pnpm sync:host-docs", "docs": ["docs/HOST-MOUNTING.md"], "why": "espejo del host" },
-    { "paths": ["../miniapp-template/scripts/publish.mjs", "../miniapp-template/.github/workflows/publish.yml"], "docs": ["docs/INTEGRATION-GUIDE.md", "docs/QUICKSTART.md", "docs/miniapps-guide.md"], "why": "flujo de publish" }
+    { "paths": ["../miniapp-template/scripts/publish.mjs", "../miniapp-template/.github/workflows/publish.yml"], "docs": ["docs/INTEGRATION-GUIDE.md", "docs/QUICKSTART.md", "docs/miniapps-guide.md"], "why": "flujo de publish" },
+    { "paths": ["../backstagereactnative/apps/host/scripts/dev.mjs", "../backstagereactnative/apps/host/scripts/dev-plan.mjs", "../backstagereactnative/apps/host/scripts/scaffold-config.mjs", "../backstagereactnative/apps/host/dev-miniapps.config.example.mjs"], "docs": ["docs/LOCAL-DEV.md"], "why": "orquestador pnpm dev (config declarativo, --device, dev:scan)" }
   ]
 }

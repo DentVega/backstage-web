@@ -341,7 +341,9 @@ plantilla una vez y editá los paths a tus repos de miniapp:
 cd backstagereactnative
 cp apps/host/dev-miniapps.config.example.mjs apps/host/dev-miniapps.config.mjs
 # editá apps/host/dev-miniapps.config.mjs (gitignored):
-#   [{ id, path, mode:'mount'|'remote', port?, autostart }]
+#   devMiniapps: [{ id, path, mode:'mount'|'remote', port?, autostart }]
+#   backstage?:  { path, port, autostart }        // control-plane (opcional)
+#   device?:     { ip }                           // IP LAN para --device (opcional)
 pnpm dev            # ← levanta todo (dashboard mprocs)
 ```
 
@@ -354,6 +356,10 @@ pnpm dev            # ← levanta todo (dashboard mprocs)
   {path: '../backstage-web', port: 3999, autostart: true}` y `pnpm dev` también lo
   levanta (para que cargue el Home/catálogo) → dev-loop en **un solo comando**. Sin ese
   export, corré Backstage por tu cuenta.
+- **Device físico** (opcional): `export const device = {ip: '192.168.0.7'}` fija la IP LAN
+  de tu Mac para `pnpm dev --device` (iPhone/Android por Wi-Fi). Precedencia:
+  `--ip=<x>` > `DEVICE_IP=<x>` > `device.ip` > auto-detección. Ver "iOS — simulador e
+  iPhone físico" más abajo.
 - Procesos on-demand en el dashboard: `app-android` / `app-ios` para (re)instalar la app —
   eligen device solos (con varios conectados usan el primero; `ANDROID_SERIAL=<serial> pnpm dev`
   para elegir otro; iOS con `IOS_SIMULATOR="<nombre>"` o `IOS_UDID`).
