@@ -346,6 +346,10 @@ pnpm dev            # ← levanta todo (dashboard mprocs)
 - **`autostart`** decide qué arranca prendido; en el TUI de mprocs **prendés/apagás cada
   dev server en caliente** (los remotes). `pnpm dev` deriva `DEV_MINIAPP_PATHS`,
   `DEV_REMOTES` y los `adb reverse` del config, y arranca el Host + cada dev server.
+- **Backstage** (control-plane) opcional: agregá al config `export const backstage =
+  {path: '../backstage-web', port: 3999, autostart: true}` y `pnpm dev` también lo
+  levanta (para que cargue el Home/catálogo) → dev-loop en **un solo comando**. Sin ese
+  export, corré Backstage por tu cuenta.
 - Procesos on-demand en el dashboard: `app-android` / `app-ios` para (re)instalar la app.
 - `DEV_DRY=1 pnpm dev` imprime el plan + el YAML generado sin arrancar nada (para inspeccionar).
 
