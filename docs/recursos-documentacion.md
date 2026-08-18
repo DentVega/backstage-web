@@ -1,10 +1,9 @@
 # Recursos para documentar procesos
 
 > [!NOTE]
-> Lista de referencia personal para aprender a documentar procesos y metodologías
-> (como el doc [El proceso](/docs/proceso)). No es documentación de la plataforma —&nbsp;es
-> material de estudio. Los **sitios son gratis**; los **libros son pagos** (link al sitio
-> oficial del autor para ubicarlos).
+> Recursos recomendados para aprender a documentar procesos y metodologías —&nbsp;el mismo
+> tipo de material detrás del doc [El proceso](/docs/proceso). Los **sitios son gratis**; los
+> **libros son pagos** (link al sitio oficial del autor para ubicarlos).
 
 ## Cómo se llama esta clase de documentación
 

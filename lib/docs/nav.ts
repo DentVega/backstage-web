@@ -163,6 +163,17 @@ export const DOC_GROUPS: readonly DocGroup[] = [
       },
     ],
   },
+  {
+    group: "Recursos",
+    items: [
+      {
+        slug: "recursos-documentacion",
+        title: "Recursos para documentar procesos",
+        file: "docs/recursos-documentacion.md",
+        blurb: "Marcos y lecturas para documentar procesos y metodologías (Diátaxis, Pyramid Principle, C4, Scrum Guide y más).",
+      },
+    ],
+  },
 ];
 
 export const ALL_DOCS: readonly DocItem[] = DOC_GROUPS.flatMap((g) => g.items);
