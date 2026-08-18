@@ -98,6 +98,12 @@ export const DOC_GROUPS: readonly DocGroup[] = [
         blurb: "Levantar toda la plataforma desde cero.",
       },
       {
+        slug: "costo-hosting",
+        title: "Costo de hosting",
+        file: "docs/COSTO-HOSTING.md",
+        blurb: "Comparación de costo (Zephyr vs Vercel vs Cloudflare R2) para servir las mini-apps, con gráfico y un escenario de ejemplo.",
+      },
+      {
         slug: "compat-gates",
         title: "Compat gates",
         file: "docs/activar-compat-gates.md",
