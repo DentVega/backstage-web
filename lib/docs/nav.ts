@@ -46,6 +46,12 @@ export const DOC_GROUPS: readonly DocGroup[] = [
         file: "docs/PLATFORM-OVERVIEW.md",
         blurb: "El mental model completo de la plataforma: arquitectura, conceptos y ciclo de vida.",
       },
+      {
+        slug: "arquitectura",
+        title: "Cómo funciona (arquitectura)",
+        file: "docs/ARQUITECTURA.md",
+        blurb: "Vista visual: los 3 planos y los 2 flujos (publicar / montar), de un vistazo.",
+      },
     ],
   },
   {
