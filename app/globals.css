@@ -436,6 +436,14 @@ code { font-family: var(--mono); font-size: 0.86em; color: var(--muted); }
 .docs-nav-link.is-active { color: var(--accent); background: var(--surface-2); border-left-color: var(--accent); font-weight: 600; }
 
 /* Docs index (landing) */
+.docs-hero { padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.docs-hero .page-lede { margin-top: 10px; }
+.docs-hero-cta { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.docs-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: 14px; text-decoration: none; }
+.docs-btn-primary { background: var(--accent); color: var(--accent-ink); }
+.docs-btn-ghost { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
+.docs-btn-ghost:hover { border-color: var(--accent); }
+.docs-featured .docs-index-card { border-left: 3px solid var(--accent); }
 .docs-index-group { margin-top: 32px; }
 .docs-index-group h2 { font-size: 15px; margin: 0 0 13px; }
 .docs-index-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 12px; }
