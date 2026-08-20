@@ -3,7 +3,8 @@
 > [!NOTE]
 > Esta página es la vista **de negocio** del proceso —&nbsp;pensada para entender *qué*
 > se necesita para llevar una super-app a producción y *por qué*, sin entrar en lo técnico.
-> Para el detalle de implementación, ver el resto de la documentación.
+> Para la vista técnica, ver [Cómo funciona](/docs/arquitectura); para el mental model
+> completo, el [Platform Overview](/docs/platform-overview).
 
 Una empresa quiere **una sola app** para sus usuarios. Pero adentro hay muchas áreas y
 equipos que necesitan lanzar y actualizar sus funcionalidades **sin pisarse entre sí** y sin
@@ -19,6 +20,19 @@ las muestra al usuario como si fueran parte de la misma aplicación.
 > renueva su stock por su cuenta, pero todos conviven bajo el mismo techo y las mismas reglas.
 
 El proceso completo se organiza en **8 pasos**, agrupados en 3 etapas.
+
+## Las 8 fases de un vistazo
+
+| Etapa | # | Fase | En una línea |
+|---|---|---|---|
+| **Cimientos** | 1 | La app anfitriona | La app que se instala; provee lo común a todas. |
+| | 2 | La torre de control | Panel central: registrar, publicar, gobernar. |
+| | 3 | El contrato | Las reglas para convivir sin romperse entre sí. |
+| **Publicación y calidad** | 4 | La línea de publicación | De código a vivo, sin pasar por la tienda cada vez. |
+| | 5 | El doble control de calidad | Chequeos automáticos que frenan lo incompatible. |
+| **Operar y escalar** | 6 | Gobierno, seguridad e integridad | Quién puede qué + lo que corre es lo que se publicó. |
+| | 7 | La operación del día a día | Rollback, métricas, iOS + Android. |
+| | 8 | Escalar la organización | Sumar equipos y propagar mejoras a la flota. |
 
 ---
 
@@ -137,7 +151,7 @@ con los controles de calidad y el rollback operativos.
 |---|---|
 | **8 / 8** | fases del proceso, implementadas |
 | **iOS + Android** | desde el mismo proceso de publicación |
-| **Flota real** | mini-apps en producción, actualizándose solas |
+| **3 mini-apps** | reales en producción, actualizándose solas |
 
 ---
 
@@ -152,3 +166,9 @@ Los tres primeros pasos son los cimientos —&nbsp;todo lo demás se apoya sobre
 Con esos cimientos en su lugar, se suma la línea de publicación y los controles de calidad
 (Etapa 2), y por último la operación y la escala (Etapa 3). Cada etapa se apoya en la anterior:
 por eso el orden importa.
+
+> [!NOTE]
+> **Qué vs. cómo.** Este documento describe *qué* se construye y en qué orden. El *cómo* lo
+> ejecuta el equipo —&nbsp;el ritmo de trabajo— es independiente: se lleva adelante con una
+> metodología ágil (Scrum, Kanban), construyendo las fases de forma incremental. El orden marca
+> **dependencias** (sin host no hay dónde publicar), no entregas de a bloques cerrados.
