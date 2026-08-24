@@ -6,6 +6,10 @@
 > Para la vista técnica, ver [Cómo funciona](/docs/arquitectura); para el mental model
 > completo, el [Platform Overview](/docs/platform-overview).
 
+**Lanzá features en minutos, no en la cola de la tienda —&nbsp;y revertí un problema en
+segundos.** Eso es lo que habilita una super-app bien implementada. Este es el proceso para
+llegar ahí.
+
 Una empresa quiere **una sola app** para sus usuarios. Pero adentro hay muchas áreas y
 equipos que necesitan lanzar y actualizar sus funcionalidades **sin pisarse entre sí** y sin
 esperar la cola de revisión de la App Store o Play Store cada vez.
@@ -33,6 +37,21 @@ El proceso completo se organiza en **8 pasos**, agrupados en 3 etapas.
 | **Operar y escalar** | 6 | Gobierno, seguridad e integridad | Quién puede qué + lo que corre es lo que se publicó. |
 | | 7 | La operación del día a día | Rollback, métricas, iOS + Android. |
 | | 8 | Escalar la organización | Sumar equipos y propagar mejoras a la flota. |
+
+## ¿Cuándo conviene una super-app?
+
+No es la respuesta para toda app. Vale la pena ser honesto sobre cuándo suma y cuándo es
+sobre-ingeniería.
+
+| Conviene si… | Es overkill si… |
+|---|---|
+| **Varios equipos o áreas** publican en la misma app y no quieren pisarse. | Un **solo equipo** mantiene toda la app. |
+| Las funcionalidades se **actualizan seguido** y molesta la cola de la tienda. | Releases **esporádicos**; la cola de la tienda no es un problema. |
+| La app es **grande** y conviene modularizarla por dominio. | La app es **chica** y simple; un solo bundle alcanza. |
+| Querés **rollback por parte** sin frenar todo, y gobierno por equipo. | No necesitás versionar ni gobernar partes por separado. |
+
+En una frase: **cuantos más equipos, más frecuencia de release y más superficie**, más paga el
+modelo. Para una app chica de un equipo, el overhead no se justifica.
 
 ---
 
@@ -87,7 +106,7 @@ se publican directo: se suben, quedan registradas con su número de versión, y 
 trae la próxima vez que el usuario entra. La app instalada no cambia; cambia el contenido que
 baja. Ese es el corazón de por qué una super-app se mueve tan rápido.
 
-- **Beneficio:** funcionalidades y arreglos en minutos, no en la cola de revisión de la tienda (actualización directa).
+- **Beneficio:** de **días** (cola de revisión de la tienda) a **minutos** (actualización directa) para lanzar una funcionalidad o un arreglo.
 - **Cómo queda resuelto:** publicación automatizada; el teléfono resuelve y trae la versión correcta en el momento.
 
 ### 5. El doble control de calidad
@@ -125,7 +144,7 @@ mini-app falla, se vuelve a la versión anterior al instante —&nbsp;sin reenvi
 tienda. Se miden los usos y las fallas para saber qué se usa de verdad y qué está fallando. Y
 todo el proceso sirve iOS y Android a la vez, sin duplicar el trabajo por plataforma.
 
-- **Beneficio:** si una mini-app falla, se revierte en segundos; decisiones con métricas; una sola operación para las dos plataformas.
+- **Beneficio:** ante una falla, rollback en **segundos** (no un release de emergencia); decisiones con métricas; **una** operación para las **dos** plataformas.
 - **Cómo queda resuelto:** rollback por versión, métricas de uso y fallas, y publicación iOS + Android.
 
 ### 8. Escalar la organización
@@ -172,3 +191,11 @@ por eso el orden importa.
 > ejecuta el equipo —&nbsp;el ritmo de trabajo— es independiente: se lleva adelante con una
 > metodología ágil (Scrum, Kanban), construyendo las fases de forma incremental. El orden marca
 > **dependencias** (sin host no hay dónde publicar), no entregas de a bloques cerrados.
+
+---
+
+> [!TIP]
+> **En una frase.** Una super-app se construye en 8 pasos sobre tres cimientos —&nbsp;host,
+> torre de control y contrato—; con eso, muchos equipos publican mini-apps de forma
+> independiente, con releases en minutos, rollback en segundos y controles que evitan que una
+> pieza rompa al resto. **Acá ya está construido y probado end-to-end.**
