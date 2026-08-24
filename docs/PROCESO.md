@@ -3,8 +3,9 @@
 > [!NOTE]
 > Esta página es la vista **de negocio** del proceso —&nbsp;pensada para entender *qué*
 > se necesita para llevar una super-app a producción y *por qué*, sin entrar en lo técnico.
-> Para la vista técnica, ver [Cómo funciona](/docs/arquitectura); para el mental model
-> completo, el [Platform Overview](/docs/platform-overview).
+> ¿Solo querés los pasos? → [El proceso en breve](/docs/proceso-breve). Para la vista técnica,
+> [Cómo funciona](/docs/arquitectura); para el mental model completo, el
+> [Platform Overview](/docs/platform-overview).
 
 **Lanzá features en minutos, no en la cola de la tienda —&nbsp;y revertí un problema en
 segundos.** Eso es lo que habilita una super-app bien implementada. Este es el proceso para

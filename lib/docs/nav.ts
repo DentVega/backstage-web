@@ -18,10 +18,16 @@ export const DOC_GROUPS: readonly DocGroup[] = [
     group: "El proceso",
     items: [
       {
+        slug: "proceso-breve",
+        title: "El proceso en breve",
+        file: "docs/PROCESO-BREVE.md",
+        blurb: "Los 8 pasos en una línea cada uno, con su beneficio. El resumen de un vistazo.",
+      },
+      {
         slug: "proceso",
         title: "Cómo se implementa una super-app",
         file: "docs/PROCESO.md",
-        blurb: "La vista de negocio: el proceso en 8 pasos, de la app anfitriona a operar la flota.",
+        blurb: "La vista de negocio completa: cada fase en detalle, cuándo conviene y el porqué.",
       },
     ],
   },
