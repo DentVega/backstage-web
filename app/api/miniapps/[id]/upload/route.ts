@@ -8,6 +8,8 @@ import { authorizeUpload } from "@/lib/auth";
 import { defaultManifest, parseCapabilities, resolveDefaultShared } from "@/lib/manifest";
 import { getHostContractStore } from "@/lib/host-contract/store";
 import { sha256Integrity } from "@/lib/integrity";
+import { verifyMessage } from "@/lib/crypto/ed25519";
+import { chunkSignatureMessage } from "@/lib/trust/message";
 import { errorBody, statusForError } from "@/lib/http";
 import { githubProvider } from "@/lib/git/github";
 import { githubToken, HOST_REPO, pruneKeep } from "@/lib/config";
@@ -163,6 +165,27 @@ export async function POST(
     }
 
     const reg = await getStore().load();
+
+    // Firma del chunk (opcional; la produce el CI con la clave privada del repo).
+    const signatureRaw = form.get("signature");
+    const signature =
+      typeof signatureRaw === "string" && signatureRaw.length > 0 ? signatureRaw : undefined;
+    // Sanity-check best-effort: si la miniapp ya tiene pubkey registrada, la firma DEBE validar
+    // el mensaje id:platform:integrity. Feedback temprano al publisher; el host es la autoridad.
+    const pubkey = reg[id]?.publicKey;
+    if (signature !== undefined && pubkey !== undefined) {
+      const msg = chunkSignatureMessage(id, platform, integrity);
+      if (!verifyMessage(msg, signature, pubkey)) {
+        return NextResponse.json(
+          {
+            error: "signature does not verify against the registered public key",
+            code: "BAD_SIGNATURE",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     const storage = await getStorage(reg[id]?.storageProvider ?? null);
     // iOS va a un subfolder para no colisionar con el chunk Android (mismo containerName).
     const prefix = platform === "ios" ? `${id}/${version}/ios` : `${id}/${version}`;
@@ -172,7 +195,7 @@ export async function POST(
     const next = publishVersion(
       reg,
       id,
-      { version, url, manifest, platform, integrity },
+      { version, url, manifest, platform, integrity, signature },
       new Date().toISOString(),
     );
     await getStore().save(next);

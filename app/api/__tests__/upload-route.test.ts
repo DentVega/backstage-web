@@ -332,3 +332,33 @@ describe("POST /api/miniapps/:id/upload", () => {
     delete process.env.GITHUB_TOKEN;
   });
 });
+
+describe("POST /api/miniapps/:id/upload — firma", () => {
+  function signedReq(signature: string, version = "0.2.0"): Request {
+    const form = new FormData();
+    form.set("file", new Blob([buildZip() as unknown as BlobPart]), "build.zip");
+    form.set("version", version);
+    form.set("manifest", JSON.stringify({ ...manifest, version }));
+    form.set("signature", signature);
+    return new Request("http://x/api/miniapps/account_dashboard/upload", {
+      method: "POST",
+      headers: { authorization: "Bearer secret" },
+      body: form,
+    });
+  }
+
+  it("guarda la signature del form en la versión publicada", async () => {
+    const res = await POST(signedReq("sig-android-b64url"), params);
+    expect(res.status).toBe(201);
+    expect(state.reg.account_dashboard.versions[0].signature).toBe("sig-android-b64url");
+  });
+
+  it("400 si hay publicKey registrada y la firma no valida (no persiste)", async () => {
+    const { generateKeypair } = await import("@/lib/crypto/ed25519");
+    (state.reg.account_dashboard as { publicKey?: string }).publicKey =
+      generateKeypair().publicKey;
+    const res = await POST(signedReq("firma-que-no-corresponde"), params);
+    expect(res.status).toBe(400);
+    expect(state.reg.account_dashboard.versions).toHaveLength(0);
+  });
+});
