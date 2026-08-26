@@ -299,6 +299,9 @@ vercel env add HOST_CONTRACT_TOKEN    # token dedicado para publicar el host con
 vercel env add HOST_REPO              # ej. Acme/backstagereactnative (capability requests)
 # COMPAT_ENFORCE se agrega recién al pasar a enforce (Parte E)
 # CI_STATUS_ENABLED — opcional (badge de CI)
+
+# --- firma de chunks (opcional; ver docs/API-REFERENCE.md §5.7) ---
+vercel env add ROOT_PUBLIC_KEY        # pubkey root (base64url); habilita el sanity-verify de PUT /api/trust-bundle
 ```
 Ver la tabla completa (nombre, propósito, notas) en **§8 — Referencia de
 variables de entorno**.
@@ -631,6 +634,7 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 | `COMPAT_ENFORCE` | `"1"` → el gate de `/upload` rechaza (422) publishes incompatibles | Ausente/`"0"` = warn (default). Solo al pasar a enforce (Parte E) |
 | `CI_STATUS_ENABLED` | Habilita el badge de estado de CI por miniapp (consulta GitHub Actions) | Opcional; `"false"` fuerza `unknown` sin llamar a GitHub |
 | `PRUNE_KEEP` | Cuántas versiones se retienen al prunear (además de la servida/pinneada) tras un publish | Opcional; default `5` (`lib/config.ts`) |
+| `ROOT_PUBLIC_KEY` | Pubkey root (raw base64url) de la firma de chunks. Habilita el sanity-verify de `PUT /api/trust-bundle` (400 `BAD_ROOT_SIGNATURE` si la firma no cuadra) | Opcional; sin ella el server no valida (el host es la autoridad). Ver `docs/API-REFERENCE.md` §5.7 |
 
 > **Discrepancia detectada entre las fuentes:** `DEPLOY.md` solo menciona
 > `BACKSTAGE_PUBLIC_URL` en su lista de env vars de prod, pero el código real

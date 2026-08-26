@@ -36,6 +36,7 @@ Los códigos de estado vienen de `statusForError` en [`lib/http.ts`](../lib/http
 | `400` | (validación de la ruta, sin tipo propio) | Falta `file` o `version` en el form-data; el `manifest` mandado no es JSON válido; el zip está vacío; el zip no contiene `<id>.container.js.bundle` en la raíz. |
 | `409` | `VersionExistsError` | Estás re-publicando una `version` que ya existe para esa plataforma (Android o iOS) — el registro es **inmutable**. |
 | `422` | — (`code: "COMPAT_INCOMPATIBLE"`) | Solo si `COMPAT_ENFORCE=1` está activo en el entorno: el manifest tiene skew de `shared` o un nativo que el host no tiene. En modo WARN (default) esto **no** bloquea, solo loguea. |
+| `400` | — (`code: "BAD_SIGNATURE"`) | Mandaste el form field `signature` y la miniapp ya tiene una `publicKey` registrada, pero la firma no verifica el mensaje `<id>:<platform>:<integrity>`. Revisá que el CI firme con la privada que corresponde a esa pubkey (ver API-REFERENCE §5.7). Sin `publicKey` registrada, la firma se guarda sin verificar. |
 | `502` | `StorageError` / `GitProviderError` | Falla temporal del storage (Blob/R2/fs) o de la API de GitHub — no es un problema de tu build, reintentá. |
 
 > [!IMPORTANT]

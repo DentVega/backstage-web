@@ -14,9 +14,9 @@
 
 | Modelo | Cómo | Quién | Usado por |
 |---|---|---|---|
-| **Público** | sin auth | cualquiera | `GET /api/resolve`, `GET /api/host-contract`, `GET /api/miniapps`, `GET /api/storage-provider`, `POST/GET /api/metrics` |
+| **Público** | sin auth | cualquiera | `GET /api/resolve`, `GET /api/host-contract`, `GET /api/miniapps`, `GET /api/storage-provider`, `GET /api/trust-bundle`, `POST/GET /api/metrics` |
 | **Token de servicio** | `Authorization: Bearer <TOKEN>` | CI (miniapp o host) | `POST /api/miniapps/:id/upload` (`PUBLISH_TOKEN`), `PUT /api/host-contract` (`HOST_CONTRACT_TOKEN`) |
-| **Sesión (NextAuth + GitHub)** | cookie de sesión | operador humano allowlisted | scaffold, deploy, sync-template, pin, maintainers, storage-provider, DELETE/PATCH miniapp, admin/* |
+| **Sesión (NextAuth + GitHub)** | cookie de sesión | operador humano allowlisted | scaffold, deploy, sync-template, pin, maintainers, public-key, storage-provider, trust-bundle (PUT), DELETE/PATCH miniapp, admin/* |
 
 > [!NOTE]
 > `upload` acepta **sesión O token** (`authorizeUpload`): usuario allowlisted o
@@ -79,14 +79,20 @@ miniapp si existe → si no, la última versión publicada (`selectLatest`).
     "entry": "./Entry",
     "shared": [{ "name": "react-native", "requiredRange": "^0.74.0", "singleton": true }],
     "capabilities": ["accounts:read"],
-    "integrity": "sha256-..."
+    "integrity": "sha256-...",
+    "signature": "base64url..."
   }
 }
 ```
 
+`manifest.signature` aparece solo si la versión se publicó firmada (firma Ed25519
+del chunk, ver §4). El host la verifica contra la pubkey de la miniapp que sale del
+[trust bundle](#trust-bundle-firma) (`GET /api/trust-bundle`). Ausente = campo no presente.
+
 Con `platform=ios`, la respuesta usa el chunk iOS (`iosUrl`) y **pisa**
-`manifest.integrity` con `iosIntegrity` (el manifest sigue siendo el de Android en
-todo lo demás — iOS nunca crea un manifest propio).
+`manifest.integrity` con `iosIntegrity` (y `manifest.signature` con `iosSignature`
+si la hay — el manifest sigue siendo el de Android en todo lo demás; iOS nunca crea
+un manifest propio).
 
 ```bash
 curl "https://<tu-proyecto>.vercel.app/api/resolve?id=acc&range=%5E1.0.0&platform=ios"
@@ -209,11 +215,17 @@ Publica un build (chunk + manifest). El endpoint central de CI (ADR-015).
 | `manifest` | string (JSON) | no | si se omite, se construye uno default desde `id`+`version`+`capabilities` (flujo UI) |
 | `capabilities` | string | no | CSV, usado solo cuando `manifest` está ausente |
 | `platform` | `"ios"` | no | default `"android"` (back-compat con publish.mjs viejo) |
+| `signature` | string | no | firma Ed25519 (base64url) del chunk, producida por el CI de la miniapp con su clave privada; se guarda por plataforma y se sirve en `manifest.signature` (ver [trust bundle](#trust-bundle-firma)) |
 
 El `integrity` (`sha256-...`) se calcula server-side de los bytes reales del
 container — nunca se confía en un valor del cliente. Con `platform=android` se
 inyecta en `manifest.integrity`; con `platform=ios` el manifest no se toca, el
 integrity viaja aparte (`iosIntegrity`) y `/api/resolve?platform=ios` lo inyecta.
+
+La `signature`, si viene, se guarda tal cual (opaca para el server). **Sanity-check
+best-effort**: si la miniapp ya tiene una `publicKey` registrada, la firma debe
+verificar el mensaje `<id>:<platform>:<integrity>` o el upload se rechaza con **400**
+`BAD_SIGNATURE` (feedback temprano; el host es la autoridad final).
 
 **Regla iOS**: solo se puede publicar el chunk iOS de una versión si **ya existe**
 el Android de esa misma versión (Android es canónico, iOS se adjunta).
@@ -293,6 +305,7 @@ Todas las rutas de esta sección exigen `canManageMiniapp` salvo donde se indiqu
 |---|---|---|---|---|
 | `/api/miniapps/:id/pin` | PUT | admin ∪ maintainer | `{ "version": string \| null }` | `MiniappDetail` |
 | `/api/miniapps/:id/maintainers` | PUT | admin ∪ maintainer | `{ "maintainers": string[] }` | `MiniappDetail` |
+| `/api/miniapps/:id/public-key` | PUT | admin ∪ maintainer | `{ "publicKey": string \| null }` | `MiniappDetail` |
 | `/api/miniapps/:id/collaborators` | GET | admin ∪ maintainer | — | `{ "collaborators": string[] }` |
 | `/api/miniapps/:id/storage-provider` | PUT | admin ∪ maintainer | `{ "provider": "r2"\|"blob"\|"fs"\|null }` | estado de storage (ver §5.4) |
 | `/api/miniapps/:id/deploy` | POST | admin ∪ maintainer | — | `{ "dispatched": true, "actionsUrl": string }` (202) |
@@ -369,6 +382,39 @@ miniapp no tiene un `repoUrl` parseable.
 `PATCH /api/miniapps/:id` actualiza `repoUrl` y/o `owner`. `repoUrl` se valida
 como URL de GitHub real (`parseRepo`) → **400** si no lo es. **400** si no se
 manda ningún campo.
+
+### 5.7 Trust bundle (firma) {#trust-bundle-firma}
+
+La firma de chunks suma **autenticidad** sobre el `integrity` (que solo da integridad).
+Jerarquía de dos niveles: cada miniapp firma su chunk en su CI con una clave privada
+por-repo; el owner firma una tabla `{miniapp → pubkey}` con una clave **root** offline.
+El host verifica la firma del chunk contra la pubkey que sale de esa tabla, y la tabla
+contra la pubkey root **pineada en el binario**.
+
+`PUT /api/miniapps/:id/public-key` registra (o limpia con `null`) la pubkey de firma
+de una miniapp (raw base64url). Admin ∪ maintainer. Es solo conveniencia (UI + borrador
+del bundle) — **la autoridad es la tabla firmada**, no este campo.
+
+`GET /api/trust-bundle` (público) sirve la tabla firmada, o **404** si todavía no se
+publicó ninguna:
+
+```json
+{
+  "bundle": {
+    "version": 3,
+    "updatedAt": "2026-08-26T00:00:00.000Z",
+    "keys": { "hellow_widget": "base64url...", "cards_wallet": "base64url..." }
+  },
+  "signature": "base64url..."
+}
+```
+
+`bundle.version` es monotónico → el host rechaza un rollback a una versión menor.
+
+`PUT /api/trust-bundle` (solo admin, `canScaffold`) guarda el bundle que produce la CLI
+de firma (`scripts/sign-trust-bundle.mjs`, corre offline con el root private key). Si
+`ROOT_PUBLIC_KEY` está seteada, el server valida la firma root antes de guardar → **400**
+`BAD_ROOT_SIGNATURE` si no verifica. **400** si el body no tiene forma de `SignedTrustBundle`.
 
 ---
 
@@ -461,6 +507,7 @@ interface Manifest {
   shared: SharedDepSpec[];         // { name, requiredRange, singleton }
   capabilities: Capability[];      // "accounts:read" | "session:whoami" (seed set)
   integrity?: string;              // "sha256-..." — server-computed
+  signature?: string;              // firma Ed25519 (base64url) del chunk; resolve la inyecta
   minHostContract?: { reactNative: string; contractVersion: string };
 }
 
@@ -472,6 +519,14 @@ interface PublishedVersion {
   publishedAt: string;      // ISO
   iosUrl?: string;          // chunk iOS, opcional/aditivo
   iosIntegrity?: string;    // sha256 del chunk iOS; resolve lo inyecta en manifest.integrity
+  signature?: string;       // firma del chunk Android (base64url); resolve la inyecta en manifest.signature
+  iosSignature?: string;    // firma del chunk iOS; resolve iOS la inyecta en manifest.signature
+}
+
+// SignedTrustBundle — respuesta de GET /api/trust-bundle. keys: miniappId → pubkey (base64url).
+interface SignedTrustBundle {
+  bundle: { version: number; updatedAt: string; keys: Record<string, string> };
+  signature: string;        // firma root (base64url) sobre el body canónico
 }
 
 // MiniappDetail — respuesta de pin / maintainers / borrar versión.
