@@ -318,7 +318,11 @@ export function resolveMiniapp(
       id,
       version: version.version,
       url: version.iosUrl,
-      manifest: { ...version.manifest, integrity: version.iosIntegrity },
+      manifest: {
+        ...version.manifest,
+        integrity: version.iosIntegrity,
+        ...(version.iosSignature !== undefined ? { signature: version.iosSignature } : {}),
+      } as Manifest,
     };
   }
 
@@ -326,7 +330,9 @@ export function resolveMiniapp(
     id,
     version: version.version,
     url: version.url,
-    manifest: version.manifest,
+    manifest: (version.signature !== undefined
+      ? { ...version.manifest, signature: version.signature }
+      : version.manifest) as Manifest,
   };
 }
 

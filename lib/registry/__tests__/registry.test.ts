@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   InvalidManifestError,
   MiniappExistsError,
@@ -335,5 +335,67 @@ describe("publishVersion — firma", () => {
     const v = withIos.cards_wallet.versions[0];
     expect(v.signature).toBe("sigA");
     expect(v.iosSignature).toBe("sigI");
+  });
+});
+
+describe("resolveMiniapp — firma en el manifest", () => {
+  let reg: Registry;
+  beforeEach(() => {
+    const base = registerMiniapp({}, { id: "cards_wallet", name: "C", owner: "o" }, now);
+    reg = publishVersion(
+      base,
+      "cards_wallet",
+      {
+        version: "0.1.0",
+        url: "u",
+        manifest: manifest("cards_wallet", "0.1.0"),
+        platform: "android",
+        integrity: "sha256-a",
+        signature: "sigA",
+      },
+      now,
+    );
+    reg = publishVersion(
+      reg,
+      "cards_wallet",
+      {
+        version: "0.1.0",
+        url: "u-ios",
+        manifest: manifest("cards_wallet", "0.1.0"),
+        platform: "ios",
+        integrity: "sha256-i",
+        signature: "sigI",
+      },
+      now,
+    );
+  });
+
+  it("Android devuelve manifest.signature = signature", () => {
+    const r = resolveMiniapp(reg, "cards_wallet", {});
+    expect((r.manifest as { signature?: string }).signature).toBe("sigA");
+  });
+
+  it("iOS devuelve manifest.signature = iosSignature (y su integrity)", () => {
+    const r = resolveMiniapp(reg, "cards_wallet", { platform: "ios" });
+    expect((r.manifest as { signature?: string }).signature).toBe("sigI");
+    expect(r.manifest.integrity).toBe("sha256-i");
+  });
+
+  it("sin firma no aparece la key signature", () => {
+    const base = registerMiniapp({}, { id: "hellow_widget", name: "S", owner: "o" }, now);
+    const noSig = publishVersion(
+      base,
+      "hellow_widget",
+      {
+        version: "0.1.0",
+        url: "u",
+        manifest: manifest("hellow_widget", "0.1.0"),
+        platform: "android",
+        integrity: "sha256-a",
+      },
+      now,
+    );
+    const r = resolveMiniapp(noSig, "hellow_widget", {});
+    expect("signature" in (r.manifest as object)).toBe(false);
   });
 });
