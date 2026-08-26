@@ -283,3 +283,57 @@ describe("resolveMiniapp — platform", () => {
     );
   });
 });
+
+describe("publishVersion — firma", () => {
+  const withApp = () =>
+    registerMiniapp({}, { id: "cards_wallet", name: "C", owner: "o" }, now);
+
+  it("Android guarda signature en la versión", () => {
+    const reg = publishVersion(
+      withApp(),
+      "cards_wallet",
+      {
+        version: "0.1.0",
+        url: "u",
+        manifest: manifest("cards_wallet", "0.1.0"),
+        platform: "android",
+        integrity: "sha256-a",
+        signature: "sigA",
+      },
+      now,
+    );
+    expect(reg.cards_wallet.versions[0].signature).toBe("sigA");
+  });
+
+  it("iOS adjunta iosSignature a la versión Android existente", () => {
+    const android = publishVersion(
+      withApp(),
+      "cards_wallet",
+      {
+        version: "0.1.0",
+        url: "u",
+        manifest: manifest("cards_wallet", "0.1.0"),
+        platform: "android",
+        integrity: "sha256-a",
+        signature: "sigA",
+      },
+      now,
+    );
+    const withIos = publishVersion(
+      android,
+      "cards_wallet",
+      {
+        version: "0.1.0",
+        url: "u-ios",
+        manifest: manifest("cards_wallet", "0.1.0"),
+        platform: "ios",
+        integrity: "sha256-i",
+        signature: "sigI",
+      },
+      now,
+    );
+    const v = withIos.cards_wallet.versions[0];
+    expect(v.signature).toBe("sigA");
+    expect(v.iosSignature).toBe("sigI");
+  });
+});

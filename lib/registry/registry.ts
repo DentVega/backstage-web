@@ -189,6 +189,7 @@ export function publishVersion(
     manifest: unknown;
     platform?: "android" | "ios";
     integrity?: string;
+    signature?: string;
   },
   now: string,
 ): Registry {
@@ -232,6 +233,7 @@ export function publishVersion(
       ...existing,
       iosUrl: input.url,
       iosIntegrity: input.integrity,
+      iosSignature: input.signature,
     };
     const updated: MiniappRecord = {
       ...record,
@@ -249,6 +251,7 @@ export function publishVersion(
     url: input.url,
     manifest,
     publishedAt: now,
+    ...(input.signature !== undefined ? { signature: input.signature } : {}),
   };
   const updated: MiniappRecord = {
     ...record,
