@@ -49,6 +49,8 @@ export interface CatalogEntry {
   readonly versionCount: number;
   readonly createdAt?: string;
   readonly repoUrl?: string;
+  /** Pubkey de firma (base64url) — la usa la CLI del trust bundle para armar la tabla. */
+  readonly publicKey?: string;
 }
 
 /** A single published version, shaped for the detail UI. */

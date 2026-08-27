@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { scaffoldAllowedLogins, rootPublicKey } from "@/lib/config";
-import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
+import { rootPublicKey } from "@/lib/config";
+import { authorizeUpload } from "@/lib/auth";
 import { getTrustBundleStore } from "@/lib/trust/store";
 import { canonicalBundleMessage } from "@/lib/trust/message";
 import { verifyMessage } from "@/lib/crypto/ed25519";
@@ -38,11 +38,9 @@ export async function GET(): Promise<NextResponse> {
  */
 export async function PUT(req: Request): Promise<NextResponse> {
   try {
-    const { auth } = await import("@/auth");
-    const session = await auth();
-    if (!canScaffold(session?.githubLogin, scaffoldAllowedLogins())) {
-      throw new ScaffoldForbiddenError();
-    }
+    // Sesión admin (UI) O Bearer PUBLISH_TOKEN (CLI headless). La firma root sigue siendo el
+    // gate real: el server solo almacena el bundle (+ sanity-verify contra ROOT_PUBLIC_KEY).
+    await authorizeUpload(req);
     const body = (await req.json().catch(() => null)) as unknown;
     if (!isSignedBundle(body)) {
       return NextResponse.json({ error: "body is not a SignedTrustBundle" }, { status: 400 });

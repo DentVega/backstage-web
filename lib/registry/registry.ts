@@ -366,6 +366,7 @@ export function listCatalog(reg: Registry): CatalogEntry[] {
       versionCount: record.versions.length,
       ...(record.createdAt !== undefined ? { createdAt: record.createdAt } : {}),
       ...(record.repoUrl !== undefined ? { repoUrl: record.repoUrl } : {}),
+      ...(record.publicKey !== undefined ? { publicKey: record.publicKey } : {}),
     };
   });
 }

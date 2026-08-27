@@ -60,10 +60,24 @@ describe("PUT /api/trust-bundle", () => {
     expect(res.status).toBe(200);
     expect(state.bundle).toEqual(signed());
   });
-  it("403 si no es admin", async () => {
+  it("401 sin sesión admin ni token", async () => {
     authMock.mockResolvedValue({ githubLogin: "randolino" });
-    expect((await PUT(putReq(signed()))).status).toBe(403);
+    delete process.env.PUBLISH_TOKEN;
+    expect((await PUT(putReq(signed()))).status).toBe(401);
     expect(state.bundle).toBeNull();
+  });
+  it("200 con Bearer PUBLISH_TOKEN (CLI headless, sin sesión)", async () => {
+    authMock.mockResolvedValue(null);
+    process.env.PUBLISH_TOKEN = "secret-token";
+    const req = new Request("http://x/api/trust-bundle", {
+      method: "PUT",
+      headers: { "content-type": "application/json", authorization: "Bearer secret-token" },
+      body: JSON.stringify(signed()),
+    });
+    const res = await PUT(req);
+    expect(res.status).toBe(200);
+    expect(state.bundle).toEqual(signed());
+    delete process.env.PUBLISH_TOKEN;
   });
   it("400 si el body no tiene la forma de SignedTrustBundle", async () => {
     expect((await PUT(putReq({ nope: 1 }))).status).toBe(400);

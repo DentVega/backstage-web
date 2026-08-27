@@ -1,8 +1,23 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { generateKeypair } from "./keygen.mjs";
-import { buildSignedBundle } from "./sign-trust-bundle.mjs";
+import { buildSignedBundle, keysFromCatalog } from "./sign-trust-bundle.mjs";
 import { verify, createPublicKey } from "node:crypto";
+
+test("keysFromCatalog acepta {miniapps:[...]} y arma el mapa solo con las que tienen pubkey", () => {
+  const body = {
+    miniapps: [
+      { id: "a", publicKey: "PKa" },
+      { id: "b" }, // sin pubkey → se omite
+      { id: "c", publicKey: "PKc" },
+    ],
+  };
+  assert.deepEqual(keysFromCatalog(body), { a: "PKa", c: "PKc" });
+});
+
+test("keysFromCatalog también acepta un array pelado", () => {
+  assert.deepEqual(keysFromCatalog([{ id: "a", publicKey: "PKa" }]), { a: "PKa" });
+});
 
 const SPKI_POINT_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
 function publicKeyObject(pointB64url) {

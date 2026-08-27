@@ -34,6 +34,14 @@ export function buildSignedBundle({ keys, version, updatedAt, privateKey }) {
   return { bundle, signature };
 }
 
+/** Arma el mapa {id → pubkey} desde la respuesta de /api/miniapps ({miniapps:[...]} o array). */
+export function keysFromCatalog(body) {
+  const list = Array.isArray(body) ? body : (body?.miniapps ?? []);
+  const keys = {};
+  for (const m of list) if (m.publicKey) keys[m.id] = m.publicKey;
+  return keys;
+}
+
 function arg(name) {
   const i = process.argv.indexOf(name);
   return i >= 0 ? process.argv[i + 1] : undefined;
@@ -49,10 +57,12 @@ async function main() {
     process.exit(1);
   }
 
-  // 1) Leer pubkeys actuales del catálogo.
-  const miniapps = await (await fetch(`${base}/api/miniapps`)).json();
-  const keys = {};
-  for (const m of miniapps) if (m.publicKey) keys[m.id] = m.publicKey;
+  // 1) Leer pubkeys actuales del catálogo (/api/miniapps → {miniapps:[...]}).
+  const keys = keysFromCatalog(await (await fetch(`${base}/api/miniapps`)).json());
+  if (Object.keys(keys).length === 0) {
+    console.error("No hay ninguna pubkey registrada en el catálogo — registrá las pubkeys (PUT /api/miniapps/:id/public-key) antes de firmar el bundle.");
+    process.exit(1);
+  }
 
   // 2) Bundle live → bump de version + diff.
   const liveRes = await fetch(`${base}/api/trust-bundle`);

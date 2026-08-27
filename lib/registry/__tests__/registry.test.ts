@@ -14,6 +14,7 @@ import {
   registerMiniapp,
   resolveMiniapp,
   selectLatest,
+  setMiniappPublicKey,
 } from "@/lib/registry/registry";
 
 const manifest = (id: string, version: string) => ({
@@ -168,6 +169,11 @@ describe("listCatalog", () => {
       createdAt: now,
       repoUrl: "https://github.com/org/miniapp-acc",
     });
+  });
+  it("expone publicKey cuando está registrada (para la CLI del trust bundle)", () => {
+    let reg = registerMiniapp({}, { id: "acc", name: "A", owner: "o" }, now);
+    reg = setMiniappPublicKey(reg, "acc", "PK-b64url");
+    expect(listCatalog(reg)[0].publicKey).toBe("PK-b64url");
   });
 });
 
