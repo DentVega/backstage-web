@@ -361,7 +361,9 @@ Qué hace ese script (`scripts/publish.mjs`, reusado por todas las miniapps):
    automáticamente. Vos no editás la versión a mano en cada release.
 4. Sube **ambos** chunks (android primero, iOS después) a **la misma versión**, con
    `POST /api/miniapps/hello_counter/upload` (`Authorization: Bearer $PUBLISH_TOKEN`,
-   multipart con `file`, `version`, `manifest`, `platform`).
+   multipart con `file`, `version`, `manifest`, `platform`, y `signature` opcional —
+   la firma Ed25519 del chunk, que el CI agregará cuando la [firma](/docs/api-reference)
+   esté activada; hoy no la manda).
 
 > [!CAUTION]
 > El registro es **inmutable**: publicar dos veces la misma `version` da **`409`**. No
@@ -386,7 +388,9 @@ curl "https://<tu-backstage>/api/resolve?id=hello_counter&platform=ios"
 
 Cada uno te devuelve `{ id, version, url, manifest }` con la URL del chunk de esa
 plataforma. El upload guarda los chunks con integridad **sha256** — el host la verifica
-antes de ejecutar el código que descarga.
+antes de ejecutar el código que descarga. (Sobre eso, la plataforma soporta **firmar** el
+chunk para probar autenticidad además de integridad — `manifest.signature`; ver
+[API Reference](/docs/api-reference) §5.7. La verificación en el host se activa por separado.)
 
 ---
 

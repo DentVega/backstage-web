@@ -50,6 +50,10 @@ export function MiniappSlot({id}: {id: MiniappId}) {
 Ponelo en un `Tab.Screen`, dentro de una `ScrollView`, en un modal, donde sea.
 Solo necesita un contenedor con altura (flex o `height`).
 
+> El paso `verify` hoy es la **integridad** sha256 del chunk. La verificación de **firma**
+> (autenticidad, contra un trust bundle firmado por el root) está planificada — el backend ya
+> la sirve en `manifest.signature`, el lado del host aún no la implementa.
+
 ---
 
 ## Los 3 pasos completos

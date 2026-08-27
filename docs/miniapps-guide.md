@@ -104,6 +104,7 @@ curl -X POST http://localhost:3999/api/miniapps/<id>/upload \
   -F "version=0.1.0" -F "capabilities=accounts:read" \
   -F "file=@/tmp/<id>.zip;type=application/zip"
 # (opcional) -F 'manifest={...}'  para un manifest explícito
+# (opcional) -F 'signature=<Ed25519 b64url>'  firma del chunk (ver API Reference §5.7)
 
 # opcional — adjuntar el chunk iOS a esa misma versión:
 curl -X POST http://localhost:3999/api/miniapps/<id>/upload \

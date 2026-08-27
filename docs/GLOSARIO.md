@@ -37,8 +37,8 @@ código de una miniapp — solo guarda metadata y bytes. → [Platform Overview]
 **Registry** — la fuente de verdad que mantiene Backstage: por cada miniapp,
 `id, name, owner, versions[], repoUrl, maintainers?, pinnedVersion?`; por
 cada versión publicada, `version, url, manifest, publishedAt` (+ `iosUrl` /
-`iosIntegrity` si publicó iOS). Es el dato, no la API — la API que lo expone
-es `/api/miniapps` y `/api/resolve`.
+`iosIntegrity` / `signature` / `iosSignature` si aplica). Es el dato, no la API —
+la API que lo expone es `/api/miniapps` y `/api/resolve`.
 
 **Module Federation** — la tecnología (de Re.Pack/webpack) que permite que un
 bundle (el "host"/"shell") cargue código de otro bundle (un "remote") **en
@@ -56,8 +56,8 @@ nombre de archivo, contenido distinto por plataforma.
 
 **Manifest** — el JSON que describe una versión publicada de una miniapp:
 `id`, `version`, `entry`, `shared` (sus deps compartidas con `requiredRange`),
-`capabilities`, `integrity?`, `minHostContract?`. No se escribe a mano — lo
-genera `gen-manifest-shared.mjs` en la CI del template. → [API Reference](/docs/api-reference) §8
+`capabilities`, `integrity?`, `signature?`, `minHostContract?`. No se escribe a
+mano — lo genera `gen-manifest-shared.mjs` en la CI del template. → [API Reference](/docs/api-reference) §8
 
 ---
 
@@ -74,6 +74,26 @@ difieren por plataforma). → [API Reference](/docs/api-reference) §2
 **server-side** de los bytes reales del container (nunca se confía en un
 valor que mande el cliente). El host lo verifica antes de montar; si no
 coincide, es un fallback `integrity-failed`.
+
+**Firma / Signature (Ed25519)** — sobre la integridad, un chunk puede llevar
+una **firma** (`manifest.signature`). El hash prueba **integridad** (los bytes
+no cambiaron); la firma prueba **autenticidad** (los publicó alguien
+autorizado) — cierra el caso de un atacante que controle a la vez el storage y
+el registry. Modelo de dos niveles: cada miniapp firma con su clave privada
+por-repo, y el owner firma la tabla `{miniapp→pubkey}` con una clave **root**.
+El backend ya acepta/sirve firmas; la verificación en el host se activa por
+separado. → [API Reference](/docs/api-reference) §5.7
+
+**Trust bundle** — la tabla `{miniapp → pubkey}` firmada por la clave **root**
+del owner, servida por `GET /api/trust-bundle`. Es el ancla de confianza: el
+host la trae, la verifica contra la pubkey root **pineada en su binario**, y de
+ahí saca la pubkey con la que valida la firma de cada chunk. Su `version` es
+monotónico (anti-rollback). → [API Reference](/docs/api-reference) §5.7
+
+**Clave root / `ROOT_PUBLIC_KEY`** — el par Ed25519 del owner que firma el trust
+bundle. La privada vive **offline** (nunca en Vercel); la pública va pineada en
+el host y, opcionalmente, en `ROOT_PUBLIC_KEY` para que el server valide el
+bundle antes de guardarlo.
 
 **Capability** — un permiso **acotado y revocable** que el host otorga a una
 miniapp (ej. `accounts:read`, `session:whoami`) — nunca un credential crudo.
@@ -222,6 +242,12 @@ miniapp; soporta rotación dual-token (`PUBLISH_TOKEN` + `PUBLISH_TOKENS_OLD`
 como CSV) para rotar sin downtime. `HOST_CONTRACT_TOKEN` es un token
 separado, dedicado, que solo autoriza `PUT /api/host-contract` (publicar el
 contrato del host) — nunca se comparten entre sí. → [Rotar PUBLISH_TOKEN](/docs/rotar-publish-token)
+
+**MINIAPP_SIGN_KEY / clave root** — claves de **firma** (Ed25519), distintas de
+los tokens de arriba. `MINIAPP_SIGN_KEY` será el secret por-repo con el que la CI
+de cada miniapp firma su chunk (trabajo out-of-band, aún no en el template). La
+**clave root** del owner firma el trust bundle y vive offline. Ver **Firma /
+Signature** y **Trust bundle** más arriba. → [API Reference](/docs/api-reference) §5.7
 
 ---
 

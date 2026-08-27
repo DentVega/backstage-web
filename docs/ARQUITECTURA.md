@@ -113,5 +113,7 @@ Qué pasa cuando un usuario abre una mini-app dentro de la super-app.
 > **El gobierno cruza los dos flujos.** El **Host Contract + los gates de compatibilidad**
 > bloquean al publicar lo que no encaja (en ambos sentidos: mini-app → host y host → flota),
 > y la **verificación de integridad** (sha256) garantiza que lo que corre en el teléfono es
-> idéntico a lo que se publicó. Además, el **pin de versión** permite **rollback instantáneo**
-> sin tocar la app instalada. Ver [Host Contract](/docs/host-contract) y [Compat gate](/docs/compat-gate).
+> idéntico a lo que se publicó — con **firma** Ed25519 la plataforma suma además
+> *autenticidad* (quién lo publicó; ver [API Reference](/docs/api-reference) §5.7). Además, el
+> **pin de versión** permite **rollback instantáneo** sin tocar la app instalada. Ver
+> [Host Contract](/docs/host-contract) y [Compat gate](/docs/compat-gate).

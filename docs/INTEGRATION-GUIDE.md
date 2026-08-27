@@ -258,7 +258,8 @@ denegado — **nunca** asumas que tenés el permiso.
 ### 5.5 El `manifest.json` — debe ser *truthful*
 
 Tu manifest lleva: `id`, `version`, `entry`, `shared`, `capabilities`,
-`minHostContract` (y `nativeModules` si aplica). No lo escribas a mano en cada
+`minHostContract` (y `nativeModules` si aplica). El server además le inyecta
+`integrity` (sha256) y, si publicaste firmado, `signature`. No lo escribas a mano en cada
 release: el CI del template corre `scripts/gen-manifest-shared.mjs`, que:
 
 - Deriva `shared` como `^<versión-instalada>` de tus dependencias,
@@ -356,6 +357,11 @@ Qué dispara ese push (los workflows reusables ya vienen cableados en tu repo):
    - Sube los chunks al storage de producción (R2/Blob) con **integridad
      sha256** — el host verifica ese hash antes de ejecutar el código
      descargado.
+   - Opcionalmente el CI puede **firmar** el chunk (Ed25519) y mandar el campo
+     `signature`: prueba autenticidad (quién publicó), no solo integridad. El
+     backend ya lo acepta y lo sirve en `manifest.signature`; la firma en el CI
+     (secret `MINIAPP_SIGN_KEY`) y la verificación en el host se activan por
+     separado. Ver [API Reference](/docs/api-reference) §5.7.
 4. **iOS es best-effort**: si el build de iOS falla, **no bloquea** el publish
    de Android. Tu miniapp queda disponible en Android igual.
 

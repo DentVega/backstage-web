@@ -32,7 +32,7 @@
 ## Etapa 3 · Operar y escalar — mantener viva y crecer
 
 6. **Gobierno, seguridad e integridad**
-   Permisos por mini-app (quién es responsable, quién puede publicar) + la garantía de que lo que corre en el teléfono es idéntico a lo que se publicó, sin nada alterado en el camino.
+   Permisos por mini-app (quién es responsable, quién puede publicar) + la garantía de que lo que corre en el teléfono es idéntico a lo que se publicó, sin nada alterado en el camino — y firma criptográfica que además prueba *quién* lo publicó.
    → *Control de acceso claro y confianza en cada pieza que llega al usuario.*
 
 7. **La operación del día a día**

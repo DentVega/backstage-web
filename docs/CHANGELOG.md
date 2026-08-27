@@ -14,6 +14,25 @@ la plataforma y qué hay disponible hoy.
 
 ---
 
+## 2026-08-27 · Firma de chunks — backend (autenticidad, no solo integridad)
+
+Sobre el hash sha256 (que prueba **integridad**), la plataforma suma **firma** Ed25519 de
+los chunks (prueba **autenticidad**: quién publicó). Cierra el caso de un atacante que
+controle a la vez el storage y el registry — un hash recalculado no le alcanza sin la clave.
+Modelo de dos niveles: cada miniapp firma con su clave privada por-repo, y el owner firma
+la tabla `{miniapp→pubkey}` (*trust bundle*) con una clave **root** offline pineada en el
+host. Ver [API Reference](/docs/api-reference) §5.7 y [Platform Overview](/docs/platform-overview) §6.
+
+- **Backend (backstage-web, este hito):** `POST /upload` acepta un campo `signature` y lo
+  guarda por versión/plataforma (sanity-verify best-effort contra la pubkey registrada);
+  `/api/resolve` la sirve en `manifest.signature`; `PUT /api/miniapps/:id/public-key`
+  registra/rota la pubkey de cada miniapp; `GET/PUT /api/trust-bundle` sirve y guarda la
+  tabla firmada; CLI `scripts/keygen.mjs` + `scripts/sign-trust-bundle.mjs` para firmar
+  offline. Aditivo, sin migración.
+- **En activación (out-of-band):** la firma en la CI de cada miniapp (`publish.mjs` +
+  secret `MINIAPP_SIGN_KEY`, vía el template) y la **verificación en el host** (pin de la
+  pubkey root, fetch+verify del trust bundle, enforce) quedan como paso siguiente.
+
 ## 2026-08-13 → 2026-08-14 · Dev-loop de un comando: `pnpm dev` + iPhone físico
 
 El dev-loop deja de ser "N terminales + env vars + `adb reverse` a mano". Un **config

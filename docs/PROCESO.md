@@ -131,12 +131,14 @@ se verifica que ese cambio no rompa ninguna mini-app ya publicada. Si algo no da
 
 **Qué es:** son dos cosas distintas que van juntas. **Gobierno:** quién es responsable de cada
 mini-app y quién puede publicar —&nbsp;para que no cualquiera suba cualquier cosa.
-**Integridad:** una garantía de que lo que corre en el teléfono es idéntico a lo que se
-publicó, sin nada alterado en el camino; si una pieza no coincide con su huella, no se ejecuta.
+**Integridad y autenticidad:** una garantía de que lo que corre en el teléfono es idéntico a
+lo que se publicó, sin nada alterado en el camino (integridad); si una pieza no coincide con
+su huella, no se ejecuta. Sobre eso, la plataforma suma **firma criptográfica**, que prueba
+además *quién* publicó esa versión (autenticidad), no solo que no cambió.
 Juntas dan control de acceso y confianza en cada actualización.
 
 - **Beneficio:** control de acceso claro y confianza en cada pieza que llega al usuario.
-- **Cómo queda resuelto:** permisos por mini-app + verificación de integridad de cada versión antes de ejecutarla.
+- **Cómo queda resuelto:** permisos por mini-app + verificación de integridad (y firma) de cada versión antes de ejecutarla.
 
 ### 7. La operación del día a día
 
