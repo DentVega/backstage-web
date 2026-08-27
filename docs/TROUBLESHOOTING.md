@@ -124,13 +124,20 @@ que decide el mensaje y si hay botón **Reintentar**.
 | `invalid-manifest` | "La miniapp tiene un manifiesto inválido." | ❌ No, permanente | El manifest no tiene la forma esperada por el contrato (`isManifest` falla). | No hay reintento automático — hay que republicar con un manifest válido (normalmente corriendo `gen-manifest-shared.mjs`, no escribiéndolo a mano). |
 | `skew` | "Esta miniapp no es compatible con esta versión de la app. Actualizá la app para usarla." | ❌ No, permanente | Una lib `shared` del manifest (ej. `react-query`) queda **fuera del rango** que el host realmente provee (`evaluate.ts` → `satisfiesShared`). | Del lado miniapp: alineá tu dep con el Host Contract y republicá ([§3](#3-el-compat-gate-te-frena)). Del lado usuario: no hay nada que hacer salvo esperar una versión compatible. |
 | `host-too-old` | "Actualizá la app para usar esta miniapp." | ❌ No, permanente | El `minHostContract` del manifest (contractVersion o versión mínima de `react-native`) es más nuevo que el binario del host instalado en ese dispositivo. | El usuario necesita actualizar la app (nueva build del host). Del lado plataforma: bajá tu dependencia de la capability nueva si es evitable, o esperá el rollout del host. |
+| `invalid-signature` | "No pudimos verificar la firma de esta miniapp." | ❌ No, permanente | Solo con la firma en **enforce**: la firma Ed25519 del chunk (`manifest.signature`) no verifica contra la pubkey de la miniapp del trust bundle, o falta. En **warn** (default) esto NO cae a fallback — monta igual y solo cuenta una métrica. | Republicá la miniapp **firmada** (CI con `MINIAPP_SIGN_KEY`) y confirmá que su pubkey está en el trust bundle. Ver [API Reference](/docs/api-reference) §5.7. |
+| `unknown-key` | "Esta miniapp no está autorizada para ejecutarse." | ❌ No, permanente | Solo en **enforce**: la miniapp no está en el trust bundle (no tiene pubkey registrada). En **warn** no cae a fallback. | Registrá su pubkey (`PUT /api/miniapps/:id/public-key`) y re-firmá el trust bundle (`scripts/sign-trust-bundle.mjs`). |
 
 > [!NOTE]
 > **Transitorio vs permanente lo decide `isRetryable()`** (`loaderState.ts`):
 > `resolve-failed`, `download-failed` e `integrity-failed` son las únicas que muestran
-> botón **Reintentar**; el resto (`invalid-manifest`, `skew`, `host-too-old`) no lo
-> muestra porque reintentar no cambia nada — el problema es del manifest/versión, no de
-> la red.
+> botón **Reintentar**; el resto (`invalid-manifest`, `skew`, `host-too-old`,
+> `invalid-signature`, `unknown-key`) no lo muestra porque reintentar no cambia nada — el
+> problema es del manifest/versión/firma, no de la red.
+
+> [!NOTE]
+> Las razones de **firma** solo aparecen con el host en modo **enforce**. Por default el
+> host verifica en **warn** (monta igual + métrica) y, sin `ROOT_PUBLIC_KEY` pineada, la
+> verificación está **off** (no hace nada). Ver [API Reference](/docs/api-reference) §5.7.
 
 ### Otras entradas frecuentes (no son `reason` del loader, pero aparecen al montar)
 

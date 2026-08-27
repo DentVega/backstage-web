@@ -295,8 +295,11 @@ la firma prueba que los publicó alguien autorizado — cierra el caso de un
 atacante que controle a la vez el storage y el registry. Modelo de dos niveles:
 cada miniapp firma con su clave privada por-repo, y el owner firma la tabla
 `{miniapp → pubkey}` (el *trust bundle*, `GET /api/trust-bundle`) con una clave
-**root** offline pineada en el host. El backend ya acepta/sirve firmas y el
-bundle; la verificación en el host se activa por separado (ver
+**root** offline pineada en el host. Está **todo el código** en las tres capas: el
+backend acepta/sirve firmas y el bundle, el CI del template firma (con el secret
+`MINIAPP_SIGN_KEY`), y el host verifica. La **activación** es operacional y gradual:
+el host verifica en modo **warn** (monta igual + métrica) y, sin `ROOT_PUBLIC_KEY`
+pineada, está **off**; se pasa a **enforce** una vez firmada toda la flota (ver
 `docs/API-REFERENCE.md` §5.7).
 
 **Capabilities como modelo de permisos:** en vez de exponer credenciales

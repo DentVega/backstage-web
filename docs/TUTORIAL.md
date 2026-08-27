@@ -362,8 +362,8 @@ Qué hace ese script (`scripts/publish.mjs`, reusado por todas las miniapps):
 4. Sube **ambos** chunks (android primero, iOS después) a **la misma versión**, con
    `POST /api/miniapps/hello_counter/upload` (`Authorization: Bearer $PUBLISH_TOKEN`,
    multipart con `file`, `version`, `manifest`, `platform`, y `signature` opcional —
-   la firma Ed25519 del chunk, que el CI agregará cuando la [firma](/docs/api-reference)
-   esté activada; hoy no la manda).
+   la firma Ed25519 del chunk, que el CI del template agrega **si el secret
+   `MINIAPP_SIGN_KEY` está seteado** en el repo; sin el secret, publica sin firma).
 
 > [!CAUTION]
 > El registro es **inmutable**: publicar dos veces la misma `version` da **`409`**. No
