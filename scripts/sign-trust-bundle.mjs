@@ -79,7 +79,18 @@ async function main() {
     privateKey,
   });
 
-  // 4) Publicar.
+  // 4a) Modo --browser: no publica; imprime un snippet listo para pegar en la consola del
+  //     browser logueado como admin (session auth — no necesita PUBLISH_TOKEN).
+  if (process.argv.includes("--browser")) {
+    const snippet = `await fetch('${base}/api/trust-bundle',{method:'PUT',headers:{'content-type':'application/json'},body:${JSON.stringify(
+      JSON.stringify(signed),
+    )}}).then(async r=>console.log(r.status, await r.text()))`;
+    console.error(`\n📋 Pegá esto en la consola del browser (logueado como admin en ${base}):\n`);
+    console.log(snippet);
+    return;
+  }
+
+  // 4b) Publicar headless (requiere --token / PUBLISH_TOKEN).
   const put = await fetch(`${base}/api/trust-bundle`, {
     method: "PUT",
     headers: {
