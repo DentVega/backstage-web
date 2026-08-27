@@ -180,6 +180,24 @@ export function setMaintainers(reg: Registry, rawId: string, list: readonly stri
   return { ...reg, [id]: { ...record, maintainers: cleaned } };
 }
 
+/** Setea (o limpia con null) la pubkey de firma de una miniapp. Throws si no existe. */
+export function setMiniappPublicKey(
+  reg: Registry,
+  rawId: string,
+  publicKey: string | null,
+): Registry {
+  const id = parseMiniappId(rawId);
+  if (id === null) throw new InvalidManifestError(`bad miniapp id "${rawId}"`);
+  const record = reg[id];
+  if (record === undefined) throw new MiniappNotFoundError(id);
+  if (publicKey === null || publicKey.trim().length === 0) {
+    const next = { ...record };
+    delete (next as { publicKey?: string }).publicKey;
+    return { ...reg, [id]: next };
+  }
+  return { ...reg, [id]: { ...record, publicKey: publicKey.trim() } };
+}
+
 export function publishVersion(
   reg: Registry,
   rawId: string,
@@ -189,6 +207,7 @@ export function publishVersion(
     manifest: unknown;
     platform?: "android" | "ios";
     integrity?: string;
+    signature?: string;
   },
   now: string,
 ): Registry {
@@ -232,6 +251,7 @@ export function publishVersion(
       ...existing,
       iosUrl: input.url,
       iosIntegrity: input.integrity,
+      iosSignature: input.signature,
     };
     const updated: MiniappRecord = {
       ...record,
@@ -249,6 +269,7 @@ export function publishVersion(
     url: input.url,
     manifest,
     publishedAt: now,
+    ...(input.signature !== undefined ? { signature: input.signature } : {}),
   };
   const updated: MiniappRecord = {
     ...record,
@@ -315,7 +336,11 @@ export function resolveMiniapp(
       id,
       version: version.version,
       url: version.iosUrl,
-      manifest: { ...version.manifest, integrity: version.iosIntegrity },
+      manifest: {
+        ...version.manifest,
+        integrity: version.iosIntegrity,
+        ...(version.iosSignature !== undefined ? { signature: version.iosSignature } : {}),
+      } as Manifest,
     };
   }
 
@@ -323,7 +348,9 @@ export function resolveMiniapp(
     id,
     version: version.version,
     url: version.url,
-    manifest: version.manifest,
+    manifest: (version.signature !== undefined
+      ? { ...version.manifest, signature: version.signature }
+      : version.manifest) as Manifest,
   };
 }
 

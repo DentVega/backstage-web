@@ -289,6 +289,16 @@ Cada versión publicada puede llevar **un chunk por plataforma**:
 el host lo verifica antes de montar — si no coincide, es un
 `integrity-failed` (fallback transitorio, ver §7).
 
+**Autenticidad (firma de chunks):** sobre la integridad, la plataforma soporta
+**firmar** los chunks (Ed25519). El sha256 prueba que los bytes no cambiaron;
+la firma prueba que los publicó alguien autorizado — cierra el caso de un
+atacante que controle a la vez el storage y el registry. Modelo de dos niveles:
+cada miniapp firma con su clave privada por-repo, y el owner firma la tabla
+`{miniapp → pubkey}` (el *trust bundle*, `GET /api/trust-bundle`) con una clave
+**root** offline pineada en el host. El backend ya acepta/sirve firmas y el
+bundle; la verificación en el host se activa por separado (ver
+`docs/API-REFERENCE.md` §5.7).
+
 **Capabilities como modelo de permisos:** en vez de exponer credenciales
 crudas a una miniapp, el host le inyecta un `CapabilityGrant` acotado a la
 sesión actual, con soporte de revocación (`isRevoked()`). La miniapp declara

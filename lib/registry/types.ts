@@ -11,6 +11,10 @@ export interface PublishedVersion {
   readonly iosUrl?: string;
   /** sha256 del chunk iOS ("sha256-…"); el resolve iOS lo pisa en manifest.integrity. */
   readonly iosIntegrity?: string;
+  /** Firma Ed25519 (base64url) del chunk Android — el CI la produce; el host la verifica. */
+  readonly signature?: string;
+  /** Firma Ed25519 (base64url) del chunk iOS; el resolve iOS la inyecta en manifest.signature. */
+  readonly iosSignature?: string;
 }
 
 export interface MiniappRecord {
@@ -28,6 +32,9 @@ export interface MiniappRecord {
   readonly pinnedVersion?: SemVer;
   /** Logins de GitHub que pueden gestionar esta miniapp (además de los platform-admins). */
   readonly maintainers?: string[];
+  /** Pubkey actual de la miniapp (raw base64url). SOLO conveniencia (UI + borrador del
+   *  bundle). La autoridad es la tabla firmada por root, no este campo (vive en KV). */
+  readonly publicKey?: string;
 }
 
 export type Registry = Readonly<Record<string, MiniappRecord>>;

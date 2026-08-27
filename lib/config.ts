@@ -45,3 +45,10 @@ export function pruneKeep(): number {
   const n = Number(process.env.PRUNE_KEEP);
   return Number.isFinite(n) && n > 0 ? n : 5;
 }
+
+/** Pubkey root (raw base64url) para el sanity-check server-side del trust bundle.
+ *  Opcional: si no está, el PUT no valida (el host es la autoridad final igual). */
+export function rootPublicKey(): string | null {
+  const v = process.env.ROOT_PUBLIC_KEY;
+  return v && v.length > 0 ? v : null;
+}
