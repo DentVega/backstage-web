@@ -15,7 +15,7 @@
 | Modelo | Cómo | Quién | Usado por |
 |---|---|---|---|
 | **Público** | sin auth | cualquiera | `GET /api/resolve`, `GET /api/host-contract`, `GET /api/miniapps`, `GET /api/storage-provider`, `GET /api/trust-bundle`, `POST/GET /api/metrics` |
-| **Token de servicio** | `Authorization: Bearer <TOKEN>` | CI (miniapp o host) | `POST /api/miniapps/:id/upload` (`PUBLISH_TOKEN`), `PUT /api/host-contract` (`HOST_CONTRACT_TOKEN`) |
+| **Token de servicio** | `Authorization: Bearer <TOKEN>` | CI (miniapp o host) | `POST /api/miniapps/:id/upload` (`PUBLISH_TOKEN`), `PUT /api/trust-bundle` (`PUBLISH_TOKEN`, o sesión admin), `PUT /api/host-contract` (`HOST_CONTRACT_TOKEN`) |
 | **Sesión (NextAuth + GitHub)** | cookie de sesión | operador humano allowlisted | scaffold, deploy, sync-template, pin, maintainers, public-key, storage-provider, trust-bundle (PUT), DELETE/PATCH miniapp, admin/* |
 
 > [!NOTE]
@@ -411,10 +411,13 @@ publicó ninguna:
 
 `bundle.version` es monotónico → el host rechaza un rollback a una versión menor.
 
-`PUT /api/trust-bundle` (solo admin, `canScaffold`) guarda el bundle que produce la CLI
-de firma (`scripts/sign-trust-bundle.mjs`, corre offline con el root private key). Si
-`ROOT_PUBLIC_KEY` está seteada, el server valida la firma root antes de guardar → **400**
-`BAD_ROOT_SIGNATURE` si no verifica. **400** si el body no tiene forma de `SignedTrustBundle`.
+`PUT /api/trust-bundle` guarda el bundle que produce la CLI de firma
+(`scripts/sign-trust-bundle.mjs`, corre offline con el root private key). **Auth: sesión
+admin O `Bearer PUBLISH_TOKEN`** (`authorizeUpload`) — así la CLI publica headless con
+`--token`. La **firma root** es el gate real: el server solo almacena. Si `ROOT_PUBLIC_KEY`
+está seteada, valida la firma root antes de guardar → **400** `BAD_ROOT_SIGNATURE` si no
+verifica. **400** si el body no tiene forma de `SignedTrustBundle`. `GET /api/miniapps`
+expone `publicKey` por miniapp (la CLI la lee de ahí para armar la tabla).
 
 ---
 
@@ -548,6 +551,7 @@ interface CatalogEntry {
   id: MiniappId; name: string; owner: string;
   latestVersion: SemVer | null; servedVersion: SemVer | null;
   versionCount: number; createdAt?: string; repoUrl?: string;
+  publicKey?: string;              // pubkey de firma (para la CLI del trust bundle)
 }
 
 // HostContract — GET/PUT /api/host-contract.
