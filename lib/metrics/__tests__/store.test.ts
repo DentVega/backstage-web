@@ -27,4 +27,13 @@ describe("metricsStore", () => {
     expect(snap.mounts.x).toBe(0);
     expect(snap.fallbacks["host-too-old"]).toBe(0);
   });
+
+  it("cuenta y expone las razones de firma (invalid-signature / unknown-key)", async () => {
+    const s = metricsStore(inMemoryKvClient());
+    await s.track({ type: "fallback", id: "a", reason: "invalid-signature" });
+    await s.track({ type: "fallback", id: "b", reason: "unknown-key" });
+    const snap = await s.snapshot([]);
+    expect(snap.fallbacks["invalid-signature"]).toBe(1);
+    expect(snap.fallbacks["unknown-key"]).toBe(1);
+  });
 });

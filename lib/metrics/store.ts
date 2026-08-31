@@ -11,6 +11,8 @@ export const FALLBACK_REASONS = [
   "skew",
   "integrity-failed",
   "host-too-old",
+  "invalid-signature",
+  "unknown-key",
 ] as const;
 
 export interface MetricsStore {
