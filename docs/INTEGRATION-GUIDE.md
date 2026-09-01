@@ -357,11 +357,11 @@ Qué dispara ese push (los workflows reusables ya vienen cableados en tu repo):
    - Sube los chunks al storage de producción (R2/Blob) con **integridad
      sha256** — el host verifica ese hash antes de ejecutar el código
      descargado.
-   - Opcionalmente el CI puede **firmar** el chunk (Ed25519) y mandar el campo
-     `signature`: prueba autenticidad (quién publicó), no solo integridad. El
-     backend ya lo acepta y lo sirve en `manifest.signature`; la firma en el CI
-     (secret `MINIAPP_SIGN_KEY`) y la verificación en el host se activan por
-     separado. Ver [API Reference](/docs/api-reference) §5.7.
+   - El CI **firma** el chunk (Ed25519) y manda el campo `signature`: prueba
+     autenticidad (quién publicó), no solo integridad. Está **live en prod** — el CI
+     firma con el secret `MINIAPP_SIGN_KEY`, el backend lo sirve en
+     `manifest.signature`, y el host lo verifica (warn por default, enforce con
+     `SIGNATURE_MODE`). Ver [API Reference](/docs/api-reference) §5.7.
 4. **iOS es best-effort**: si el build de iOS falla, **no bloquea** el publish
    de Android. Tu miniapp queda disponible en Android igual.
 

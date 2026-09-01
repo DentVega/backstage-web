@@ -81,8 +81,8 @@ no cambiaron); la firma prueba **autenticidad** (los publicó alguien
 autorizado) — cierra el caso de un atacante que controle a la vez el storage y
 el registry. Modelo de dos niveles: cada miniapp firma con su clave privada
 por-repo, y el owner firma la tabla `{miniapp→pubkey}` con una clave **root**.
-El backend ya acepta/sirve firmas; la verificación en el host se activa por
-separado. → [API Reference](/docs/api-reference) §5.7
+El backend firma/sirve y el host verifica — **live y validado en prod** (warn por
+default, enforce con `SIGNATURE_MODE`). → [API Reference](/docs/api-reference) §5.7
 
 **Trust bundle** — la tabla `{miniapp → pubkey}` firmada por la clave **root**
 del owner, servida por `GET /api/trust-bundle`. Es el ancla de confianza: el
@@ -244,8 +244,8 @@ separado, dedicado, que solo autoriza `PUT /api/host-contract` (publicar el
 contrato del host) — nunca se comparten entre sí. → [Rotar PUBLISH_TOKEN](/docs/rotar-publish-token)
 
 **MINIAPP_SIGN_KEY / clave root** — claves de **firma** (Ed25519), distintas de
-los tokens de arriba. `MINIAPP_SIGN_KEY` será el secret por-repo con el que la CI
-de cada miniapp firma su chunk (trabajo out-of-band, aún no en el template). La
+los tokens de arriba. `MINIAPP_SIGN_KEY` es el secret por-repo con el que la CI
+de cada miniapp firma su chunk (ya en el template, firmando en prod). La
 **clave root** del owner firma el trust bundle y vive offline. Ver **Firma /
 Signature** y **Trust bundle** más arriba. → [API Reference](/docs/api-reference) §5.7
 

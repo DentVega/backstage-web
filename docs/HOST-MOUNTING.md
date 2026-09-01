@@ -51,9 +51,10 @@ Ponelo en un `Tab.Screen`, dentro de una `ScrollView`, en un modal, donde sea.
 Solo necesita un contenedor con altura (flex o `height`).
 
 > El paso `verify` cubre la **integridad** sha256 del chunk y, además, la **firma**
-> (autenticidad, contra un trust bundle firmado por el root). La firma corre en modo **warn**
-> (monta igual + métrica) y está **off** hasta pinear una `ROOT_PUBLIC_KEY`; pasar a **enforce**
-> (rechaza sin firma válida) es un paso operacional.
+> (autenticidad, contra un trust bundle firmado por el root) — **live y validada en prod**. La
+> firma corre en modo **warn** por default (monta igual + métrica) y pasa a **enforce** (rechaza
+> sin firma válida) vía el flag build-time `SIGNATURE_MODE`. Sin `ROOT_PUBLIC_KEY` pineada, la
+> verificación está off.
 
 ---
 

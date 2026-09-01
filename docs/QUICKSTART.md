@@ -112,8 +112,9 @@ Un push a `main` dispara el CI, que **buildea android + iOS**, valida el compat 
 escribir nada de pipeline.
 
 > [!NOTE]
-> El publish sube a storage con integridad **sha256** (y, si está configurada, la **firma**
-> del chunk — ver [API Reference](/docs/api-reference) §5.7). Verificá que quedó:
+> El publish sube a storage con integridad **sha256** y la **firma** del chunk (Ed25519 —
+> el CI de la flota firma por default; ver [API Reference](/docs/api-reference) §5.7).
+> Verificá que quedó:
 > ```bash
 > curl "https://<tu-proyecto>.vercel.app/api/resolve?id=<id>"
 > curl "https://<tu-proyecto>.vercel.app/api/resolve?id=<id>&platform=ios"

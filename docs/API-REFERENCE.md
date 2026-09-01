@@ -453,13 +453,16 @@ miniapps del registry. Público.
     "invalid-manifest": 0,
     "skew": 0,
     "integrity-failed": 0,
-    "host-too-old": 1
+    "host-too-old": 1,
+    "invalid-signature": 0,
+    "unknown-key": 0
   }
 }
 ```
 
 `mounts` trae una key por cada id del registry (0 si nunca se reportó). `fallbacks`
-trae las **6 razones fijas** de `FALLBACK_REASONS` (`lib/metrics/store.ts`), también
+trae las **8 razones fijas** de `FALLBACK_REASONS` (`lib/metrics/store.ts`) — incluidas
+`invalid-signature`/`unknown-key` de la verificación de firma —, también
 zero-filled — no es un objeto dinámico con solo las razones vistas.
 
 ---

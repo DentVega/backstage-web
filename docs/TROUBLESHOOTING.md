@@ -146,6 +146,7 @@ que decide el mensaje y si hay botón **Reintentar**.
 | `useTheme must be used within a <ThemeProvider>` | `@dentvega/ui-kit` no está declarado `singleton: true` en `shared` — en **ambos** lados (`rspack.config.mjs` del host y de la miniapp). Es el error de integración más común. |
 | "Acceso no autorizado" dentro de la miniapp | Al `<MiniappHost capabilities={grant}/>` no le pasaste la capability que tu `Entry.tsx` chequea. Revisá el `grant` en el punto de montaje. |
 | `remoteEntryExports is undefined` / 404 al `.container.js.bundle` | El chunk no está servido en la URL que devolvió `resolve`, o no es un build estático (ver [§4](#4-dev-loop-local), "publiqué el dev server por error"). |
+| Una versión / chunk publicado **"desaparece"** del registry (ej. la miniapp queda sin iOS pese a que el CI dijo `published … [ios]`) | **Lost update por concurrencia:** el registry es un blob único en KV sin locking (`lib/registry/kv.ts`), así que **publishes encimados se pisan**. Fix inmediato: **republicar 1 vez sin correr otros publishes en paralelo**. Deuda de fondo: [SETUP](/docs/setup) §7.6 (compare-and-swap en `kvStore.save`). |
 
 ---
 

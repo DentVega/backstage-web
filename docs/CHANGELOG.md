@@ -14,6 +14,23 @@ la plataforma y qué hay disponible hoy.
 
 ---
 
+## 2026-09-01 · Firma de chunks — **activada y validada en producción**
+
+La firma quedó **live end-to-end**. Las 3 miniapps de la flota publican chunks firmados que
+**verifican** contra el trust bundle root-firmado (v1). El host verifica en modo **warn** por
+default (monta + emite métrica ante una firma faltante/inválida) y pasa a **enforce** (bloquea)
+vía el flag build-time `SIGNATURE_MODE`. El **rechazo se probó** end-to-end: una versión sin
+firma → en warn incrementa `invalid-signature` en `/metrics`, en enforce muestra la pantalla
+"no pudimos verificar la firma".
+
+- **CI (template):** `scripts/publish.mjs` firma el chunk con el secret `MINIAPP_SIGN_KEY`
+  (lee el container de disco, sin deps externas). Degrada seguro sin el secret.
+- **Host:** verifica con `@noble/curves` contra la pubkey del trust bundle; razones de fallback
+  `invalid-signature`/`unknown-key`; `ROOT_PUBLIC_KEY` + `SIGNATURE_MODE` pineados en el build.
+- **Observabilidad:** `/metrics` ahora cuenta `invalid-signature`/`unknown-key`.
+- **Operativa:** claves generadas (root + 3 miniapps), pubkeys registradas, trust bundle v1
+  firmado y publicado. Ver [SETUP](/docs/setup) §7.5.
+
 ## 2026-08-27 · Firma de chunks — backend (autenticidad, no solo integridad)
 
 Sobre el hash sha256 (que prueba **integridad**), la plataforma suma **firma** Ed25519 de
@@ -29,9 +46,9 @@ host. Ver [API Reference](/docs/api-reference) §5.7 y [Platform Overview](/docs
   registra/rota la pubkey de cada miniapp; `GET/PUT /api/trust-bundle` sirve y guarda la
   tabla firmada; CLI `scripts/keygen.mjs` + `scripts/sign-trust-bundle.mjs` para firmar
   offline. Aditivo, sin migración.
-- **En activación (out-of-band):** la firma en la CI de cada miniapp (`publish.mjs` +
-  secret `MINIAPP_SIGN_KEY`, vía el template) y la **verificación en el host** (pin de la
-  pubkey root, fetch+verify del trust bundle, enforce) quedan como paso siguiente.
+- **CI + host (completado 2026-09-01, ver el hito de arriba):** la firma en la CI de cada
+  miniapp (`publish.mjs` + secret `MINIAPP_SIGN_KEY`, vía el template) y la **verificación en
+  el host** (pin de la pubkey root, fetch+verify del trust bundle, warn→enforce).
 
 ## 2026-08-13 → 2026-08-14 · Dev-loop de un comando: `pnpm dev` + iPhone físico
 

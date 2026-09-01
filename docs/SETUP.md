@@ -577,18 +577,19 @@ el token nuevo en todos los repos del registry.
   irrecuperable → hacé la rotación directa (pisar + reseed sin publishes en el
   medio) en vez del dual-token.
 
-### 7.5 Firma de chunks (trust bundle) — en activación
+### 7.5 Firma de chunks (trust bundle)
 
-Sobre la integridad sha256, la plataforma soporta **firmar** los chunks (Ed25519)
-para probar **autenticidad**, no solo integridad. Ver [API Reference](/docs/api-reference)
+Sobre la integridad sha256, la plataforma **firma** los chunks (Ed25519) para probar
+**autenticidad**, no solo integridad. Ver [API Reference](/docs/api-reference)
 §5.7 y [Platform Overview](/docs/platform-overview) §6.
 
-**Estado:** el **backend ya está** (acepta/sirve firmas + endpoints + CLI, este repo).
-Falta el trabajo out-of-band: firmar en la CI de cada miniapp (`publish.mjs` + secret
-`MINIAPP_SIGN_KEY`) y **verificar en el host** (pin de la pubkey root, fetch+verify del
-bundle, enforce). Como la activación es **enforce directo**, el orden importa.
+**Estado: live y validado en producción.** Las 3 miniapps publican firmado y verifican
+contra el trust bundle root-firmado (v1); el host verifica en **warn** por default y pasa
+a **enforce** vía el flag build-time `SIGNATURE_MODE` (rechazo probado end-to-end). El
+runbook de abajo es el que se corrió — y el que repetís para **onboardear una miniapp
+nueva** (keygen + secret + registrar pubkey + re-firmar el bundle) o **rotar** una clave.
 
-**Runbook (cuando actives):**
+**Runbook (alta de claves / rotación):**
 1. **Generar la clave root** (una vez, en tu máquina — la privada **nunca** va a Vercel):
    ```bash
    node scripts/keygen.mjs --label root   # → { publicKey, privateKey }
@@ -605,10 +606,24 @@ bundle, enforce). Como la activación es **enforce directo**, el orden importa.
    ```
    Lee las pubkeys del catálogo, arma la tabla, la firma con el root y hace
    `PUT /api/trust-bundle`. Bumpea `version` (monotónico → anti-rollback).
-4. **Republicar la flota firmada** y recién ahí soltar el host que hace enforce (una
-   miniapp con la versión servida sin firma quedaría rota bajo enforce).
+4. **Republicar la(s) miniapp(s)** para que su versión servida quede firmada. El host en
+   **warn** (default) la monta y, si algo no firma, lo cuenta en `/metrics`
+   (`invalid-signature`/`unknown-key`) sin romper. Cuando `/metrics` está limpio, el host
+   pasa a **enforce** (`SIGNATURE_MODE=enforce`, build-time → rebuild/release) y rechaza lo
+   que no tenga firma válida.
 
-### 7.6 Contract package con semver real (deuda a saldar)
+### 7.6 Registry sin control de concurrencia (deuda a saldar)
+
+El registry es un **blob único** en KV (`lib/registry/kv.ts` — `kvStore` hace
+`load → modifica → save` de todo el objeto bajo una sola key, **sin CAS/lock**). Publishes
+**encimados** (o publish + pin/prune concurrentes) hacen *read-modify-write* sobre el mismo
+blob → se **pisan** (lost update). **Incidente real:** cards_wallet corrió 3 publishes juntos
+(2026-08-31); el CI publicó el iOS de 0.1.13 y toda la 0.1.14, pero el registry perdió esos
+writes → la miniapp quedó sin chunk iOS. **Workaround:** republicar 1 vez sin encimar.
+**Fix de fondo (pendiente):** optimistic locking / compare-and-swap en `kvStore.save`, o
+keys por-miniapp en vez de un blob único.
+
+### 7.7 Contract package con semver real (deuda a saldar)
 
 El gate de `/upload` usa `satisfiesShared`/`checkCompatibility` de
 `@scope/miniapp-contract`. Publicá el package (§3.2) y mantené la dep de
@@ -616,7 +631,7 @@ El gate de `/upload` usa `satisfiesShared`/`checkCompatibility` de
 si no, cae a una copia local. El build de Vercel instala el package privado, así
 que el `GITHUB_TOKEN` de Vercel necesita `read:packages`.
 
-### 7.7 Maintainers por-miniapp
+### 7.8 Maintainers por-miniapp
 
 Delega la gestión de una miniapp (publish/deploy/pin/borrar/maintainers) a
 gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
@@ -650,7 +665,7 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 |---|---|---|
 | `AUTH_SECRET` | Firma de sesión de Auth.js | `openssl rand -base64 32` |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth App (login) | Callback `/api/auth/callback/github` |
-| `SCAFFOLD_ALLOWED_LOGINS` | CSV de logins de GitHub autorizados a **crear** miniapps y son **platform-admins** (pueden gestionar — publish/deploy/pin/borrar/maintainers — cualquier miniapp) | Vacío = nadie puede (**fail-closed**). Case-insensitive. Gestionar una miniapp puntual también lo puede un **maintainer** de esa miniapp (admin ∪ maintainer) — ver §7.7 |
+| `SCAFFOLD_ALLOWED_LOGINS` | CSV de logins de GitHub autorizados a **crear** miniapps y son **platform-admins** (pueden gestionar — publish/deploy/pin/borrar/maintainers — cualquier miniapp) | Vacío = nadie puede (**fail-closed**). Case-insensitive. Gestionar una miniapp puntual también lo puede un **maintainer** de esa miniapp (admin ∪ maintainer) — ver §7.8 |
 | `MINIAPP_TEMPLATE_REPO` | Repo template a clonar, ej. `Acme/miniapp-template` | Debe estar marcado **"Template repository"** en GitHub |
 | `GITHUB_TOKEN` | PAT del server: crear repos desde el template, admin de Actions (permisos+secrets), leer contenidos (drift), crear issues (capability requests), **borrar repos**, e instalar `@scope/miniapp-contract` en el build | Scopes (classic PAT): **`repo`** + **`workflow`** + **`delete_repo`** + **`read:packages`**. `delete_repo` habilita "borrar miniapp+repo" (Parte E). `read:packages` es obligatorio o el build de Vercel se cae al instalar el package privado |
 | `PUBLISH_TOKEN` | Token de servicio que validan los endpoints `/publish` y `/upload` | Mismo valor se siembra como secret `PUBLISH_TOKEN` en cada miniapp scaffoldeada. Rotación: Parte E |

@@ -390,7 +390,7 @@ Cada uno te devuelve `{ id, version, url, manifest }` con la URL del chunk de es
 plataforma. El upload guarda los chunks con integridad **sha256** — el host la verifica
 antes de ejecutar el código que descarga. (Sobre eso, la plataforma soporta **firmar** el
 chunk para probar autenticidad además de integridad — `manifest.signature`; ver
-[API Reference](/docs/api-reference) §5.7. La verificación en el host se activa por separado.)
+[API Reference](/docs/api-reference) §5.7. El host verifica la firma en prod — en **warn** por default, **enforce** con el flag `SIGNATURE_MODE`.)
 
 ---
 
