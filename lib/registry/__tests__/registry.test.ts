@@ -8,12 +8,15 @@ import {
   type Registry,
 } from "@/lib/registry/types";
 import {
+  asRecordMutation,
   getMiniappDetail,
   listCatalog,
   publishVersion,
   registerMiniapp,
+  removeMiniapp,
   resolveMiniapp,
   selectLatest,
+  setMaintainers,
   setMiniappPublicKey,
 } from "@/lib/registry/registry";
 
@@ -403,5 +406,27 @@ describe("resolveMiniapp — firma en el manifest", () => {
     );
     const r = resolveMiniapp(noSig, "hellow_widget", {});
     expect("signature" in (r.manifest as object)).toBe(false);
+  });
+});
+
+describe("asRecordMutation", () => {
+  const withApp = () => registerMiniapp({}, { id: "cards_wallet", name: "C", owner: "o" }, now);
+  it("aplica un mutador (reg)=>reg sobre un solo record", () => {
+    const rec = withApp().cards_wallet;
+    const fn = asRecordMutation("cards_wallet", (reg) =>
+      setMaintainers(reg, "cards_wallet", ["DentVega"]),
+    );
+    expect(fn(rec)!.maintainers).toEqual(["DentVega"]);
+  });
+  it("devuelve null cuando el mutador borra el record (removeMiniapp)", () => {
+    const rec = withApp().cards_wallet;
+    const fn = asRecordMutation("cards_wallet", (reg) => removeMiniapp(reg, "cards_wallet"));
+    expect(fn(rec)).toBeNull();
+  });
+  it("registra cuando el record no existe (rec undefined)", () => {
+    const fn = asRecordMutation("nueva", (reg) =>
+      registerMiniapp(reg, { id: "nueva", name: "N", owner: "o" }, now),
+    );
+    expect(fn(undefined)!.id).toBe("nueva");
   });
 });
