@@ -3,6 +3,7 @@ import {
   InvalidManifestError,
   InvalidRepoUrlError,
   MiniappExistsError,
+  ConflictError,
   MiniappNotFoundError,
   NoCompatibleVersionError,
   VersionExistsError,
@@ -19,6 +20,7 @@ export function statusForError(err: unknown): number {
   if (err instanceof NoCompatibleVersionError) return 404;
   if (err instanceof MiniappExistsError) return 409;
   if (err instanceof VersionExistsError) return 409;
+  if (err instanceof ConflictError) return 409;
   if (err instanceof InvalidManifestError) return 400;
   if (err instanceof InvalidRepoUrlError) return 400;
   if (err instanceof GitProviderError) return 502;
