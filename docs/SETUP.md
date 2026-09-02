@@ -620,7 +620,8 @@ cards_wallet corrió 3 publishes juntos y el registry perdió el iOS de 0.1.13 +
 
 **Resuelto (2026-09-02):** el registry pasó a **una key KV por miniapp** (`registry:app:<id>`)
 + un índice (`registry:index`), y las escrituras usan **compare-and-set** por-key (`mutateApp`,
-CAS vía Lua en Upstash con retry). Equipos en miniapps **distintas nunca chocan** (keys
+CAS vía Lua en Upstash con retry `MAX_RETRIES=15` + jitter para tolerar ráfagas concurrentes
+sobre la misma miniapp). Equipos en miniapps **distintas nunca chocan** (keys
 distintas); dos writes a la **misma** miniapp reintentan sin perder datos. Ver spec/plan
 `docs/superpowers/{specs,plans}/2026-09-02-registry-per-miniapp-keys`.
 

@@ -12,7 +12,7 @@
 - **Framework:** Next.js 16 (App Router, RSC) — **read `node_modules/next/dist/docs/` before writing code; this Next has breaking changes vs. training data** (see `AGENTS.md`).
 - **Language:** TypeScript (strict).
 - **Auth:** Auth.js v5 (`next-auth@5.0.0-beta.31`), GitHub OAuth. Access token stays server-side.
-- **Registry store:** JSON file (`data/registry.json`) in dev; **Upstash Redis** (`@upstash/redis`) in prod — injectable `RegistryStore`.
+- **Registry store:** JSON file (`data/registry.json`) in dev; **Upstash Redis** (`@upstash/redis`) in prod — injectable `RegistryStore`. En prod es **una key por miniapp** (`registry:app:<id>`) + un índice (`registry:index`), escrito con **compare-and-set** (`mutateApp`, Lua CAS con retry+jitter) — no un blob único, para aislar concurrencia entre miniapps.
 - **Chunk storage:** local `public/chunks` (fs) in dev; **Vercel Blob** (`@vercel/blob`) in prod — selected by `BLOB_READ_WRITE_TOKEN`. Injectable `ChunkStorage`.
 - **Git provider:** GitHub REST (`repos/{template}/generate`) — injectable `GitProvider`.
 - **Shared contract:** `@org/miniapp-contract` (vendored at `./vendor/miniapp-contract`) — the ONLY coupling between web and mobile. Versioned.

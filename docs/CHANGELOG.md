@@ -18,8 +18,9 @@ la plataforma y qué hay disponible hoy.
 
 El registry dejó de ser un **blob único** en KV (que perdía writes cuando dos publishes se
 encimaban) y pasó a **una key por miniapp** (`registry:app:<id>`) + un índice, con escrituras
-por **compare-and-set** (`mutateApp`, Lua en Upstash con retry). Equipos trabajando en miniapps
-**distintas ya no chocan**; dos writes a la **misma** miniapp reintentan sin perder datos.
+por **compare-and-set** (`mutateApp`, Lua en Upstash con retry `MAX_RETRIES=15` + jitter en el
+backoff — rompe el thundering herd de ráfagas sobre la misma miniapp). Equipos trabajando en
+miniapps **distintas ya no chocan**; dos writes a la **misma** miniapp reintentan sin perder datos.
 Migración lazy (idempotente) + `scripts/migrate-registry-per-app.mjs`. Reads del host
 (`/api/resolve`) leen **una sola key** → más rápido. Ver
 [SETUP](/docs/setup) §7.6. Corrige el incidente del 2026-08-31 (cards_wallet sin iOS).

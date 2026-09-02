@@ -97,7 +97,9 @@ Contract** (ver abajo).
 **Registry** — la fuente de verdad de Backstage. Por cada miniapp guarda:
 `id, name, owner, versions[], repoUrl, maintainers?, pinnedVersion?,
 storageProvider?`. Por cada versión publicada: `version, url` (chunk
-android), `iosUrl?`, `iosIntegrity?`, `manifest, publishedAt`.
+android), `iosUrl?`, `iosIntegrity?`, `manifest, publishedAt`. En prod vive como
+**una key KV por miniapp** + un índice, con escrituras por compare-and-set
+(equipos en miniapps distintas no se pisan).
 
 **Chunk** — el bundle JS que Re.Pack construye (`<id>.container.js.bundle` +
 sub-chunks/vendor), guardado en el storage bajo `${id}/${version}/` para

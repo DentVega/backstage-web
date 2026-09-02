@@ -38,7 +38,9 @@ código de una miniapp — solo guarda metadata y bytes. → [Platform Overview]
 `id, name, owner, versions[], repoUrl, maintainers?, pinnedVersion?`; por
 cada versión publicada, `version, url, manifest, publishedAt` (+ `iosUrl` /
 `iosIntegrity` / `signature` / `iosSignature` si aplica). Es el dato, no la API —
-la API que lo expone es `/api/miniapps` y `/api/resolve`.
+la API que lo expone es `/api/miniapps` y `/api/resolve`. En prod se guarda como
+**una key KV por miniapp** (`registry:app:<id>`) + un índice, con escrituras por
+compare-and-set (aísla concurrencia entre miniapps distintas).
 
 **Module Federation** — la tecnología (de Re.Pack/webpack) que permite que un
 bundle (el "host"/"shell") cargue código de otro bundle (un "remote") **en
