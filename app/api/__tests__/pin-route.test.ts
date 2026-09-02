@@ -11,9 +11,13 @@ const state = vi.hoisted(() => ({ reg: {} as Record<string, unknown> }));
 
 vi.mock("@/lib/registry/store", () => ({
   getStore: () => ({
-    load: async () => state.reg,
-    save: async (r: typeof state.reg) => {
-      state.reg = r;
+    getApp: async (id: string) => (state.reg as Record<string, unknown>)[id],
+    getAll: async () => state.reg,
+    mutateApp: async (id: string, fn: (r: unknown) => unknown) => {
+      const next = fn((state.reg as Record<string, unknown>)[id]);
+      if (next === null) delete (state.reg as Record<string, unknown>)[id];
+      else (state.reg as Record<string, unknown>)[id] = next;
+      return next;
     },
   }),
 }));
