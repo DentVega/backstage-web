@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/registry/store";
-import { setMaintainers, getMiniappDetail } from "@/lib/registry/registry";
+import { setMaintainers, getMiniappDetail, asRecordMutation } from "@/lib/registry/registry";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { repoCollaboratorLogins } from "@/lib/git/collaborators";
@@ -19,8 +19,8 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const reg = await getStore().load();
-    const record = reg[id];
+    const store = getStore();
+    const record = await store.getApp(id);
     if (record === undefined) {
       return NextResponse.json({ error: "miniapp no encontrada" }, { status: 404 });
     }
@@ -50,9 +50,8 @@ export async function PUT(
         );
       }
     }
-    const next = setMaintainers(reg, id, list); // MiniappNotFoundError → 404
-    await getStore().save(next);
-    return NextResponse.json(getMiniappDetail(next, id), { status: 200 });
+    const next = await store.mutateApp(id, asRecordMutation(id, (reg) => setMaintainers(reg, id, list)));
+    return NextResponse.json(getMiniappDetail(next ? { [id]: next } : {}, id), { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });
   }

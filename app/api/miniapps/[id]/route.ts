@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/registry/store";
-import { removeMiniapp, updateMiniappMeta } from "@/lib/registry/registry";
+import { removeMiniapp, updateMiniappMeta, asRecordMutation } from "@/lib/registry/registry";
 import { MiniappNotFoundError } from "@/lib/registry/types";
 import { scaffoldAllowedLogins, githubToken } from "@/lib/config";
 import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
@@ -23,17 +23,17 @@ export async function DELETE(
   try {
     const { id } = await params;
     const alsoRepo = new URL(req.url).searchParams.get("repo") === "true";
-    const reg = await getStore().load();
+    const store = getStore();
+    const record = await store.getApp(id);
     // Lazy (evita el crash de next-auth/Next-16 en el grafo de tests).
     const { auth } = await import("@/auth");
     const session = await auth();
-    if (!canManageMiniapp(session?.githubLogin, reg[id]?.maintainers, scaffoldAllowedLogins())) {
+    if (!canManageMiniapp(session?.githubLogin, record?.maintainers, scaffoldAllowedLogins())) {
       throw new ScaffoldForbiddenError();
     }
 
     let repoDeleted: boolean | undefined;
     if (alsoRepo) {
-      const record = reg[id];
       if (record === undefined) throw new MiniappNotFoundError(id);
       const parsed = parseRepo(record.repoUrl);
       if (parsed === null) {
@@ -60,8 +60,7 @@ export async function DELETE(
       }
     }
 
-    const next = removeMiniapp(reg, id);
-    await getStore().save(next);
+    await store.mutateApp(id, asRecordMutation(id, (reg) => removeMiniapp(reg, id)));
     return NextResponse.json(
       alsoRepo ? { id, deleted: true, repoDeleted } : { id, deleted: true },
       { status: 200 },
@@ -82,10 +81,11 @@ export async function PATCH(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const reg = await getStore().load();
+    const store = getStore();
+    const record = await store.getApp(id);
     const { auth } = await import("@/auth");
     const session = await auth();
-    if (!canManageMiniapp(session?.githubLogin, reg[id]?.maintainers, scaffoldAllowedLogins())) {
+    if (!canManageMiniapp(session?.githubLogin, record?.maintainers, scaffoldAllowedLogins())) {
       throw new ScaffoldForbiddenError();
     }
     const body = (await req.json().catch(() => null)) as { repoUrl?: unknown; owner?: unknown } | null;
@@ -106,9 +106,7 @@ export async function PATCH(
         { status: 400 },
       );
     }
-    const next = updateMiniappMeta(reg, id, patch); // MiniappNotFoundError → 404
-    await getStore().save(next);
-    const rec = next[id];
+    const rec = await store.mutateApp(id, asRecordMutation(id, (reg) => updateMiniappMeta(reg, id, patch)));
     return NextResponse.json({ id, repoUrl: rec?.repoUrl, owner: rec?.owner }, { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

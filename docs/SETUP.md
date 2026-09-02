@@ -612,16 +612,20 @@ nueva** (keygen + secret + registrar pubkey + re-firmar el bundle) o **rotar** u
    pasa a **enforce** (`SIGNATURE_MODE=enforce`, build-time → rebuild/release) y rechaza lo
    que no tenga firma válida.
 
-### 7.6 Registry sin control de concurrencia (deuda a saldar)
+### 7.6 Registry concurrente (keys por-miniapp + CAS) — ✅ resuelto
 
-El registry es un **blob único** en KV (`lib/registry/kv.ts` — `kvStore` hace
-`load → modifica → save` de todo el objeto bajo una sola key, **sin CAS/lock**). Publishes
-**encimados** (o publish + pin/prune concurrentes) hacen *read-modify-write* sobre el mismo
-blob → se **pisan** (lost update). **Incidente real:** cards_wallet corrió 3 publishes juntos
-(2026-08-31); el CI publicó el iOS de 0.1.13 y toda la 0.1.14, pero el registry perdió esos
-writes → la miniapp quedó sin chunk iOS. **Workaround:** republicar 1 vez sin encimar.
-**Fix de fondo (pendiente):** optimistic locking / compare-and-swap en `kvStore.save`, o
-keys por-miniapp en vez de un blob único.
+**Antes** el registry era un **blob único** en KV (`load → modifica → save` de todo bajo una
+key, sin CAS): publishes encimados se pisaban (lost update). Incidente real 2026-08-31:
+cards_wallet corrió 3 publishes juntos y el registry perdió el iOS de 0.1.13 + toda la 0.1.14.
+
+**Resuelto (2026-09-02):** el registry pasó a **una key KV por miniapp** (`registry:app:<id>`)
++ un índice (`registry:index`), y las escrituras usan **compare-and-set** por-key (`mutateApp`,
+CAS vía Lua en Upstash con retry). Equipos en miniapps **distintas nunca chocan** (keys
+distintas); dos writes a la **misma** miniapp reintentan sin perder datos. Ver spec/plan
+`docs/superpowers/{specs,plans}/2026-09-02-registry-per-miniapp-keys`.
+
+**Migración:** corre **lazy** en el primer acceso post-deploy (idempotente); para dispararla
+explícito: `node scripts/migrate-registry-per-app.mjs` (con `KV_REST_API_URL`/`KV_REST_API_TOKEN`).
 
 ### 7.7 Contract package con semver real (deuda a saldar)
 

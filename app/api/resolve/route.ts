@@ -17,8 +17,9 @@ export async function GET(req: Request): Promise<NextResponse> {
     const range = url.searchParams.get("range") ?? undefined;
     const platform = url.searchParams.get("platform") === "ios" ? "ios" : undefined;
 
-    const reg = await getStore().load();
-    const resolved = resolveMiniapp(reg, id, { version, range, platform });
+    // Lee SOLO la key de esa miniapp (hot-path del host), no todo el registry.
+    const rec = await getStore().getApp(id);
+    const resolved = resolveMiniapp(rec ? { [id]: rec } : {}, id, { version, range, platform });
     return NextResponse.json(resolved, { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

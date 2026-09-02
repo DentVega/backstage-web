@@ -36,6 +36,7 @@ Dentro del modelo de sesión hay dos niveles (`lib/scaffold-authz.ts`):
 |---|---|
 | 401 | `AuthError` — falta o es inválido el Bearer token |
 | 403 | `ScaffoldForbiddenError` — sesión válida pero sin permiso (no admin, no maintainer) |
+| 409 | `ConflictError` (`code: "CONFLICT"`) — escrituras concurrentes sobre la misma miniapp agotaron los reintentos de compare-and-set; reintentable |
 
 Body de error estándar (`errorBody`, `lib/http.ts`):
 

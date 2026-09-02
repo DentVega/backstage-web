@@ -4,6 +4,7 @@ import type { KvClient } from "@/lib/registry/kv";
 
 function memClient(): KvClient & { data: Map<string, string> } {
   const data = new Map<string, string>();
+  const sets = new Map<string, Set<string>>();
   return {
     data,
     async get(k) {
@@ -16,6 +17,35 @@ function memClient(): KvClient & { data: Map<string, string> } {
       const n = Number(data.get(k) ?? 0) + 1;
       data.set(k, String(n));
       return n;
+    },
+    async casSet(k, expected, v) {
+      const cur = data.has(k) ? data.get(k)! : null;
+      if (cur === expected) {
+        data.set(k, v);
+        return true;
+      }
+      return false;
+    },
+    async casDel(k, expected) {
+      if (expected === null) return true;
+      const cur = data.has(k) ? data.get(k)! : null;
+      if (cur === expected) {
+        data.delete(k);
+        return true;
+      }
+      return false;
+    },
+    async sadd(k, m) {
+      (sets.get(k) ?? sets.set(k, new Set()).get(k)!).add(m);
+    },
+    async srem(k, m) {
+      sets.get(k)?.delete(m);
+    },
+    async smembers(k) {
+      return [...(sets.get(k) ?? [])];
+    },
+    async mget(keys) {
+      return keys.map((k) => data.get(k) ?? null);
     },
   };
 }

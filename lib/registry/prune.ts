@@ -1,23 +1,17 @@
-import type { Registry } from "./types";
+import type { MiniappRecord } from "./types";
 import type { SemVer } from "@dentvega/miniapp-contract";
 import type { ChunkStorage } from "@/lib/storage/types";
-import { versionsToPrune } from "./registry";
 
 /**
- * Prunea una miniapp: borra del storage el chunk de cada versión fuera de la ventana
- * (best-effort — un borrado que falla no rompe nada) y las saca del registry. La
- * versión servida/pinneada nunca entra a `versionsToPrune`. Devuelve el reg nuevo.
+ * Borra del storage el chunk de cada versión a prunear (best-effort — un borrado que falla
+ * no rompe nada). Cálculo de `toPrune` con `versionsToPrune` (puro) por afuera; los borrados
+ * de storage (I/O) van acá, FUERA del CAS del registry.
  */
-export async function pruneMiniapp(
-  reg: Registry,
+export async function pruneChunks(
   storage: ChunkStorage,
   id: string,
-  keepN: number,
-): Promise<{ reg: Registry; pruned: SemVer[] }> {
-  const record = reg[id];
-  if (record === undefined) return { reg, pruned: [] };
-
-  const toPrune = versionsToPrune(record, keepN);
+  toPrune: readonly SemVer[],
+): Promise<void> {
   for (const v of toPrune) {
     try {
       await storage.deletePrefix(`${id}/${v}`);
@@ -25,9 +19,10 @@ export async function pruneMiniapp(
       // best-effort: si el chunk no se pudo borrar, igual limpiamos el registry.
     }
   }
-  if (toPrune.length === 0) return { reg, pruned: [] };
+}
 
-  const gone = new Set<string>(toPrune);
-  const kept = record.versions.filter((pv) => !gone.has(pv.version));
-  return { reg: { ...reg, [id]: { ...record, versions: kept } }, pruned: toPrune };
+/** Saca del record las versiones prunadas (puro). La servida nunca entra a `versionsToPrune`. */
+export function removePrunedVersions(rec: MiniappRecord, toPrune: readonly SemVer[]): MiniappRecord {
+  const gone = new Set<string>(toPrune.map(String));
+  return { ...rec, versions: rec.versions.filter((pv) => !gone.has(pv.version)) };
 }

@@ -133,3 +133,12 @@ export class NoCompatibleVersionError extends Error {
     this.name = "NoCompatibleVersionError";
   }
 }
+
+/** Se agotaron los reintentos de CAS sobre una miniapp (escrituras concurrentes). Reintentable. */
+export class ConflictError extends Error {
+  readonly code = "CONFLICT";
+  constructor(id: string) {
+    super(`concurrent update conflict for "${id}" — retry`);
+    this.name = "ConflictError";
+  }
+}

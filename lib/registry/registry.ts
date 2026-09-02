@@ -198,6 +198,22 @@ export function setMiniappPublicKey(
   return { ...reg, [id]: { ...record, publicKey: publicKey.trim() } };
 }
 
+/**
+ * Adapta un mutador whole-registry `(reg)=>reg` a una fn de record para `store.mutateApp(id, fn)`.
+ * Envuelve el record actual en un mini-registry `{[id]: rec}`, aplica el mutador (que valida y
+ * tira los errores de siempre), y devuelve `next[id]` (o null si quedó borrado). Así se reusan
+ * los mutadores existentes sin refactorizarlos.
+ */
+export function asRecordMutation(
+  rawId: string,
+  mutate: (reg: Registry) => Registry,
+): (rec: MiniappRecord | undefined) => MiniappRecord | null {
+  return (rec) => {
+    const reg: Registry = rec ? { [rawId]: rec } : {};
+    return mutate(reg)[rawId] ?? null;
+  };
+}
+
 export function publishVersion(
   reg: Registry,
   rawId: string,

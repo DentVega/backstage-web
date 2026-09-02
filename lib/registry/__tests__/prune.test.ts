@@ -7,7 +7,7 @@ import {
   setMiniappPin,
 } from "@/lib/registry/registry";
 import { InvalidManifestError, MiniappNotFoundError } from "@/lib/registry/types";
-import { pruneMiniapp } from "@/lib/registry/prune";
+import { pruneChunks, removePrunedVersions } from "@/lib/registry/prune";
 import { mockStorage } from "@/lib/storage/mock";
 import type { ChunkStorage } from "@/lib/storage/types";
 import type { Registry } from "@/lib/registry/types";
@@ -46,34 +46,29 @@ describe("versionsToPrune", () => {
   });
 });
 
-describe("pruneMiniapp", () => {
-  it("borra los prefijos y saca las versiones del registry", async () => {
+describe("pruneChunks", () => {
+  it("borra un prefijo por versión a prunear", async () => {
     const deletes: string[] = [];
-    const { reg, pruned } = await pruneMiniapp(regN(V7), mockStorage(undefined, deletes), "acc", 5);
-    expect(pruned.sort()).toEqual(["0.1.0", "0.2.0"]);
+    await pruneChunks(mockStorage(undefined, deletes), "acc", ["0.1.0", "0.2.0"] as never);
     expect(deletes.sort()).toEqual(["acc/0.1.0", "acc/0.2.0"]);
-    expect(reg.acc!.versions.map((v) => v.version).sort()).toEqual([
-      "0.3.0", "0.4.0", "0.5.0", "0.6.0", "0.7.0",
-    ]);
   });
-  it("nada que prunear → no-op (no borra, mismo reg)", async () => {
-    const deletes: string[] = [];
-    const start = regN(["0.1.0"]);
-    const { reg, pruned } = await pruneMiniapp(start, mockStorage(undefined, deletes), "acc", 5);
-    expect(pruned).toEqual([]);
-    expect(deletes).toEqual([]);
-    expect(reg).toBe(start);
-  });
-  it("error del storage → best-effort: igual saca del registry", async () => {
+  it("error del storage → best-effort (no tira)", async () => {
     const failing: ChunkStorage = {
       putMany: async () => ({ baseUrl: "" }),
       deletePrefix: async () => {
         throw new Error("boom");
       },
     };
-    const { reg, pruned } = await pruneMiniapp(regN(V7), failing, "acc", 5);
-    expect(pruned.sort()).toEqual(["0.1.0", "0.2.0"]);
-    expect(reg.acc!.versions).toHaveLength(5);
+    await expect(pruneChunks(failing, "acc", ["0.1.0"] as never)).resolves.toBeUndefined();
+  });
+});
+
+describe("removePrunedVersions", () => {
+  it("saca del record las versiones prunadas", () => {
+    const rec = removePrunedVersions(regN(V7).acc!, ["0.1.0", "0.2.0"] as never);
+    expect(rec.versions.map((v) => v.version).sort()).toEqual([
+      "0.3.0", "0.4.0", "0.5.0", "0.6.0", "0.7.0",
+    ]);
   });
 });
 

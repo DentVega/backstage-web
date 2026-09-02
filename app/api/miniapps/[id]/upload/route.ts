@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { unzipSync } from "fflate";
 import { getStore } from "@/lib/registry/store";
-import { publishVersion } from "@/lib/registry/registry";
-import { pruneMiniapp } from "@/lib/registry/prune";
+import { publishVersion, asRecordMutation, versionsToPrune } from "@/lib/registry/registry";
+import { pruneChunks, removePrunedVersions } from "@/lib/registry/prune";
 import { getStorage } from "@/lib/storage";
 import { authorizeUpload } from "@/lib/auth";
 import { defaultManifest, parseCapabilities, resolveDefaultShared } from "@/lib/manifest";
@@ -164,7 +164,8 @@ export async function POST(
       }
     }
 
-    const reg = await getStore().load();
+    const store = getStore();
+    const rec = await store.getApp(id);
 
     // Firma del chunk (opcional; la produce el CI con la clave privada del repo).
     const signatureRaw = form.get("signature");
@@ -172,7 +173,7 @@ export async function POST(
       typeof signatureRaw === "string" && signatureRaw.length > 0 ? signatureRaw : undefined;
     // Sanity-check best-effort: si la miniapp ya tiene pubkey registrada, la firma DEBE validar
     // el mensaje id:platform:integrity. Feedback temprano al publisher; el host es la autoridad.
-    const pubkey = reg[id]?.publicKey;
+    const pubkey = rec?.publicKey;
     if (signature !== undefined && pubkey !== undefined) {
       const msg = chunkSignatureMessage(id, platform, integrity);
       if (!verifyMessage(msg, signature, pubkey)) {
@@ -186,25 +187,29 @@ export async function POST(
       }
     }
 
-    const storage = await getStorage(reg[id]?.storageProvider ?? null);
+    const storage = await getStorage(rec?.storageProvider ?? null);
     // iOS va a un subfolder para no colisionar con el chunk Android (mismo containerName).
     const prefix = platform === "ios" ? `${id}/${version}/ios` : `${id}/${version}`;
-    const { baseUrl } = await storage.putMany(prefix, files);
+    const { baseUrl } = await storage.putMany(prefix, files); // I/O afuera del CAS
     const url = `${baseUrl}/${containerName}`;
 
-    const next = publishVersion(
-      reg,
+    // CAS por-miniapp: publica la versión (publishVersion valida id/manifest/dup).
+    const now = new Date().toISOString();
+    const published = await store.mutateApp(
       id,
-      { version, url, manifest, platform, integrity, signature },
-      new Date().toISOString(),
+      asRecordMutation(id, (reg) =>
+        publishVersion(reg, id, { version, url, manifest, platform, integrity, signature }, now),
+      ),
     );
-    await getStore().save(next);
 
-    // Prune de versiones viejas (best-effort — el publish ya está guardado). Mantiene
-    // las últimas PRUNE_KEEP + la servida/pinneada; borra el chunk + la entrada del resto.
+    // Prune de versiones viejas (best-effort — el publish ya está guardado). I/O de storage
+    // afuera del CAS; la mutación del registry va en su propio mutateApp.
     try {
-      const { reg: prunedReg, pruned } = await pruneMiniapp(next, storage, id, pruneKeep());
-      if (pruned.length > 0) await getStore().save(prunedReg);
+      const toPrune = published ? versionsToPrune(published, pruneKeep()) : [];
+      if (toPrune.length > 0) {
+        await pruneChunks(storage, id, toPrune);
+        await store.mutateApp(id, (r) => (r ? removePrunedVersions(r, toPrune) : null));
+      }
     } catch {
       /* el prune nunca rompe el publish */
     }

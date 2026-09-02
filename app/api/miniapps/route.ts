@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/registry/store";
-import { registerMiniapp } from "@/lib/registry/registry";
+import { registerMiniapp, asRecordMutation } from "@/lib/registry/registry";
 import { errorBody, statusForError } from "@/lib/http";
 
 export const runtime = "nodejs";
@@ -15,13 +15,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         { status: 400 },
       );
     }
-    const reg = await getStore().load();
-    const next = registerMiniapp(
-      reg,
-      { id: body.id, name: body.name, owner: body.owner },
-      new Date().toISOString(),
+    const now = new Date().toISOString();
+    await getStore().mutateApp(
+      body.id,
+      asRecordMutation(body.id, (reg) =>
+        registerMiniapp(reg, { id: body.id!, name: body.name!, owner: body.owner! }, now),
+      ),
     );
-    await getStore().save(next);
     return NextResponse.json({ id: body.id }, { status: 201 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });
