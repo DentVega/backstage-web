@@ -53,3 +53,55 @@ describe("mutateApp — concurrencia", () => {
     expect(vs).toEqual(["1.0.0", "9.9.9"]); // con el bug viejo, "9.9.9" se perdía
   });
 });
+
+describe("mutateApp — robustez bajo carga", () => {
+  // KvClient con latencia: fuerza interleaving real entre mutateApp concurrentes.
+  const racyKv = (): KvClient => {
+    const base = inMemoryKvClient();
+    return {
+      ...base,
+      async casSet(k, e, v) {
+        await new Promise((r) => setTimeout(r, 1));
+        return base.casSet(k, e, v);
+      },
+    };
+  };
+
+  it("invariante: cada write a la misma miniapp ATERRIZA o da 409 — cero pérdida silenciosa", async () => {
+    const { ConflictError } = await import("@/lib/registry/types");
+    const s = kvStore(racyKv());
+    await s.mutateApp("acc", () => rec("acc", []));
+    let ok = 0;
+    await Promise.all(
+      Array.from({ length: 30 }, (_, i) =>
+        s
+          .mutateApp("acc", (r) => ({
+            ...(r as MiniappRecord),
+            versions: [...(r?.versions ?? []), { version: `v${i}` } as never],
+          }))
+          .then(() => {
+            ok++;
+          })
+          .catch((e) => {
+            if (!(e instanceof ConflictError)) throw e; // solo 409 es aceptable
+          }),
+      ),
+    );
+    const landed = (await s.getApp("acc"))!.versions.length;
+    expect(landed).toBe(ok); // TODO write exitoso quedó guardado: cero lost update
+  });
+
+  it("burst moderado (8) a la misma miniapp: TODOS aterrizan (retries + jitter)", async () => {
+    const s = kvStore(racyKv());
+    await s.mutateApp("acc", () => rec("acc", []));
+    await Promise.all(
+      Array.from({ length: 8 }, (_, i) =>
+        s.mutateApp("acc", (r) => ({
+          ...(r as MiniappRecord),
+          versions: [...(r?.versions ?? []), { version: `v${i}` } as never],
+        })),
+      ),
+    );
+    expect((await s.getApp("acc"))!.versions).toHaveLength(8);
+  });
+});

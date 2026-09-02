@@ -21,8 +21,14 @@ export interface KvClient {
   mget(keys: string[]): Promise<(string | null)[]>;
 }
 
-const MAX_RETRIES = 5;
+// Reintentos del CAS ante contención sobre la MISMA miniapp. Con N writers simultáneos, el
+// "más desafortunado" puede necesitar ~N rondas para ganar → margen holgado para bursts reales
+// (varios publishes / retries del CI sobre una miniapp). Distintas miniapps no contienden.
+const MAX_RETRIES = 15;
+// Backoff con JITTER: sin azar, los writers que chocan se despiertan en lockstep y vuelven a
+// colisionar (thundering herd). El jitter los escalona y rompe la manada.
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+const backoffMs = (attempt: number): number => 10 * (attempt + 1) + Math.random() * 15;
 
 /**
  * Store por-miniapp (ADR-014, v2): una key `registry:app:<id>` por miniapp + un set
@@ -62,7 +68,7 @@ export function kvStore(client: KvClient): RegistryStore {
           if (rec === undefined) await client.sadd(INDEX_KEY, id);
           return next;
         }
-        await sleep(20 * (attempt + 1));
+        await sleep(backoffMs(attempt));
       }
       throw new ConflictError(id);
     },
