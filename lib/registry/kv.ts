@@ -1,7 +1,9 @@
 /** KV-backed RegistryStore (ADR-014). Prod: Upstash Redis (Vercel KV). */
 import { Redis } from "@upstash/redis";
-import type { Registry } from "./types";
+import type { MiniappRecord, Registry } from "./types";
+import { ConflictError } from "./types";
 import type { RegistryStore } from "./store";
+import { appKey, INDEX_KEY, migrateBlobToPerApp } from "./migrate";
 
 /** Minimal key-value abstraction so the store is testable with an in-memory impl. */
 export interface KvClient {
@@ -19,19 +21,70 @@ export interface KvClient {
   mget(keys: string[]): Promise<(string | null)[]>;
 }
 
-const REGISTRY_KEY = "registry";
+const MAX_RETRIES = 5;
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-/** Whole-registry-under-one-key store (ADR-014). */
+/**
+ * Store por-miniapp (ADR-014, v2): una key `registry:app:<id>` por miniapp + un set
+ * `registry:index`. Las escrituras usan CAS por-key → equipos en miniapps distintas nunca
+ * chocan; writes a la misma miniapp reintentan sin perder datos.
+ */
 export function kvStore(client: KvClient): RegistryStore {
-  return {
-    async load(): Promise<Registry> {
-      const raw = await client.get(REGISTRY_KEY);
-      return raw ? (JSON.parse(raw) as Registry) : {};
+  const store: RegistryStore = {
+    async getApp(id) {
+      const raw = await client.get(appKey(id));
+      return raw ? (JSON.parse(raw) as MiniappRecord) : undefined;
     },
-    async save(reg: Registry): Promise<void> {
-      await client.set(REGISTRY_KEY, JSON.stringify(reg));
+    async getAll() {
+      await migrateBlobToPerApp(client); // lazy, idempotente
+      const ids = await client.smembers(INDEX_KEY);
+      if (ids.length === 0) return {};
+      const raws = await client.mget(ids.map(appKey));
+      const reg: Record<string, MiniappRecord> = {};
+      ids.forEach((id, i) => {
+        const raw = raws[i];
+        if (raw) reg[id] = JSON.parse(raw) as MiniappRecord; // orphan del índice → skip
+      });
+      return reg;
+    },
+    async mutateApp(id, fn) {
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        const raw = await client.get(appKey(id));
+        const rec = raw ? (JSON.parse(raw) as MiniappRecord) : undefined;
+        const next = fn(rec);
+        if (next === null) {
+          if (rec === undefined) return null;
+          if (await client.casDel(appKey(id), raw)) {
+            await client.srem(INDEX_KEY, id);
+            return null;
+          }
+        } else if (await client.casSet(appKey(id), raw, JSON.stringify(next))) {
+          if (rec === undefined) await client.sadd(INDEX_KEY, id);
+          return next;
+        }
+        await sleep(20 * (attempt + 1));
+      }
+      throw new ConflictError(id);
+    },
+    // --- shims legacy (compatibilidad Fase 1→2; se remueven al convertir los call-sites) ---
+    async load() {
+      return store.getAll();
+    },
+    async save(reg: Registry) {
+      const prevIds = await client.smembers(INDEX_KEY);
+      for (const id of Object.keys(reg)) {
+        await client.set(appKey(id), JSON.stringify(reg[id]));
+        await client.sadd(INDEX_KEY, id);
+      }
+      for (const id of prevIds) {
+        if (!(id in reg)) {
+          await client.casDel(appKey(id), await client.get(appKey(id)));
+          await client.srem(INDEX_KEY, id);
+        }
+      }
     },
   };
+  return store;
 }
 
 /** KvClient en memoria (fallback dev / tests). No persiste. */
