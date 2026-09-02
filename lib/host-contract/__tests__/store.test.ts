@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { isHostContract } from "@/lib/host-contract/types";
 import { kvHostContractStore, jsonHostContractStore } from "@/lib/host-contract/store";
-import type { KvClient } from "@/lib/registry/kv";
+import { inMemoryKvClient } from "@/lib/registry/kv";
 
 const VALID = {
   contractVersion: "1.0.0",
@@ -21,14 +21,7 @@ describe("isHostContract", () => {
   });
 });
 
-function memKv(): KvClient {
-  const m = new Map<string, string>();
-  return {
-    async get(k) { return m.get(k) ?? null; },
-    async set(k, v) { m.set(k, v); },
-    async incr(k) { const n = Number(m.get(k) ?? 0) + 1; m.set(k, String(n)); return n; },
-  };
-}
+const memKv = inMemoryKvClient;
 
 describe("kvHostContractStore", () => {
   it("load null cuando no hay contract", async () => {
