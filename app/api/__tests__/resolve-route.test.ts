@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({ reg: {} as Record<string, unknown> }));
 vi.mock("@/lib/registry/store", () => ({
-  getStore: () => ({ load: async () => state.reg }),
+  getStore: () => ({
+    load: async () => state.reg,
+    getApp: async (id: string) => (state.reg as Record<string, unknown>)[id],
+  }),
 }));
 
 import { GET } from "@/app/api/resolve/route";

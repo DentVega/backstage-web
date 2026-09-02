@@ -39,11 +39,11 @@ export default async function MiniappDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const reg = await getStore().load();
+  const rec = await getStore().getApp(id); // solo esa miniapp
 
   let detail;
   try {
-    detail = getMiniappDetail(reg, id);
+    detail = getMiniappDetail(rec ? { [id]: rec } : {}, id);
   } catch (err) {
     if (err instanceof MiniappNotFoundError) notFound();
     throw err;
