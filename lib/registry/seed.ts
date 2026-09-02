@@ -37,16 +37,16 @@ export const SEED_REGISTRY = {
  * (the seed does not clobber miniapps already registered).
  */
 export async function seedRegistry(store: RegistryStore): Promise<Registry> {
-  const current = await store.load();
-  const merged: Record<string, MiniappRecord> = { ...SEED_REGISTRY, ...current };
-  // Backfill createdAt from the seed for any kept record still missing it
-  // (records that predate the metadata field).
-  for (const [id, record] of Object.entries(merged)) {
-    const seedCreatedAt = SEED_REGISTRY[id]?.createdAt;
-    if (record.createdAt === undefined && seedCreatedAt !== undefined) {
-      merged[id] = { ...record, createdAt: seedCreatedAt };
-    }
+  for (const [id, seedRec] of Object.entries(SEED_REGISTRY)) {
+    // Idempotente + CAS por-miniapp: no pisa un record existente; solo backfillea createdAt
+    // si le falta (records previos al campo de metadata).
+    await store.mutateApp(id, (rec) => {
+      if (rec === undefined) return seedRec as MiniappRecord;
+      if (rec.createdAt === undefined && seedRec.createdAt !== undefined) {
+        return { ...rec, createdAt: seedRec.createdAt };
+      }
+      return rec;
+    });
   }
-  await store.save(merged);
-  return merged;
+  return store.getAll();
 }
