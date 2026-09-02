@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/registry/store";
-import { removeVersion, getMiniappDetail } from "@/lib/registry/registry";
+import { removeVersion, getMiniappDetail, asRecordMutation } from "@/lib/registry/registry";
 import { getStorage } from "@/lib/storage";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
@@ -19,22 +19,23 @@ export async function DELETE(
 ): Promise<NextResponse> {
   try {
     const { id, version } = await params;
-    const reg = await getStore().load();
+    const store = getStore();
+    const record = await store.getApp(id);
     const { auth } = await import("@/auth"); // lazy (patrón del resto de las routes admin)
     const session = await auth();
-    if (!canManageMiniapp(session?.githubLogin, reg[id]?.maintainers, scaffoldAllowedLogins())) {
+    if (!canManageMiniapp(session?.githubLogin, record?.maintainers, scaffoldAllowedLogins())) {
       throw new ScaffoldForbiddenError();
     }
-    const storage = await getStorage(reg[id]?.storageProvider ?? null);
-    // Valida (servida / existe) ANTES de tocar el storage.
-    const next = removeVersion(reg, id, version);
+    const storage = await getStorage(record?.storageProvider ?? null);
+    // Valida (servida / existe) ANTES de tocar el storage (throw → 400/404).
+    removeVersion(record ? { [id]: record } : {}, id, version);
     try {
       await storage.deletePrefix(`${id}/${version}`);
     } catch {
       /* best-effort: si el chunk no se borra, igual limpiamos el registry. */
     }
-    await getStore().save(next);
-    return NextResponse.json(getMiniappDetail(next, id), { status: 200 });
+    const next = await store.mutateApp(id, asRecordMutation(id, (reg) => removeVersion(reg, id, version)));
+    return NextResponse.json(getMiniappDetail(next ? { [id]: next } : {}, id), { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });
   }

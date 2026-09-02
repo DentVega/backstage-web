@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/registry/store";
-import { publishVersion } from "@/lib/registry/registry";
+import { publishVersion, asRecordMutation } from "@/lib/registry/registry";
 import { authorizeUpload } from "@/lib/auth";
 import { errorBody, statusForError } from "@/lib/http";
 
@@ -25,14 +25,13 @@ export async function POST(
         { status: 400 },
       );
     }
-    const reg = await getStore().load();
-    const next = publishVersion(
-      reg,
+    const now = new Date().toISOString();
+    await getStore().mutateApp(
       id,
-      { version: body.version, url: body.url, manifest: body.manifest },
-      new Date().toISOString(),
+      asRecordMutation(id, (reg) =>
+        publishVersion(reg, id, { version: body.version!, url: body.url!, manifest: body.manifest }, now),
+      ),
     );
-    await getStore().save(next);
     return NextResponse.json({ id, version: body.version }, { status: 201 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { getStore } from "@/lib/registry/store";
-import { setMiniappStorageProvider } from "@/lib/registry/registry";
+import { setMiniappStorageProvider, asRecordMutation } from "@/lib/registry/registry";
 import { getMiniappStorageState } from "@/lib/storage";
 import { availableProviders, isStorageProvider } from "@/lib/storage/provider";
 import { errorBody, statusForError } from "@/lib/http";
@@ -20,11 +20,12 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const reg = await getStore().load();
+    const store = getStore();
+    const record = await store.getApp(id);
     // Lazy (evita el crash de next-auth/Next-16 al importarse en el grafo de tests).
     const { auth } = await import("@/auth");
     const session = await auth();
-    if (!canManageMiniapp(session?.githubLogin, reg[id]?.maintainers, scaffoldAllowedLogins())) {
+    if (!canManageMiniapp(session?.githubLogin, record?.maintainers, scaffoldAllowedLogins())) {
       throw new ScaffoldForbiddenError();
     }
     const body = (await req.json().catch(() => null)) as { provider?: unknown } | null;
@@ -32,8 +33,7 @@ export async function PUT(
     if (provider !== null && (!isStorageProvider(provider) || !availableProviders().includes(provider))) {
       return NextResponse.json({ error: "provider not available" }, { status: 400 });
     }
-    const next = setMiniappStorageProvider(reg, id, provider); // MiniappNotFoundError → 404
-    await getStore().save(next);
+    await store.mutateApp(id, asRecordMutation(id, (reg) => setMiniappStorageProvider(reg, id, provider)));
     return NextResponse.json(await getMiniappStorageState(provider), { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

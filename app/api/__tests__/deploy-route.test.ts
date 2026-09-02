@@ -7,6 +7,15 @@ const dispatchSpy = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/registry/store", () => ({
   getStore: () => ({
     load: async () => state.reg,
+    getAll: async () => state.reg,
+    getApp: async (id: string) => (state.reg as Record<string, unknown>)[id],
+    mutateApp: async (id: string, fn: (r: unknown) => unknown) => {
+      const m = state.reg as Record<string, unknown>;
+      const next = fn(m[id]);
+      if (next === null) delete m[id];
+      else m[id] = next;
+      return next;
+    },
     save: async () => {},
   }),
 }));
