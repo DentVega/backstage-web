@@ -66,22 +66,9 @@ export function kvStore(client: KvClient): RegistryStore {
       }
       throw new ConflictError(id);
     },
-    // --- shims legacy (compatibilidad Fase 1→2; se remueven al convertir los call-sites) ---
+    // Alias de lectura (rutas/páginas read-only).
     async load() {
       return store.getAll();
-    },
-    async save(reg: Registry) {
-      const prevIds = await client.smembers(INDEX_KEY);
-      for (const id of Object.keys(reg)) {
-        await client.set(appKey(id), JSON.stringify(reg[id]));
-        await client.sadd(INDEX_KEY, id);
-      }
-      for (const id of prevIds) {
-        if (!(id in reg)) {
-          await client.casDel(appKey(id), await client.get(appKey(id)));
-          await client.srem(INDEX_KEY, id);
-        }
-      }
     },
   };
   return store;

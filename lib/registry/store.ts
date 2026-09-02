@@ -20,10 +20,8 @@ export interface RegistryStore {
     id: string,
     fn: (rec: MiniappRecord | undefined) => MiniappRecord | null,
   ): Promise<MiniappRecord | null>;
-  /** @deprecated shim de compatibilidad Fase 1→2 (se remueve al convertir los call-sites). */
+  /** Alias de lectura de `getAll()` (usado por rutas/páginas read-only). */
   load(): Promise<Registry>;
-  /** @deprecated shim de compatibilidad Fase 1→2. */
-  save(reg: Registry): Promise<void>;
 }
 
 async function readFileReg(): Promise<Registry> {
@@ -60,9 +58,6 @@ export const jsonStore: RegistryStore = {
   },
   async load() {
     return readFileReg();
-  },
-  async save(reg) {
-    await writeFileReg(reg);
   },
 };
 

@@ -11,20 +11,18 @@ describe("kvStore", () => {
     expect(await store.load()).toEqual({});
   });
 
-  it("round-trips save → load", async () => {
+  it("round-trips mutateApp → getAll", async () => {
     const store = kvStore(inMemoryKv());
-    const reg = {
-      acc: { id: "acc", name: "A", owner: "o", versions: [] },
-    } as unknown as Registry;
-    await store.save(reg);
-    expect(await store.load()).toEqual(reg);
+    const rec = { id: "acc", name: "A", owner: "o", versions: [] };
+    await store.mutateApp("acc", () => rec as never);
+    expect(await store.getAll()).toEqual({ acc: rec } as unknown as Registry);
   });
 
   it("persists across store instances backed by the same client", async () => {
     const kv = inMemoryKv();
-    const reg = { acc: { id: "acc", name: "A", owner: "o", versions: [] } } as unknown as Registry;
-    await kvStore(kv).save(reg);
-    expect(await kvStore(kv).load()).toEqual(reg);
+    const rec = { id: "acc", name: "A", owner: "o", versions: [] };
+    await kvStore(kv).mutateApp("acc", () => rec as never);
+    expect(await kvStore(kv).getApp("acc")).toEqual(rec);
   });
 });
 
@@ -39,10 +37,10 @@ describe("seedRegistry", () => {
   it("does not clobber an already-registered miniapp", async () => {
     const kv = inMemoryKv();
     const store = kvStore(kv);
-    const existing = {
-      account_dashboard: { id: "account_dashboard", name: "Mine", owner: "me", versions: [] },
-    } as unknown as Registry;
-    await store.save(existing);
+    await store.mutateApp(
+      "account_dashboard",
+      () => ({ id: "account_dashboard", name: "Mine", owner: "me", versions: [] } as never),
+    );
     await seedRegistry(store);
     const loaded = await store.load();
     expect(loaded.account_dashboard.name).toBe("Mine");
