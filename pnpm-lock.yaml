@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@dentvega/miniapp-contract':
-        specifier: ^0.3.0
-        version: 0.3.0
+        specifier: ^0.4.0
+        version: 0.4.0
       '@upstash/redis':
         specifier: ^1.38.0
         version: 1.38.0
@@ -195,8 +195,8 @@ packages:
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
 
-  '@dentvega/miniapp-contract@0.3.0':
-    resolution: {integrity: sha512-oB9n6XkxEElj+KrYpn473IDccH5Oly7bM637jYoW1FafgLSihbI2pdonFnZ7d1Z90QheCQnzIZoacqxDeX6EkQ==, tarball: https://npm.pkg.github.com/download/@dentvega/miniapp-contract/0.3.0/af5d5addf5c75dc4bd9e2cb0348b85b80be537cb}
+  '@dentvega/miniapp-contract@0.4.0':
+    resolution: {integrity: sha512-iNGDmv01HJkuQfOeTgGJBNc47zUOn6JlxGhQ7e8P4/kHAm8xjKyoOODcS4YdNJCcU1IRdz9cJrsjsNRlGKimaQ==, tarball: https://npm.pkg.github.com/download/@dentvega/miniapp-contract/0.4.0/adb7aa7b092f6c24a418d8983f0df3b3197d7dfb}
 
   '@emnapi/core@1.11.1':
     resolution: {integrity: sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==}
@@ -1751,7 +1751,7 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.0': {}
 
-  '@dentvega/miniapp-contract@0.3.0':
+  '@dentvega/miniapp-contract@0.4.0':
     dependencies:
       semver: 7.8.5
 
