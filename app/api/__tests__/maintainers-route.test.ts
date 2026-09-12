@@ -26,6 +26,8 @@ vi.mock("@/auth", () => ({ auth: vi.fn() }));
 vi.mock("@/lib/git/collaborators", () => ({
   repoCollaboratorLogins: async () => state.collaborators,
 }));
+const recordAuditMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/audit/log", () => ({ recordAudit: recordAuditMock, GLOBAL_CHAIN: "_global" }));
 
 import { PUT } from "@/app/api/miniapps/[id]/maintainers/route";
 import { auth } from "@/auth";
@@ -48,6 +50,7 @@ beforeEach(() => {
   state.collaborators = ["alice", "bob", "carol"];
   process.env.SCAFFOLD_ALLOWED_LOGINS = "DentVega";
   authMock.mockResolvedValue({ githubLogin: "DentVega" });
+  recordAuditMock.mockClear();
 });
 afterEach(() => {
   vi.restoreAllMocks();
@@ -59,6 +62,19 @@ describe("PUT /api/miniapps/:id/maintainers", () => {
     const res = await PUT(put({ maintainers: ["alice", "bob"] }), params("acc"));
     expect(res.status).toBe(200);
     expect(reg().acc.maintainers).toEqual(["alice", "bob"]);
+  });
+
+  it("registra un evento set-maintainers con el diff added/removed", async () => {
+    (state.reg.acc as { maintainers?: string[] }).maintainers = ["alice"];
+    const res = await PUT(put({ maintainers: ["alice", "bob"] }), params("acc"));
+    expect(res.status).toBe(200);
+    expect(recordAuditMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "set-maintainers",
+        miniappId: "acc",
+        details: { added: ["bob"], removed: [] },
+      }),
+    );
   });
 
   it("un maintainer actual puede editar (auto-gobierno)", async () => {

@@ -7,6 +7,8 @@ import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { githubProvider } from "@/lib/git/github";
 import { parseRepo } from "@/lib/git/miniapp-dispatch";
 import { errorBody, statusForError } from "@/lib/http";
+import { recordAudit } from "@/lib/audit/log";
+import { resolveActor } from "@/lib/audit/actor";
 
 export const runtime = "nodejs";
 
@@ -60,7 +62,15 @@ export async function DELETE(
       }
     }
 
+    const versions = record?.versions?.length ?? 0;
     await store.mutateApp(id, asRecordMutation(id, (reg) => removeMiniapp(reg, id)));
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin),
+      action: "delete-miniapp",
+      chain: id,
+      miniappId: id,
+      details: { versions, repoDeleted: repoDeleted ?? false },
+    });
     return NextResponse.json(
       alsoRepo ? { id, deleted: true, repoDeleted } : { id, deleted: true },
       { status: 200 },
@@ -107,6 +117,13 @@ export async function PATCH(
       );
     }
     const rec = await store.mutateApp(id, asRecordMutation(id, (reg) => updateMiniappMeta(reg, id, patch)));
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin),
+      action: "patch",
+      chain: id,
+      miniappId: id,
+      details: { fields: Object.keys(patch) },
+    });
     return NextResponse.json({ id, repoUrl: rec?.repoUrl, owner: rec?.owner }, { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

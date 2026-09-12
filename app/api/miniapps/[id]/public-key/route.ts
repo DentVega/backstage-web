@@ -4,6 +4,8 @@ import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { getStore } from "@/lib/registry/store";
 import { setMiniappPublicKey, getMiniappDetail, asRecordMutation } from "@/lib/registry/registry";
 import { errorBody, statusForError } from "@/lib/http";
+import { recordAudit } from "@/lib/audit/log";
+import { resolveActor } from "@/lib/audit/actor";
 
 export const runtime = "nodejs";
 
@@ -34,6 +36,13 @@ export async function PUT(
       return NextResponse.json({ error: "publicKey must be a string or null" }, { status: 400 });
     }
     const next = await store.mutateApp(id, asRecordMutation(id, (reg) => setMiniappPublicKey(reg, id, pk)));
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin),
+      action: "set-public-key",
+      chain: id,
+      miniappId: id,
+      details: { hasKey: pk !== null }, // nunca la llave en sí
+    });
     return NextResponse.json(getMiniappDetail(next ? { [id]: next } : {}, id), { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

@@ -3,6 +3,8 @@ import { getStore } from "@/lib/registry/store";
 import { publishVersion, asRecordMutation } from "@/lib/registry/registry";
 import { authorizeUpload } from "@/lib/auth";
 import { errorBody, statusForError } from "@/lib/http";
+import { recordAudit } from "@/lib/audit/log";
+import { resolveActor } from "@/lib/audit/actor";
 
 export const runtime = "nodejs";
 
@@ -32,6 +34,15 @@ export async function POST(
         publishVersion(reg, id, { version: body.version!, url: body.url!, manifest: body.manifest }, now),
       ),
     );
+    const { auth } = await import("@/auth");
+    const session = await auth().catch(() => null);
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin),
+      action: "publish",
+      chain: id,
+      miniappId: id,
+      details: { version: body.version },
+    });
     return NextResponse.json({ id, version: body.version }, { status: 201 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

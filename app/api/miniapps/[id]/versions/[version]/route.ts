@@ -5,6 +5,8 @@ import { getStorage } from "@/lib/storage";
 import { scaffoldAllowedLogins } from "@/lib/config";
 import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { errorBody, statusForError } from "@/lib/http";
+import { recordAudit } from "@/lib/audit/log";
+import { resolveActor } from "@/lib/audit/actor";
 
 export const runtime = "nodejs";
 
@@ -35,6 +37,13 @@ export async function DELETE(
       /* best-effort: si el chunk no se borra, igual limpiamos el registry. */
     }
     const next = await store.mutateApp(id, asRecordMutation(id, (reg) => removeVersion(reg, id, version)));
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin),
+      action: "delete-version",
+      chain: id,
+      miniappId: id,
+      details: { version },
+    });
     return NextResponse.json(getMiniappDetail(next ? { [id]: next } : {}, id), { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

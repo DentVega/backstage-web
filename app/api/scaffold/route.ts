@@ -7,6 +7,8 @@ import { githubProvider } from "@/lib/git/github";
 import { TEMPLATE_REPO, githubToken, scaffoldAllowedLogins, scaffoldSecrets } from "@/lib/config";
 import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { errorBody, statusForError } from "@/lib/http";
+import { recordAudit } from "@/lib/audit/log";
+import { resolveActor } from "@/lib/audit/actor";
 
 export const runtime = "nodejs";
 
@@ -52,6 +54,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       ),
     );
 
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin),
+      action: "scaffold",
+      chain: body.id,
+      miniappId: body.id,
+      details: { repo: repoUrl },
+    });
     return NextResponse.json({ id: body.id, repoUrl }, { status: 201 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });
