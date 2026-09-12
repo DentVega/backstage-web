@@ -6,6 +6,8 @@ import { setMiniappStorageProvider, asRecordMutation } from "@/lib/registry/regi
 import { getMiniappStorageState } from "@/lib/storage";
 import { availableProviders, isStorageProvider } from "@/lib/storage/provider";
 import { errorBody, statusForError } from "@/lib/http";
+import { recordAudit } from "@/lib/audit/log";
+import { resolveActor } from "@/lib/audit/actor";
 
 export const runtime = "nodejs";
 
@@ -34,6 +36,13 @@ export async function PUT(
       return NextResponse.json({ error: "provider not available" }, { status: 400 });
     }
     await store.mutateApp(id, asRecordMutation(id, (reg) => setMiniappStorageProvider(reg, id, provider)));
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin),
+      action: "set-storage-provider",
+      chain: id,
+      miniappId: id,
+      details: { provider },
+    });
     return NextResponse.json(await getMiniappStorageState(provider), { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

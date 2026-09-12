@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getStore } from "@/lib/registry/store";
 import { registerMiniapp, asRecordMutation } from "@/lib/registry/registry";
 import { errorBody, statusForError } from "@/lib/http";
+import { recordAudit } from "@/lib/audit/log";
+import { resolveActor } from "@/lib/audit/actor";
 
 export const runtime = "nodejs";
 
@@ -22,6 +24,15 @@ export async function POST(req: Request): Promise<NextResponse> {
         registerMiniapp(reg, { id: body.id!, name: body.name!, owner: body.owner! }, now),
       ),
     );
+    const { auth } = await import("@/auth");
+    const session = await auth().catch(() => null);
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin),
+      action: "register",
+      chain: body.id,
+      miniappId: body.id,
+      details: {},
+    });
     return NextResponse.json({ id: body.id }, { status: 201 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

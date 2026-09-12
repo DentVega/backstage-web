@@ -19,6 +19,22 @@ export interface KvClient {
   srem(key: string, member: string): Promise<void>;
   smembers(key: string): Promise<string[]>;
   mget(keys: string[]): Promise<(string | null)[]>;
+  /** Prepend a value to a list (LPUSH). */
+  lpush(key: string, value: string): Promise<void>;
+  /** Read a list range, newest-first (LRANGE). stop=-1 → hasta el final. */
+  lrange(key: string, start: number, stop: number): Promise<string[]>;
+  /**
+   * Append atómico cross-key para el hash-chain: si GET(headKey)===expectedHead
+   * (o expectedHead===null y no existe), LPUSH(listKey, entry) + SET(headKey, newHead)
+   * y devuelve true; sino false.
+   */
+  casAppend(
+    headKey: string,
+    listKey: string,
+    expectedHead: string | null,
+    newHead: string,
+    entry: string,
+  ): Promise<boolean>;
 }
 
 // Reintentos del CAS ante contención sobre la MISMA miniapp. Con N writers simultáneos, el
@@ -84,6 +100,7 @@ export function kvStore(client: KvClient): RegistryStore {
 export function inMemoryKvClient(): KvClient {
   const map = new Map<string, string>();
   const sets = new Map<string, Set<string>>();
+  const lists = new Map<string, string[]>();
   return {
     async get(key) {
       return map.get(key) ?? null;
@@ -127,6 +144,25 @@ export function inMemoryKvClient(): KvClient {
     async mget(keys) {
       return keys.map((k) => map.get(k) ?? null);
     },
+    async lpush(key, value) {
+      const arr = lists.get(key) ?? [];
+      arr.unshift(value);
+      lists.set(key, arr);
+    },
+    async lrange(key, start, stop) {
+      const arr = lists.get(key) ?? [];
+      const end = stop < 0 ? arr.length : stop + 1;
+      return arr.slice(start, end);
+    },
+    async casAppend(headKey, listKey, expectedHead, newHead, entry) {
+      const cur = map.has(headKey) ? map.get(headKey)! : null;
+      if (cur !== expectedHead) return false;
+      const arr = lists.get(listKey) ?? [];
+      arr.unshift(entry);
+      lists.set(listKey, arr);
+      map.set(headKey, newHead);
+      return true;
+    },
   };
 }
 
@@ -153,6 +189,14 @@ end
 return 0`;
   const CAS_DEL = `local cur = redis.call('GET', KEYS[1])
 if cur == ARGV[1] then redis.call('DEL', KEYS[1]); return 1 end
+return 0`;
+  // Append atómico del hash-chain (Upstash REST no soporta WATCH).
+  const CAS_APPEND = `local cur = redis.call('GET', KEYS[1])
+if (ARGV[1] == '' and cur == false) or cur == ARGV[1] then
+  redis.call('LPUSH', KEYS[2], ARGV[3])
+  redis.call('SET', KEYS[1], ARGV[2])
+  return 1
+end
 return 0`;
   return {
     async get(key: string): Promise<string | null> {
@@ -185,6 +229,20 @@ return 0`;
     },
     async mget(keys) {
       return keys.length ? await redis.mget<(string | null)[]>(...keys) : [];
+    },
+    async lpush(key, value) {
+      await redis.lpush(key, value);
+    },
+    async lrange(key, start, stop) {
+      return (await redis.lrange<string>(key, start, stop)) ?? [];
+    },
+    async casAppend(headKey, listKey, expectedHead, newHead, entry) {
+      const r = await redis.eval(
+        CAS_APPEND,
+        [headKey, listKey],
+        [expectedHead ?? "", newHead, entry],
+      );
+      return r === 1;
     },
   };
 }

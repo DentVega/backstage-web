@@ -11,6 +11,8 @@ import { sha256Integrity } from "@/lib/integrity";
 import { verifyMessage } from "@/lib/crypto/ed25519";
 import { chunkSignatureMessage } from "@/lib/trust/message";
 import { errorBody, statusForError } from "@/lib/http";
+import { recordAudit } from "@/lib/audit/log";
+import { resolveActor } from "@/lib/audit/actor";
 import { githubProvider } from "@/lib/git/github";
 import { githubToken, HOST_REPO, pruneKeep } from "@/lib/config";
 import { openCapabilityRequests } from "@/lib/capability-request";
@@ -84,6 +86,12 @@ export async function POST(
     }
     // Plataforma del chunk subido (default android → backward-compat con el publish.mjs viejo).
     const platform = form.get("platform") === "ios" ? "ios" : "android";
+    // Atribución del audit: campos que el CI reporta (github.actor/sha/repo). Opcionales.
+    const ciActor = {
+      actor: typeof form.get("actor") === "string" ? (form.get("actor") as string) : undefined,
+      commit: typeof form.get("commit") === "string" ? (form.get("commit") as string) : undefined,
+      repo: typeof form.get("repo") === "string" ? (form.get("repo") as string) : undefined,
+    };
     // Integrity de los bytes REALES del chunk (nunca un valor del cliente),
     // así el host puede verificar la descarga del CDN antes de ejecutarla.
     const integrity = sha256Integrity(container.data);
@@ -213,6 +221,17 @@ export async function POST(
     } catch {
       /* el prune nunca rompe el publish */
     }
+
+    // Audit: quién publicó qué (UI → login de sesión; CI → github.actor). Fire-and-forward.
+    const { auth } = await import("@/auth");
+    const session = await auth().catch(() => null);
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin, ciActor),
+      action: "publish",
+      chain: id,
+      miniappId: id,
+      details: { version, platform, integrity, signed: signature !== undefined },
+    });
 
     return NextResponse.json({ id, version, url, platform }, { status: 201 });
   } catch (err) {

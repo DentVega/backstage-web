@@ -53,6 +53,9 @@ vi.mock("@/lib/storage", async () => {
 
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
 
+const recordAuditMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/audit/log", () => ({ recordAudit: recordAuditMock, GLOBAL_CHAIN: "_global" }));
+
 import { POST } from "@/app/api/miniapps/[id]/upload/route";
 import { auth } from "@/auth";
 
@@ -116,6 +119,7 @@ beforeEach(() => {
   };
   state.contract = null; // no host contract published by default
   ensureIssueSpy.mockClear();
+  recordAuditMock.mockClear();
 });
 
 describe("POST /api/miniapps/:id/upload", () => {
@@ -127,6 +131,34 @@ describe("POST /api/miniapps/:id/upload", () => {
       "https://mock.blob/account_dashboard/0.2.0/account_dashboard.container.js.bundle",
     );
     expect(state.reg.account_dashboard.versions).toHaveLength(1);
+  });
+
+  it("registra un evento publish tras un upload exitoso (CI con actor)", async () => {
+    const form = new FormData();
+    form.set("file", new Blob([buildZip() as unknown as BlobPart]), "build.zip");
+    form.set("version", "0.2.0");
+    form.set("manifest", JSON.stringify({ ...manifest, version: "0.2.0" }));
+    form.set("actor", "octocat");
+    form.set("commit", "sha1");
+    form.set("repo", "org/account_dashboard");
+    const req = new Request("http://x/api/miniapps/account_dashboard/upload", {
+      method: "POST",
+      headers: { authorization: "Bearer secret" },
+      body: form,
+    });
+
+    const res = await POST(req, params);
+
+    expect(res.status).toBe(201);
+    expect(recordAuditMock).toHaveBeenCalledTimes(1);
+    const arg = recordAuditMock.mock.calls[0][0];
+    expect(arg).toMatchObject({
+      action: "publish",
+      chain: "account_dashboard",
+      miniappId: "account_dashboard",
+      actor: { type: "ci", login: "octocat", commit: "sha1", repo: "org/account_dashboard" },
+    });
+    expect(arg.details).toMatchObject({ version: "0.2.0", signed: false });
   });
 
   it("rejects without a valid token (401)", async () => {

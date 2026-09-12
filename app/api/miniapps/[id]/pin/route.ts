@@ -4,6 +4,8 @@ import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { getStore } from "@/lib/registry/store";
 import { setMiniappPin, getMiniappDetail, asRecordMutation } from "@/lib/registry/registry";
 import { errorBody, statusForError } from "@/lib/http";
+import { recordAudit } from "@/lib/audit/log";
+import { resolveActor } from "@/lib/audit/actor";
 
 export const runtime = "nodejs";
 
@@ -32,8 +34,16 @@ export async function PUT(
     if (version !== null && typeof version !== "string") {
       return NextResponse.json({ error: "version must be a string or null" }, { status: 400 });
     }
+    const fromPin = rec?.pinnedVersion ?? null;
     // CAS por-miniapp. setMiniappPin valida (InvalidManifestError→400, MiniappNotFoundError→404).
     const next = await store.mutateApp(id, asRecordMutation(id, (reg) => setMiniappPin(reg, id, version)));
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin),
+      action: "pin",
+      chain: id,
+      miniappId: id,
+      details: { from: fromPin, to: version },
+    });
     return NextResponse.json(getMiniappDetail(next ? { [id]: next } : {}, id), { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

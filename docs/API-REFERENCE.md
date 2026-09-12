@@ -15,6 +15,7 @@
 | Modelo | Cómo | Quién | Usado por |
 |---|---|---|---|
 | **Público** | sin auth | cualquiera | `GET /api/resolve`, `GET /api/host-contract`, `GET /api/miniapps`, `GET /api/storage-provider`, `GET /api/trust-bundle`, `POST/GET /api/metrics` |
+| **Auditoría** | sesión | admin (`AUDIT_ADMIN_LOGINS`) ∪ maintainer | `GET /api/audit` (global → admin; `?miniapp=` → +maintainer), `GET /api/audit/verify` (admin) |
 | **Token de servicio** | `Authorization: Bearer <TOKEN>` | CI (miniapp o host) | `POST /api/miniapps/:id/upload` (`PUBLISH_TOKEN`), `PUT /api/trust-bundle` (`PUBLISH_TOKEN`, o sesión admin), `PUT /api/host-contract` (`HOST_CONTRACT_TOKEN`) |
 | **Sesión (NextAuth + GitHub)** | cookie de sesión | operador humano allowlisted | scaffold, deploy, sync-template, pin, maintainers, public-key, storage-provider, trust-bundle (PUT), DELETE/PATCH miniapp, admin/* |
 
@@ -217,6 +218,9 @@ Publica un build (chunk + manifest). El endpoint central de CI (ADR-015).
 | `capabilities` | string | no | CSV, usado solo cuando `manifest` está ausente |
 | `platform` | `"ios"` | no | default `"android"` (back-compat con publish.mjs viejo) |
 | `signature` | string | no | firma Ed25519 (base64url) del chunk, producida por el CI de la miniapp con su clave privada; se guarda por plataforma y se sirve en `manifest.signature` (ver [trust bundle](#trust-bundle-firma)) |
+| `actor` | string | no | atribución del [audit log](/docs/audit-log): usuario de GitHub que disparó el publish (`GITHUB_ACTOR`). Si se omite, el evento se registra como `ci` |
+| `commit` | string | no | `GITHUB_SHA` del commit publicado (audit log) |
+| `repo` | string | no | `owner/repo` que publicó (`GITHUB_REPOSITORY`, audit log) |
 
 El `integrity` (`sha256-...`) se calcula server-side de los bytes reales del
 container — nunca se confía en un valor del cliente. Con `platform=android` se
@@ -465,6 +469,47 @@ miniapps del registry. Público.
 trae las **8 razones fijas** de `FALLBACK_REASONS` (`lib/metrics/store.ts`) — incluidas
 `invalid-signature`/`unknown-key` de la verificación de firma —, también
 zero-filled — no es un objeto dinámico con solo las razones vistas.
+
+### `GET /api/audit`
+
+Feed del [audit log](/docs/audit-log): quién hizo qué en el control-plane
+(publicaciones + cambios de gestión). Eventos más nuevos primero.
+
+**Auth**: **sin `miniapp`** (feed global) → solo admins (`AUDIT_ADMIN_LOGINS`,
+`canScaffold`). **Con `miniapp=<id>`** → admin **o** maintainer de esa miniapp
+(`canManageMiniapp`).
+
+**Query** (todos opcionales): `miniapp`, `actor` (login exacto), `action`
+(`publish`/`pin`/`delete-miniapp`/…), `limit` (default: todos).
+
+**200**
+```json
+{
+  "events": [
+    {
+      "seq": 12,
+      "ts": 1757600000000,
+      "actor": { "type": "ci", "login": "octocat", "commit": "abc123", "repo": "org/acc" },
+      "action": "publish",
+      "chain": "acc",
+      "miniappId": "acc",
+      "details": { "version": "1.2.0", "platform": "android", "signed": true },
+      "prevHash": "…",
+      "hash": "…"
+    }
+  ]
+}
+```
+
+Cada evento encadena su `hash` con el `prevHash` del anterior (hash-chain
+tamper-evidente por cadena). **401** si no autorizado.
+
+### `GET /api/audit/verify`
+
+Verifica la integridad de todas las cadenas (recomputa los hashes). Solo admins.
+
+**200** — `{ "ok": true, "chains": [{ "chain": "acc", "ok": true }] }`. Si una
+cadena fue manipulada: `{ "ok": false, "chains": [{ "chain": "acc", "ok": false, "brokenAt": 7 }] }`.
 
 ---
 

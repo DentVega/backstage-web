@@ -6,7 +6,9 @@ import { getCiProvider, repoFullNameFor, type CiStatus } from "@/lib/ci";
 import { resolveDriftStatuses } from "@/lib/drift/resolve";
 import { auth } from "@/auth";
 import { canManageMiniapp } from "@/lib/scaffold-authz";
-import { scaffoldAllowedLogins } from "@/lib/config";
+import { scaffoldAllowedLogins, auditAdminLogins } from "@/lib/config";
+import { getAuditStore } from "@/lib/audit/log";
+import { AuditTable } from "@/app/audit/audit-table";
 import { MiniappHeader } from "@/app/components/MiniappHeader";
 import { VersionList } from "@/app/components/VersionList";
 import { CiBadge } from "@/app/components/CiBadge";
@@ -66,6 +68,9 @@ export default async function MiniappDetailPage({
     ).status;
   }
   const driftStatus = (await resolveDriftStatuses([detail]))[detail.id] ?? "unknown";
+  // Historial del audit log: visible para maintainers de la miniapp o admins de auditoría.
+  const canSeeAudit = canManageMiniapp(session?.githubLogin, detail.maintainers, auditAdminLogins());
+  const auditHistory = canSeeAudit ? await getAuditStore().readAll({ miniapp: id, limit: 200 }) : [];
 
   return (
     <main className="page">
@@ -114,6 +119,14 @@ export default async function MiniappDetailPage({
           canDelete={canPublish}
         />
       </section>
+
+      {canSeeAudit ? (
+        <section className="detail-section">
+          <h2>Historial</h2>
+          <p className="page-lede">Publicaciones y cambios de gestión de esta miniapp.</p>
+          <AuditTable events={auditHistory} />
+        </section>
+      ) : null}
 
       {canPublish ? (
         <>

@@ -5,6 +5,7 @@ import type { KvClient } from "@/lib/registry/kv";
 function memClient(): KvClient & { data: Map<string, string> } {
   const data = new Map<string, string>();
   const sets = new Map<string, Set<string>>();
+  const lists = new Map<string, string[]>();
   return {
     data,
     async get(k) {
@@ -46,6 +47,24 @@ function memClient(): KvClient & { data: Map<string, string> } {
     },
     async mget(keys) {
       return keys.map((k) => data.get(k) ?? null);
+    },
+    async lpush(k, v) {
+      const arr = lists.get(k) ?? [];
+      arr.unshift(v);
+      lists.set(k, arr);
+    },
+    async lrange(k, start, stop) {
+      const arr = lists.get(k) ?? [];
+      return arr.slice(start, stop < 0 ? arr.length : stop + 1);
+    },
+    async casAppend(headKey, listKey, expectedHead, newHead, entry) {
+      const cur = data.has(headKey) ? data.get(headKey)! : null;
+      if (cur !== expectedHead) return false;
+      const arr = lists.get(listKey) ?? [];
+      arr.unshift(entry);
+      lists.set(listKey, arr);
+      data.set(headKey, newHead);
+      return true;
     },
   };
 }

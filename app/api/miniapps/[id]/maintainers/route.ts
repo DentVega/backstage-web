@@ -5,6 +5,8 @@ import { scaffoldAllowedLogins } from "@/lib/config";
 import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { repoCollaboratorLogins } from "@/lib/git/collaborators";
 import { errorBody, statusForError } from "@/lib/http";
+import { recordAudit } from "@/lib/audit/log";
+import { resolveActor } from "@/lib/audit/actor";
 
 export const runtime = "nodejs";
 
@@ -50,7 +52,18 @@ export async function PUT(
         );
       }
     }
+    const before = record.maintainers ?? [];
     const next = await store.mutateApp(id, asRecordMutation(id, (reg) => setMaintainers(reg, id, list)));
+    await recordAudit({
+      actor: resolveActor(session?.githubLogin),
+      action: "set-maintainers",
+      chain: id,
+      miniappId: id,
+      details: {
+        added: list.filter((m) => !before.includes(m)),
+        removed: before.filter((m) => !list.includes(m)),
+      },
+    });
     return NextResponse.json(getMiniappDetail(next ? { [id]: next } : {}, id), { status: 200 });
   } catch (err) {
     return NextResponse.json(errorBody(err), { status: statusForError(err) });

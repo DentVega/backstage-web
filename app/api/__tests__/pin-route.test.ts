@@ -23,6 +23,9 @@ vi.mock("@/lib/registry/store", () => ({
 }));
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
 
+const recordAuditMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/audit/log", () => ({ recordAudit: recordAuditMock, GLOBAL_CHAIN: "_global" }));
+
 import { PUT } from "@/app/api/miniapps/[id]/pin/route";
 import { auth } from "@/auth";
 
@@ -45,6 +48,7 @@ beforeEach(() => {
   };
   process.env.SCAFFOLD_ALLOWED_LOGINS = ADMIN;
   authMock.mockResolvedValue({ githubLogin: ADMIN });
+  recordAuditMock.mockClear();
 });
 afterEach(() => {
   vi.restoreAllMocks();
@@ -80,6 +84,18 @@ describe("PUT /api/miniapps/:id/pin", () => {
   });
   it("404 miniapp inexistente", async () => {
     expect((await PUT(putReq({ version: "0.1.0" }), params("ghost"))).status).toBe(404);
+  });
+
+  it("registra un evento pin tras pinear", async () => {
+    await PUT(putReq({ version: "0.1.0" }), params("cards_wallet"));
+    expect(recordAuditMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "pin",
+        miniappId: "cards_wallet",
+        actor: { type: "user", login: ADMIN },
+        details: expect.objectContaining({ to: "0.1.0" }),
+      }),
+    );
   });
 
   it("un maintainer no-admin puede gestionar SU miniapp", async () => {
