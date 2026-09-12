@@ -97,6 +97,19 @@ bundle. La privada vive **offline** (nunca en Vercel); la pública va pineada en
 el host y, opcionalmente, en `ROOT_PUBLIC_KEY` para que el server valide el
 bundle antes de guardarlo.
 
+**Audit log** — registro append-only de quién hizo qué en el control-plane
+(publicaciones + cambios de gestión). Atribuye cada evento a una persona (login de
+GitHub en la UI; `github.actor` en el CI). Se ve en `/audit` (admins) y en el panel
+"Historial" de cada miniapp (maintainers). → [Audit log](/docs/audit-log)
+
+**Hash-chain** — la estructura del audit log: cada evento incluye el hash del anterior
+(`hash = sha256(prevHash + evento)`), una cadena por miniapp. Borrar o editar una
+entrada rompe la cadena en ese punto, así que la manipulación es detectable.
+
+**Tamper-evidente** — propiedad del audit log: no impide la manipulación, pero la
+**delata** (la cadena se rompe y `GET /api/audit/verify` lo señala). Distinto de
+tamper-**proof** (imposible de alterar), que requeriría un sink externo append-only.
+
 **Capability** — un permiso **acotado y revocable** que el host otorga a una
 miniapp (ej. `accounts:read`, `session:whoami`) — nunca un credential crudo.
 La miniapp declara las que necesita en su `manifest.json`; el host las

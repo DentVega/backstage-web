@@ -133,6 +133,12 @@ export const DOC_GROUPS: readonly DocGroup[] = [
         file: "docs/rotar-publish-token.md",
         blurb: "Rotación del token de publish sin ventana de riesgo.",
       },
+      {
+        slug: "audit-log",
+        title: "Audit log",
+        file: "docs/AUDIT-LOG.md",
+        blurb: "Quién hizo qué en el control-plane: publicaciones y cambios, atribuidos por persona, en un hash-chain tamper-evidente.",
+      },
     ],
   },
   {

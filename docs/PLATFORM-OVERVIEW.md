@@ -342,6 +342,13 @@ host).
 - **CI** — último resultado de GitHub Actions del repo de esa miniapp
   (con fallback resiliente a `unknown`, nunca rompe la UI).
 
+**Audit log:** además de las métricas de runtime, la plataforma registra quién hizo
+qué en el control-plane (publicaciones + cambios de gestión), atribuido por persona
+(login de GitHub en la UI; `github.actor` en el CI). Es un hash-chain **tamper-evidente**
+por cadena: manipular el historial rompe la cadena y se detecta. Se ve en `/audit`
+(admins) y en el panel "Historial" de cada miniapp (maintainers).
+→ [Audit log](/docs/audit-log)
+
 ---
 
 ## 8. Mapa de repos

@@ -302,6 +302,9 @@ vercel env add HOST_REPO              # ej. Acme/backstagereactnative (capabilit
 
 # --- firma de chunks (opcional; ver docs/API-REFERENCE.md §5.7) ---
 vercel env add ROOT_PUBLIC_KEY        # pubkey root (base64url); habilita el sanity-verify de PUT /api/trust-bundle
+
+# --- audit log (opcional; ver docs/AUDIT-LOG.md) ---
+vercel env add AUDIT_ADMIN_LOGINS     # CSV de logins GitHub con acceso al feed global /audit. Vacío → fail-closed (nadie)
 ```
 Ver la tabla completa (nombre, propósito, notas) en **§8 — Referencia de
 variables de entorno**.
