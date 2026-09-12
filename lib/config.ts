@@ -40,6 +40,17 @@ export function scaffoldAllowedLogins(): string[] {
     .filter((s) => s.length > 0);
 }
 
+/**
+ * GitHub usernames con acceso al audit log global (`/audit`, `/api/audit` sin miniapp,
+ * `/api/audit/verify`), desde `AUDIT_ADMIN_LOGINS` (CSV). Vacío → fail-closed (nadie).
+ */
+export function auditAdminLogins(): string[] {
+  return (process.env.AUDIT_ADMIN_LOGINS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
 /** Cuántas versiones se mantienen al prunear (además de la servida/pinneada). Default 5. */
 export function pruneKeep(): number {
   const n = Number(process.env.PRUNE_KEEP);
