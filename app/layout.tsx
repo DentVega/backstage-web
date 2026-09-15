@@ -4,7 +4,7 @@ import "./globals.css";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { canScaffold } from "@/lib/scaffold-authz";
-import { scaffoldAllowedLogins } from "@/lib/config";
+import { scaffoldAllowedLogins, auditAdminLogins } from "@/lib/config";
 import { UserMenu } from "@/app/components/UserMenu";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { NavLinks } from "@/app/components/NavLinks";
@@ -31,6 +31,7 @@ export default async function RootLayout({
 }>) {
   const session = await auth();
   const canAdmin = canScaffold(session?.githubLogin, scaffoldAllowedLogins());
+  const canAuditAdmin = canScaffold(session?.githubLogin, auditAdminLogins());
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
@@ -42,7 +43,11 @@ export default async function RootLayout({
           </Link>
           <span className="header-sp" />
           <div className="header-actions">
-            <NavLinks loggedIn={Boolean(session?.user)} canAdmin={canAdmin} />
+            <NavLinks
+              loggedIn={Boolean(session?.user)}
+              canAdmin={canAdmin}
+              canAuditAdmin={canAuditAdmin}
+            />
             <ThemeToggle />
             <UserMenu user={session?.user} />
           </div>
