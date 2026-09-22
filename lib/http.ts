@@ -9,7 +9,7 @@ import {
   VersionExistsError,
 } from "./registry/types";
 import { GitProviderError } from "./git/types";
-import { StorageError } from "./storage/types";
+import { StorageError } from "@dentvega/miniapp-storage";
 import { AuthError } from "./auth";
 import { ScaffoldForbiddenError } from "./scaffold-authz";
 

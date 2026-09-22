@@ -17,7 +17,7 @@ import { githubProvider } from "@/lib/git/github";
 import { githubToken, HOST_REPO, pruneKeep } from "@/lib/config";
 import { openCapabilityRequests } from "@/lib/capability-request";
 import { satisfiesShared, type SemVer } from "@dentvega/miniapp-contract";
-import type { StorageFile } from "@/lib/storage/types";
+import type { StorageFile } from "@dentvega/miniapp-storage";
 
 export const runtime = "nodejs";
 

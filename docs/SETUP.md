@@ -15,7 +15,7 @@
 > - `backstagereactnative/docs/mounting-miniapps.md` — montar una miniapp en cualquier punto del host.
 >
 > **Novedades desde la v1 de esta guía** (todo cubierto abajo): storage en
-> **Cloudflare R2** (además de Vercel Blob) con selección de provider **desde la
+> **Cloudflare R2, AWS S3, Google Cloud Storage y Azure Blob** (además de Vercel Blob) con selección de provider **desde la
 > UI** y override **por miniapp** (§4.3, Parte E); **gates de compatibilidad de
 > dependencias** en enforce (Parte E); **contract package** con semver real
 > (§3.2); **borrar miniapp + repo** desde Backstage (Parte E); **rotación del
@@ -248,14 +248,34 @@ env en este orden de precedencia: **R2 → Blob → fs**.
 - **Vercel Blob (fallback):** Marketplace → setea `BLOB_READ_WRITE_TOKEN`. Se usa
   si R2 no está configurado. (Ojo: su free tier se agota — 2000 ops/mes — y el
   store se **suspende**; por eso R2 es el primario.)
-- **fs (dev):** si no hay R2 ni Blob, sirve desde `public/chunks/`
+- **AWS S3:** crear el bucket, darle lectura pública (o poner un CloudFront
+  delante) y un IAM access key con `s3:PutObject`/`s3:DeleteObject`/`s3:ListBucket`.
+  Setear `AWS_S3_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`.
+  Opcional `AWS_S3_PUBLIC_BASE_URL` (el CDN); sin ella se lee del bucket
+  (`https://<bucket>.s3.<region>.amazonaws.com`).
+- **Google Cloud Storage:** se usa vía su **XML API en modo interoperabilidad**
+  (habla el mismo protocolo que S3). En la consola: Cloud Storage → Settings →
+  Interoperability → crear una **clave HMAC**. Setear `GCS_BUCKET`,
+  `GCS_HMAC_ACCESS_KEY_ID`, `GCS_HMAC_SECRET` (+ opcional `GCS_PUBLIC_BASE_URL`).
+  > Limitación: las claves HMAC son estáticas. Organizaciones que exijan workload
+  > identity necesitan un adapter nativo, que hoy no existe.
+- **Azure Blob Storage:** crear el storage account y un container; generar un
+  **SAS token** con permisos de escritura/borrado/listado sobre el container.
+  Setear `AZURE_STORAGE_ACCOUNT`, `AZURE_STORAGE_CONTAINER`,
+  `AZURE_STORAGE_SAS_TOKEN` (+ opcional `AZURE_STORAGE_PUBLIC_BASE_URL`).
+  > El SAS **vence**: anotá la fecha y rotalo antes, o los publishes fallan con 403.
+- **fs (dev):** si no hay ningún otro configurado, sirve desde `public/chunks/`
   (`BACKSTAGE_PUBLIC_URL` como origen). Solo para local.
+
+Todos los adapters vienen de **`@dentvega/miniapp-storage`** (librería pública,
+MIT). R2, AWS y GCS comparten el mismo motor S3-compatible; Azure tiene el suyo.
 
 **Selección desde la UI (opcional):** un admin puede fijar el provider activo
 desde el **catálogo** (strip "Storage") y **por miniapp** desde el detalle
 ("Almacenamiento") — la preferencia vive en KV y `getStorage()` la respeta, con
 fallback seguro al orden por env si el provider elegido no tiene creds. Ver
-Parte E. Sin preferencia guardada, manda el orden por env (R2 → Blob → fs).
+Parte E. Sin preferencia guardada, manda el orden por env
+(S3 → R2 → GCS → Azure → Blob → fs).
 
 **Chunks por plataforma (Android + iOS):** cada versión puede tener un chunk
 Android y uno iOS. El chunk Android se guarda en `${id}/${version}/` (como
@@ -683,6 +703,9 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Upstash Redis — registro/catálogo + preferencia de storage provider | Provisionado vía Vercel Marketplace |
 | `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` / `R2_PUBLIC_BASE_URL` | Cloudflare R2 — CDN de chunks (primario, recomendado), Android **e iOS** | Las 5 juntas activan R2. `R2_PUBLIC_BASE_URL` = `https://pub-xxxxx.r2.dev` (sin barra final). El chunk iOS va al subfolder `${id}/${version}/ios/`. Ver §4.3 |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob — CDN de chunks (fallback si no hay R2), Android **e iOS** | Provisionado vía Vercel Marketplace. Free tier se suspende al agotarse |
+| `AWS_S3_BUCKET` / `AWS_REGION` / `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | AWS S3 — CDN de chunks | Las 4 juntas activan S3. Opcional `AWS_S3_PUBLIC_BASE_URL` para servir por CloudFront. Ver §4.3 |
+| `GCS_BUCKET` / `GCS_HMAC_ACCESS_KEY_ID` / `GCS_HMAC_SECRET` | Google Cloud Storage — CDN de chunks | Las 3 juntas activan GCS. Claves HMAC de **interoperabilidad**, no service account. Opcional `GCS_PUBLIC_BASE_URL`. Ver §4.3 |
+| `AZURE_STORAGE_ACCOUNT` / `AZURE_STORAGE_CONTAINER` / `AZURE_STORAGE_SAS_TOKEN` | Azure Blob Storage — CDN de chunks | Las 3 juntas activan Azure. El SAS **vence** — rotarlo antes o los publishes dan 403. Opcional `AZURE_STORAGE_PUBLIC_BASE_URL`. Ver §4.3 |
 | `HOST_CONTRACT_TOKEN` | Token dedicado que valida `PUT /api/host-contract` (publicar el contrato del host) | Separado del `PUBLISH_TOKEN`. `openssl rand -hex 32`. Parte E / compat gates |
 | `HOST_REPO` | Repo del host, ej. `Acme/backstagereactnative` | Destino de los capability requests (issues) cuando una miniapp pide un nativo |
 | `COMPAT_ENFORCE` | `"1"` → el gate de `/upload` rechaza (422) publishes incompatibles | Ausente/`"0"` = warn (default). Solo al pasar a enforce (Parte E) |

@@ -3,7 +3,7 @@ import { scaffoldAllowedLogins } from "@/lib/config";
 import { canScaffold, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { getStorageProviderState } from "@/lib/storage";
 import { getStoragePreferenceStore } from "@/lib/storage/preference";
-import { availableProviders, isStorageProvider } from "@/lib/storage/provider";
+import { availableProviders, isStorageProvider } from "@dentvega/miniapp-storage";
 import { errorBody, statusForError } from "@/lib/http";
 
 export const runtime = "nodejs";
@@ -34,7 +34,7 @@ export async function PUT(req: Request): Promise<NextResponse> {
     }
     const body = (await req.json().catch(() => null)) as { provider?: unknown } | null;
     const provider = body?.provider;
-    if (!isStorageProvider(provider) || !availableProviders().includes(provider)) {
+    if (!isStorageProvider(provider) || !availableProviders(process.env).includes(provider)) {
       return NextResponse.json({ error: "provider not available" }, { status: 400 });
     }
     await getStoragePreferenceStore().save(provider);

@@ -1,6 +1,6 @@
 import type { MiniappRecord } from "./types";
 import type { SemVer } from "@dentvega/miniapp-contract";
-import type { ChunkStorage } from "@/lib/storage/types";
+import type { ChunkStorage } from "@dentvega/miniapp-storage";
 
 /**
  * Borra del storage el chunk de cada versión a prunear (best-effort — un borrado que falla

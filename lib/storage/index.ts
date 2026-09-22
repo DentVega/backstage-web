@@ -1,37 +1,68 @@
-import { r2ConfigFromEnv, r2Storage } from "./r2";
-import { blobStorage } from "./blob";
-import { fsStorage } from "./fs";
-import { availableProviders, type StorageProvider } from "./provider";
+import path from "node:path";
+import {
+  availableProviders,
+  selectStorage,
+  r2ConfigFromEnv,
+  r2Storage,
+  s3ConfigFromEnv,
+  s3Storage,
+  gcsConfigFromEnv,
+  gcsStorage,
+  azureConfigFromEnv,
+  azureStorage,
+  fsStorage,
+  type ChunkStorage,
+  type StorageProvider,
+} from "@dentvega/miniapp-storage";
+import { blobStorage } from "@dentvega/miniapp-storage/vercel-blob";
 import { getStoragePreferenceStore } from "./preference";
-import type { ChunkStorage } from "./types";
 
 function buildStorage(p: StorageProvider): ChunkStorage {
   if (p === "r2") {
-    const cfg = r2ConfigFromEnv();
+    const cfg = r2ConfigFromEnv(process.env);
     if (cfg === null) throw new Error("R2 selected but not configured");
     return r2Storage(cfg);
   }
-  if (p === "blob") return blobStorage();
-  return fsStorage();
+  if (p === "s3") {
+    const cfg = s3ConfigFromEnv(process.env);
+    if (cfg === null) throw new Error("S3 selected but not configured");
+    return s3Storage(cfg);
+  }
+  if (p === "gcs") {
+    const cfg = gcsConfigFromEnv(process.env);
+    if (cfg === null) throw new Error("GCS selected but not configured");
+    return gcsStorage(cfg);
+  }
+  if (p === "azure") {
+    const cfg = azureConfigFromEnv(process.env);
+    if (cfg === null) throw new Error("Azure selected but not configured");
+    return azureStorage(cfg);
+  }
+  if (p === "blob") return blobStorage(process.env.BLOB_READ_WRITE_TOKEN);
+  // El fs adapter de la librería no asume estructura de directorios: se la pasamos nosotros.
+  return fsStorage(
+    path.join(process.cwd(), "public", "chunks"),
+    `${process.env.BACKSTAGE_PUBLIC_URL ?? "http://localhost:3999"}/chunks`,
+  );
 }
 
-/** Active provider + whether it came from the saved preference or env-order. */
+/** Provider activo + si vino de la preferencia guardada o del env-order. */
 export async function getStorageProviderState(): Promise<{
   available: StorageProvider[];
   active: StorageProvider;
   source: "preference" | "env";
 }> {
   const pref = await getStoragePreferenceStore().load();
-  const available = availableProviders();
-  const usePref = pref !== null && available.includes(pref);
+  const available = availableProviders(process.env);
+  const active = selectStorage(available, pref, null);
   return {
     available,
-    active: usePref ? pref : available[0],
-    source: usePref ? "preference" : "env",
+    active,
+    source: pref !== null && available.includes(pref) ? "preference" : "env",
   };
 }
 
-/** Per-miniapp storage state: override vs global default, with the effective provider. */
+/** Estado por-miniapp: override vs default global, con el provider efectivo. */
 export async function getMiniappStorageState(miniappOverride: StorageProvider | null): Promise<{
   available: StorageProvider[];
   override: StorageProvider | null;
@@ -50,10 +81,12 @@ export async function getMiniappStorageState(miniappOverride: StorageProvider | 
   };
 }
 
-/** Storage for a publish: miniapp override (if valid) → global default → env-order. */
+/** Storage para un publish: override de la miniapp → default global → env-order. */
 export async function getStorage(
   miniappOverride: StorageProvider | null = null,
 ): Promise<ChunkStorage> {
   const { effective } = await getMiniappStorageState(miniappOverride);
   return buildStorage(effective);
 }
+
+export type { ChunkStorage, StorageProvider };

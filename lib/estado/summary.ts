@@ -4,7 +4,7 @@
  */
 import type { CatalogEntry, Registry } from "@/lib/registry/types";
 import type { HostContract } from "@/lib/host-contract/types";
-import type { StorageProvider } from "@/lib/storage/provider";
+import type { StorageProvider } from "@dentvega/miniapp-storage";
 
 export type Platform = "android" | "ios";
 

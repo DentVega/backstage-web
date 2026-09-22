@@ -82,7 +82,7 @@ describe("kvStoragePreferenceStore", () => {
   });
   it("load de un valor inválido → null (defensivo)", async () => {
     const c = memClient();
-    await c.set("storage-provider", "s3");
+    await c.set("storage-provider", "dropbox");
     expect(await kvStoragePreferenceStore(c).load()).toBeNull();
   });
 });

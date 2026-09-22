@@ -47,7 +47,7 @@ vi.mock("@/lib/host-contract/store", () => ({
 }));
 
 vi.mock("@/lib/storage", async () => {
-  const { mockStorage } = await import("@/lib/storage/mock");
+  const { mockStorage } = await import("@dentvega/miniapp-storage");
   return { getStorage: () => mockStorage() };
 });
 
@@ -128,7 +128,7 @@ describe("POST /api/miniapps/:id/upload", () => {
     expect(res.status).toBe(201);
     const body = (await res.json()) as { url: string };
     expect(body.url).toBe(
-      "https://mock.blob/account_dashboard/0.2.0/account_dashboard.container.js.bundle",
+      "https://mock.storage/account_dashboard/0.2.0/account_dashboard.container.js.bundle",
     );
     expect(state.reg.account_dashboard.versions).toHaveLength(1);
   });
@@ -199,12 +199,12 @@ describe("POST /api/miniapps/:id/upload", () => {
     expect(state.reg.account_dashboard.versions).toHaveLength(1); // NO crea versión nueva
     const v = state.reg.account_dashboard.versions.find((x) => x.version === "0.2.0")!;
     expect(v.iosUrl).toBe(
-      "https://mock.blob/account_dashboard/0.2.0/ios/account_dashboard.container.js.bundle",
+      "https://mock.storage/account_dashboard/0.2.0/ios/account_dashboard.container.js.bundle",
     );
     expect(v.iosIntegrity).toMatch(/^sha256-[0-9a-f]{64}$/);
     // Android intacto (path SIN /ios/, integrity en el manifest canónico).
     expect(v.url).toBe(
-      "https://mock.blob/account_dashboard/0.2.0/account_dashboard.container.js.bundle",
+      "https://mock.storage/account_dashboard/0.2.0/account_dashboard.container.js.bundle",
     );
     expect(v.manifest.integrity).toMatch(/^sha256-[0-9a-f]{64}$/);
   });

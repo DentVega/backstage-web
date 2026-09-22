@@ -33,7 +33,7 @@ vi.mock("@/lib/storage", () => ({
     source: override ? "miniapp" : "env",
   }),
 }));
-vi.mock("@/lib/storage/provider", () => ({
+vi.mock("@dentvega/miniapp-storage", () => ({
   availableProviders: () => ["r2", "blob", "fs"],
   isStorageProvider: (v: unknown) => v === "r2" || v === "blob" || v === "fs",
 }));
