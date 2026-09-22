@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@dentvega/miniapp-contract": "^0.4.0",
+    "@dentvega/miniapp-storage": "file:/Volumes/SSDExterno/prodproyects/repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz",
     "@upstash/redis": "^1.38.0",
     "@vercel/blob": "^2.6.1",
     "aws4fetch": "^1.0.20",

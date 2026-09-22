@@ -11,6 +11,9 @@ importers:
       '@dentvega/miniapp-contract':
         specifier: ^0.4.0
         version: 0.4.0
+      '@dentvega/miniapp-storage':
+        specifier: file:/Volumes/SSDExterno/prodproyects/repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz
+        version: file:../repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz(@vercel/blob@2.6.1)
       '@upstash/redis':
         specifier: ^1.38.0
         version: 1.38.0
@@ -197,6 +200,16 @@ packages:
 
   '@dentvega/miniapp-contract@0.4.0':
     resolution: {integrity: sha512-iNGDmv01HJkuQfOeTgGJBNc47zUOn6JlxGhQ7e8P4/kHAm8xjKyoOODcS4YdNJCcU1IRdz9cJrsjsNRlGKimaQ==, tarball: https://npm.pkg.github.com/download/@dentvega/miniapp-contract/0.4.0/adb7aa7b092f6c24a418d8983f0df3b3197d7dfb}
+
+  '@dentvega/miniapp-storage@file:../repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz':
+    resolution: {integrity: sha512-OtGH4i0LFQMovmGIsTUoyKuDF31bFm0m1jf3z1/NkU1AKNiE+BJ6GQh9RPJTBdu/MzYq1AQEF19T/StVDdx0gw==, tarball: file:../repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz}
+    version: 0.2.0
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@vercel/blob': ^2.0.0
+    peerDependenciesMeta:
+      '@vercel/blob':
+        optional: true
 
   '@emnapi/core@1.11.1':
     resolution: {integrity: sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==}
@@ -1754,6 +1767,12 @@ snapshots:
   '@dentvega/miniapp-contract@0.4.0':
     dependencies:
       semver: 7.8.5
+
+  '@dentvega/miniapp-storage@file:../repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz(@vercel/blob@2.6.1)':
+    dependencies:
+      aws4fetch: 1.0.20
+    optionalDependencies:
+      '@vercel/blob': 2.6.1
 
   '@emnapi/core@1.11.1':
     dependencies:

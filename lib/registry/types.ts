@@ -1,5 +1,5 @@
 import type { Manifest, MiniappId, SemVer } from "@dentvega/miniapp-contract";
-import type { StorageProvider } from "@/lib/storage/provider";
+import type { StorageProvider } from "@dentvega/miniapp-storage";
 
 export interface PublishedVersion {
   readonly version: SemVer;

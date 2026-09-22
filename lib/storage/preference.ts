@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { KvClient } from "@/lib/registry/kv";
 import { upstashClient } from "@/lib/registry/kv";
-import { isStorageProvider, type StorageProvider } from "./provider";
+import { isStorageProvider, type StorageProvider } from "@dentvega/miniapp-storage";
 
 const DATA_FILE = path.join(process.cwd(), "data", "storage-provider.json");
 const KEY = "storage-provider";

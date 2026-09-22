@@ -4,7 +4,7 @@ import { canManageMiniapp, ScaffoldForbiddenError } from "@/lib/scaffold-authz";
 import { getStore } from "@/lib/registry/store";
 import { setMiniappStorageProvider, asRecordMutation } from "@/lib/registry/registry";
 import { getMiniappStorageState } from "@/lib/storage";
-import { availableProviders, isStorageProvider } from "@/lib/storage/provider";
+import { availableProviders, isStorageProvider } from "@dentvega/miniapp-storage";
 import { errorBody, statusForError } from "@/lib/http";
 import { recordAudit } from "@/lib/audit/log";
 import { resolveActor } from "@/lib/audit/actor";
@@ -32,7 +32,7 @@ export async function PUT(
     }
     const body = (await req.json().catch(() => null)) as { provider?: unknown } | null;
     const provider = body?.provider ?? null;
-    if (provider !== null && (!isStorageProvider(provider) || !availableProviders().includes(provider))) {
+    if (provider !== null && (!isStorageProvider(provider) || !availableProviders(process.env).includes(provider))) {
       return NextResponse.json({ error: "provider not available" }, { status: 400 });
     }
     await store.mutateApp(id, asRecordMutation(id, (reg) => setMiniappStorageProvider(reg, id, provider)));

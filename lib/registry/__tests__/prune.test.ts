@@ -8,8 +8,8 @@ import {
 } from "@/lib/registry/registry";
 import { InvalidManifestError, MiniappNotFoundError } from "@/lib/registry/types";
 import { pruneChunks, removePrunedVersions } from "@/lib/registry/prune";
-import { mockStorage } from "@/lib/storage/mock";
-import type { ChunkStorage } from "@/lib/storage/types";
+import { mockStorage } from "@dentvega/miniapp-storage";
+import type { ChunkStorage } from "@dentvega/miniapp-storage";
 import type { Registry } from "@/lib/registry/types";
 
 const now = "2026-08-10T10:00:00.000Z";
@@ -48,9 +48,9 @@ describe("versionsToPrune", () => {
 
 describe("pruneChunks", () => {
   it("borra un prefijo por versión a prunear", async () => {
-    const deletes: string[] = [];
-    await pruneChunks(mockStorage(undefined, deletes), "acc", ["0.1.0", "0.2.0"] as never);
-    expect(deletes.sort()).toEqual(["acc/0.1.0", "acc/0.2.0"]);
+    const storage = mockStorage();
+    await pruneChunks(storage, "acc", ["0.1.0", "0.2.0"] as never);
+    expect(storage.deletes.sort()).toEqual(["acc/0.1.0", "acc/0.2.0"]);
   });
   it("error del storage → best-effort (no tira)", async () => {
     const failing: ChunkStorage = {

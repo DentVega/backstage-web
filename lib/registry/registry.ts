@@ -9,7 +9,7 @@ import {
   type ResolveResponse,
   type SemVer,
 } from "@dentvega/miniapp-contract";
-import type { StorageProvider } from "@/lib/storage/provider";
+import type { StorageProvider } from "@dentvega/miniapp-storage";
 import {
   InvalidManifestError,
   MiniappExistsError,
