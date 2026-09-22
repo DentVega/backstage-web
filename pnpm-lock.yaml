@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@dentvega/miniapp-contract':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.4.1
+        version: 0.4.1
       '@dentvega/miniapp-storage':
-        specifier: file:/Volumes/SSDExterno/prodproyects/repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz
-        version: file:../repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz(@vercel/blob@2.6.1)
+        specifier: ^0.2.0
+        version: 0.2.0(@vercel/blob@2.6.1)
       '@upstash/redis':
         specifier: ^1.38.0
         version: 1.38.0
@@ -198,12 +198,11 @@ packages:
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
 
-  '@dentvega/miniapp-contract@0.4.0':
-    resolution: {integrity: sha512-iNGDmv01HJkuQfOeTgGJBNc47zUOn6JlxGhQ7e8P4/kHAm8xjKyoOODcS4YdNJCcU1IRdz9cJrsjsNRlGKimaQ==, tarball: https://npm.pkg.github.com/download/@dentvega/miniapp-contract/0.4.0/adb7aa7b092f6c24a418d8983f0df3b3197d7dfb}
+  '@dentvega/miniapp-contract@0.4.1':
+    resolution: {integrity: sha512-9gQGyhShPCv6kZDMCc/Wr5Ma8KpUTfH+W1nw9wHL9Ko/4vqbYNDdP/ydojGnnJcgCChTUzz8cYnI1tShgu1NAQ==}
 
-  '@dentvega/miniapp-storage@file:../repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz':
-    resolution: {integrity: sha512-OtGH4i0LFQMovmGIsTUoyKuDF31bFm0m1jf3z1/NkU1AKNiE+BJ6GQh9RPJTBdu/MzYq1AQEF19T/StVDdx0gw==, tarball: file:../repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz}
-    version: 0.2.0
+  '@dentvega/miniapp-storage@0.2.0':
+    resolution: {integrity: sha512-OtGH4i0LFQMovmGIsTUoyKuDF31bFm0m1jf3z1/NkU1AKNiE+BJ6GQh9RPJTBdu/MzYq1AQEF19T/StVDdx0gw==}
     engines: {node: '>=20'}
     peerDependencies:
       '@vercel/blob': ^2.0.0
@@ -1764,11 +1763,11 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.0': {}
 
-  '@dentvega/miniapp-contract@0.4.0':
+  '@dentvega/miniapp-contract@0.4.1':
     dependencies:
       semver: 7.8.5
 
-  '@dentvega/miniapp-storage@file:../repack-miniapps/packages/miniapp-storage/dentvega-miniapp-storage-0.2.0.tgz(@vercel/blob@2.6.1)':
+  '@dentvega/miniapp-storage@0.2.0(@vercel/blob@2.6.1)':
     dependencies:
       aws4fetch: 1.0.20
     optionalDependencies:
