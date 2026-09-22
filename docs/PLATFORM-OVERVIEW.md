@@ -49,7 +49,7 @@ registry** (Backstage). Ninguno conoce los internals de los otros.
 <li>Registry (versiones, urls por-plataforma)</li>
 <li>Catálogo (served version, badges drift/CI)</li>
 <li>Scaffolder · Compat gate (Host Contract)</li>
-<li>Storage (R2/Blob/fs) · Métricas</li>
+<li>Storage multi-cloud · Métricas</li>
 </ul>
 <span class="dgm-plane-foot">Next.js · backstage-web</span>
 </div>
@@ -156,7 +156,7 @@ quedan **fuera** de ese sync (out-of-band / `.templatesyncignore`) — son
 "tuyos", nunca se tocan. Ver `docs/actualizar-miniapp.md` para el detalle.
 
 **Storage** — el backend que guarda los bytes de los chunks. Se elige por
-presencia de env vars, en el orden **R2 (default) → Blob → fs**, con override
+presencia de env vars, en el orden **S3 → R2 → GCS → Azure → Blob → fs**, con override
 por-miniapp y un selector en la UI de Backstage.
 
 **Ownership/seguridad** — dos niveles: **platform-admins**
@@ -355,7 +355,7 @@ por cadena: manipular el historial rompe la cadena y se detecta. Se ve en `/audi
 
 | Repo | Rol |
 |---|---|
-| **`backstage-web`** | Control-plane (Next.js). Registry, catálogo, scaffolder, compat gate, storage (R2/Blob/fs), métricas, API de distribución (`/api/resolve`). |
+| **`backstage-web`** | Control-plane (Next.js). Registry, catálogo, scaffolder, compat gate, storage multi-cloud (AWS S3, Cloudflare R2, Google Cloud Storage, Azure Blob, Vercel Blob, fs), métricas, API de distribución (`/api/resolve`). |
 | **`backstagereactnative`** | Host móvil (RN + Re.Pack, Module Federation v2). Contiene los paquetes `host-runtime` (loader: resolve→verify→mount→fallback), `miniapp-contract` (tipos + contrato compartido) y `ui-kit` (primitivas de UI compartidas). |
 | **`miniapp-template`** | Repo GitHub **template** (público). Scaffold base + CI reutilizable (`publish.yml`) + mecanismo de Capa 2 (template-sync). |
 | **`miniapp-hellow_widget`**, **`miniapp-cards_wallet`**, **`miniapp-account-dashboard`** | Miniapps de referencia — cada una su propio repo, generado desde el template (o migrado, en el caso de `account_dashboard`), publicando Android + iOS. |
