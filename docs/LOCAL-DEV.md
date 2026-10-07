@@ -103,7 +103,7 @@ PUBLISH_TOKEN=dev-publish-secret
 ```bash
 cd backstagereactnative
 pnpm install
-pnpm build:packages   # build de miniapp-contract / host-runtime / ui-kit
+pnpm build:packages   # build de miniapp-contract / ui-kit (el runtime viene de npm)
 ```
 
 Toolchain (detalle completo en [`SETUP.md` §2](./SETUP.md#2-prerrequisitos) y
@@ -302,8 +302,9 @@ catálogo). Si estás desarrollando un punto de montaje específico (un tab, una
 sección, un modal), montala vos mismo con `<MiniappHost/>` donde corresponda:
 
 ```tsx
-import {MiniappHost, createScopedGrant, httpResolveClient} from '@dentvega/host-runtime';
+import {MiniappHost, createScopedGrant, httpResolveClient} from '@dentvega/miniapp-runtime';
 import {repackChunkLoader} from '../chunkLoader';
+import {miniappRender} from '../miniappRender';
 import {HOST_PROVIDED, BACKSTAGE_BASE_URL} from '../hostProvided';
 
 const resolveClient = httpResolveClient(BACKSTAGE_BASE_URL);
@@ -314,6 +315,7 @@ const resolveClient = httpResolveClient(BACKSTAGE_BASE_URL);
   chunkLoader={repackChunkLoader}
   hostProvided={HOST_PROVIDED}
   capabilities={grant}   // inyectá SOLO las capabilities que la miniapp necesita
+  render={miniappRender} // UI de carga/error del host (ui-kit + copy en español)
 />
 ```
 

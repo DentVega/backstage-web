@@ -18,8 +18,9 @@ URL alcanzable**, la montás así en cualquier punto del árbol:
 import React, {useMemo} from 'react';
 import {View} from 'react-native';
 import type {MiniappId} from '@org/miniapp-contract';
-import {MiniappHost, createScopedGrant, httpResolveClient} from '@org/host-runtime';
+import {MiniappHost, createScopedGrant, httpResolveClient} from '@dentvega/miniapp-runtime';
 import {repackChunkLoader} from '../chunkLoader';
+import {miniappRender} from '../miniappRender';
 import {HOST_PROVIDED, BACKSTAGE_BASE_URL} from '../hostProvided';
 import {useSession, deriveCapabilities} from '../session/store';
 
@@ -40,6 +41,7 @@ export function MiniappSlot({id}: {id: MiniappId}) {
         chunkLoader={repackChunkLoader}
         hostProvided={HOST_PROVIDED}
         capabilities={grant}
+        render={miniappRender}
       />
     </View>
   );
@@ -49,6 +51,12 @@ export function MiniappSlot({id}: {id: MiniappId}) {
 `MiniappHost` hace todo el ciclo: `resolve → verify → download → mount → fallback`.
 Ponelo en un `Tab.Screen`, dentro de una `ScrollView`, en un modal, donde sea.
 Solo necesita un contenedor con altura (flex o `height`).
+
+> **El runtime es headless.** `MiniappHost` viene del paquete público `@dentvega/miniapp-runtime`
+> y no trae design system: sin `render`, los estados de carga/error usan `View`/`Text` crudos con
+> copy en inglés. El host le inyecta su UI con `render={miniappRender}`
+> (`apps/host/src/miniappRender.tsx`): ahí viven los componentes de `ui-kit` y el copy en español
+> de cada `FallbackReason`. Para cambiar textos o estilos del fallback se toca ese archivo, no el runtime.
 
 > El paso `verify` cubre la **integridad** sha256 del chunk y, además, la **firma**
 > (autenticidad, contra un trust bundle firmado por el root) — **live y validada en prod**. La
@@ -148,6 +156,6 @@ apuntando a sus chunks:
 
 ## Referencias
 - Loader: `apps/host/src/chunkLoader.ts` (resolver + `registerRemotes` + `loadRemote`).
-- Componente de montaje: `@org/host-runtime` → `MiniappHost`, `httpResolveClient`, `createScopedGrant`.
+- Componente de montaje: `@dentvega/miniapp-runtime` (npm) → `MiniappHost`, `httpResolveClient`, `createScopedGrant`.
 - Contrato: `@org/miniapp-contract` (`MiniappEntryProps`, `Manifest`, `ResolveResponse`).
 - Capabilities de sesión: `apps/host/src/session/store.ts` (`deriveCapabilities`).

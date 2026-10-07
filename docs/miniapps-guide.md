@@ -134,8 +134,9 @@ modal, inline). El loader es genérico: sirve para cualquier `id` registrado, si
 `rspack.config` por miniapp.
 
 ```tsx
-import {MiniappHost, createScopedGrant, httpResolveClient} from '@org/host-runtime';
+import {MiniappHost, createScopedGrant, httpResolveClient} from '@dentvega/miniapp-runtime';
 import {repackChunkLoader} from '../chunkLoader';
+import {miniappRender} from '../miniappRender';
 import {HOST_PROVIDED, BACKSTAGE_BASE_URL} from '../hostProvided';
 
 const resolveClient = httpResolveClient(BACKSTAGE_BASE_URL);
@@ -146,6 +147,7 @@ const resolveClient = httpResolveClient(BACKSTAGE_BASE_URL);
   chunkLoader={repackChunkLoader}
   hostProvided={HOST_PROVIDED}
   capabilities={grant}   // inyecta SOLO las capabilities que la miniapp necesita
+  render={miniappRender} // UI de carga/error del host (ui-kit + copy en español)
 />
 ```
 

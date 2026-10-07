@@ -219,7 +219,7 @@ catálogo.
    decide automáticamente). Backstage devuelve la versión más alta
    compatible, o la `pinnedVersion` si el admin fijó una.
 
-5. **Mount** — `MiniappHost` (del paquete `host-runtime`) hace el ciclo
+5. **Mount** — `MiniappHost` (del paquete npm `@dentvega/miniapp-runtime`) hace el ciclo
    completo: descarga el chunk, verifica su **sha256**, lo monta como remote
    federado inyectando el `CapabilityGrant` correspondiente, y si algo falla
    muestra un fallback tipado (con auto-retry en las razones transitorias).
@@ -321,7 +321,7 @@ de eso, solo otorga o no el permiso.
 - **Fallbacks por razón** — cada fallo de montaje se clasifica y cuenta por
   su causa.
 
-**Taxonomía de fallback del host** (definida en `host-runtime`):
+**Taxonomía de fallback del host** (definida en `@dentvega/miniapp-runtime`):
 
 | Razón | Naturaleza | Significado |
 |---|---|---|
@@ -356,7 +356,7 @@ por cadena: manipular el historial rompe la cadena y se detecta. Se ve en `/audi
 | Repo | Rol |
 |---|---|
 | **`backstage-web`** | Control-plane (Next.js). Registry, catálogo, scaffolder, compat gate, storage multi-cloud (AWS S3, Cloudflare R2, Google Cloud Storage, Azure Blob, Vercel Blob, fs), métricas, API de distribución (`/api/resolve`). |
-| **`backstagereactnative`** | Host móvil (RN + Re.Pack, Module Federation v2). Contiene los paquetes `host-runtime` (loader: resolve→verify→mount→fallback), `miniapp-contract` (tipos + contrato compartido) y `ui-kit` (primitivas de UI compartidas). |
+| **`backstagereactnative`** | Host móvil (RN + Re.Pack, Module Federation v2). Contiene los paquetes `miniapp-contract` (tipos + contrato compartido) y `ui-kit` (primitivas de UI compartidas); el loader (resolve→verify→mount→fallback) lo consume de npm como `@dentvega/miniapp-runtime` e inyecta su UI de `ui-kit` en `MiniappHost`. |
 | **`miniapp-template`** | Repo GitHub **template** (público). Scaffold base + CI reutilizable (`publish.yml`) + mecanismo de Capa 2 (template-sync). |
 | **`miniapp-hellow_widget`**, **`miniapp-cards_wallet`**, **`miniapp-account-dashboard`** | Miniapps de referencia — cada una su propio repo, generado desde el template (o migrado, en el caso de `account_dashboard`), publicando Android + iOS. |
 
