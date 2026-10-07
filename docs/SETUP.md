@@ -363,7 +363,7 @@ host) en [`DEPLOY.md`](../DEPLOY.md).
 git clone https://github.com/<owner>/backstagereactnative.git
 cd backstagereactnative
 pnpm install
-pnpm build:packages   # build de packages/miniapp-contract, host-runtime, ui-kit
+pnpm build:packages   # build de packages/miniapp-contract y ui-kit (el runtime viene de npm)
 ```
 
 Layout relevante:
@@ -371,9 +371,11 @@ Layout relevante:
 apps/host/                 host RN + Re.Pack (Module Federation v2)
 packages/
   miniapp-contract/        contrato: manifest, forma de resolve, capabilities
-  host-runtime/             loader: resolve → verify → mount → fallback
   ui-kit/                    primitivas de UI compartidas (ThemeProvider, tokens)
 ```
+
+El loader (resolve → verify → mount → fallback) no vive en el monorepo: es el paquete
+público de npm `@dentvega/miniapp-runtime` (código en `repack-miniapps/packages/miniapp-runtime`).
 
 ### 5.2 Apuntar el host a tu Backstage
 
@@ -433,8 +435,9 @@ modal, inline) — el loader es genérico, no requiere tocar `rspack.config.mjs`
 por miniapp:
 
 ```tsx
-import {MiniappHost, createScopedGrant, httpResolveClient} from '@acme/host-runtime';
+import {MiniappHost, createScopedGrant, httpResolveClient} from '@dentvega/miniapp-runtime';
 import {repackChunkLoader} from '../chunkLoader';
+import {miniappRender} from '../miniappRender';
 import {HOST_PROVIDED, BACKSTAGE_BASE_URL} from '../hostProvided';
 
 const resolveClient = httpResolveClient(BACKSTAGE_BASE_URL);
@@ -445,6 +448,7 @@ const resolveClient = httpResolveClient(BACKSTAGE_BASE_URL);
   chunkLoader={repackChunkLoader}
   hostProvided={HOST_PROVIDED}
   capabilities={grant}   // inyecta SOLO las capabilities que la miniapp necesita
+  render={miniappRender} // UI de carga/error del host (ui-kit + copy en español)
 />
 ```
 

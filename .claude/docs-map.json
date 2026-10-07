@@ -5,7 +5,7 @@
     { "paths": ["lib/registry/registry.ts"], "docs": ["docs/API-REFERENCE.md", "docs/TROUBLESHOOTING.md"], "why": "resolve/publish + errores" },
     { "paths": ["lib/http.ts"], "docs": ["docs/API-REFERENCE.md", "docs/TROUBLESHOOTING.md"], "why": "tabla de codigos de error" },
     { "paths": ["app/api/miniapps/[id]/upload/route.ts"], "docs": ["docs/COMPAT-GATE.md", "docs/TROUBLESHOOTING.md"], "why": "compat gate en el publish (422 COMPAT_ENFORCE)" },
-    { "paths": ["../backstagereactnative/packages/host-runtime/src/loaderState.ts", "../backstagereactnative/packages/host-runtime/src/evaluate.ts"], "docs": ["docs/TROUBLESHOOTING.md"], "why": "fallback reasons del montaje" },
+    { "paths": ["../repack-miniapps/packages/miniapp-runtime/src/loaderState.ts", "../repack-miniapps/packages/miniapp-runtime/src/evaluate.ts", "../backstagereactnative/apps/host/src/miniappRender.tsx"], "docs": ["docs/TROUBLESHOOTING.md"], "why": "fallback reasons del montaje" },
     { "paths": ["../backstagereactnative/packages/miniapp-contract/src/shared.ts"], "docs": ["docs/HOST-CONTRACT.md", "docs/COMPAT-GATE.md"], "why": "satisfiesShared / semver" },
     { "paths": ["../backstagereactnative/apps/host/scripts/check-host-compat.mjs"], "docs": ["docs/COMPAT-GATE.md"], "why": "blast-radius / findNewlyBroken" },
     { "paths": ["lib/scaffold-authz.ts", "lib/auth-paths.ts"], "docs": ["docs/INTEGRATION-GUIDE.md", "docs/API-REFERENCE.md"], "why": "auth/ownership" },

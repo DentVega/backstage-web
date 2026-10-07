@@ -4,7 +4,7 @@
 > publicar una miniapp, que no monte en el host, el compat gate, el dev-loop local y
 > template-sync. Todo lo de acá está verificado contra el código real (`lib/http.ts`,
 > `lib/registry/registry.ts`, `app/api/miniapps/[id]/upload/route.ts` en este repo, y
-> `packages/host-runtime` + `apps/host` en `backstagereactnative`) — no es folklore.
+> `@dentvega/miniapp-runtime` en `repack-miniapps` + `apps/host` en `backstagereactnative`) — no es folklore.
 >
 > Si tu síntoma no está acá, revisá primero [`LOCAL-DEV.md` §7](./LOCAL-DEV.md#7-troubleshooting)
 > (dev-loop) y [`docs/mounting-miniapps.md`](https://github.com/<owner>/backstagereactnative/blob/main/docs/mounting-miniapps.md)
@@ -111,16 +111,17 @@ curl -X POST https://<tu-backstage>/api/miniapps/<id>/upload \
 
 ## 2. La miniapp no monta en el host
 
-`<MiniappHost/>` (paquete `@dentvega/host-runtime`, repo `backstagereactnative`) hace
+`<MiniappHost/>` (paquete npm `@dentvega/miniapp-runtime`, montado por `apps/host` en `backstagereactnative`) hace
 `resolve → verify → download → mount`. Si cualquier paso falla, cae a una pantalla
-**"Miniapp no disponible"** con un `reason` (`packages/host-runtime/src/loaderState.ts`)
-que decide el mensaje y si hay botón **Reintentar**.
+**"Miniapp no disponible"** con un `reason` (`repack-miniapps/packages/miniapp-runtime/src/loaderState.ts`)
+que decide el mensaje y si hay botón **Reintentar**. Los mensajes en español de la tabla los
+define el host en `apps/host/src/miniappRender.tsx` (el runtime es headless).
 
 | `reason` | Mensaje al usuario | ¿Transitorio? | Qué significa | Qué hacer |
 |---|---|---|---|---|
 | `resolve-failed` | "No pudimos localizar esta miniapp." | ✅ Sí, reintentable | Falló el `GET /api/resolve?id=...` (red, Backstage caído, DNS). | Botón Reintentar visible. Si persiste: verificá que Backstage esté arriba y que `BACKSTAGE_URL` del build apunte a la URL correcta ([§4](#4-dev-loop-local)). |
 | `download-failed` | "No pudimos descargar esta miniapp." | ✅ Sí, reintentable | El `resolve` funcionó pero la descarga del chunk (`.container.js.bundle`) falló — red, CDN, 404 al archivo. | Reintentar. Si el 404 es consistente: el chunk no está realmente en la URL que devolvió `resolve` (build corrupto o borrado del storage). |
-| `integrity-failed` | "No pudimos verificar la integridad de esta miniapp." | ✅ Sí, reintentable | El sha256 del chunk descargado no matchea el `integrity` del manifest — descarga parcial/corrupta, o el CDN sirvió bytes distintos a los publicados. | Reintentar (suele ser una descarga parcial). Si persiste, es más serio: republicá la versión. |
+| `integrity-failed` | "No pudimos verificar la integridad de la miniapp." | ✅ Sí, reintentable | El sha256 del chunk descargado no matchea el `integrity` del manifest — descarga parcial/corrupta, o el CDN sirvió bytes distintos a los publicados. | Reintentar (suele ser una descarga parcial). Si persiste, es más serio: republicá la versión. |
 | `invalid-manifest` | "La miniapp tiene un manifiesto inválido." | ❌ No, permanente | El manifest no tiene la forma esperada por el contrato (`isManifest` falla). | No hay reintento automático — hay que republicar con un manifest válido (normalmente corriendo `gen-manifest-shared.mjs`, no escribiéndolo a mano). |
 | `skew` | "Esta miniapp no es compatible con esta versión de la app. Actualizá la app para usarla." | ❌ No, permanente | Una lib `shared` del manifest (ej. `react-query`) queda **fuera del rango** que el host realmente provee (`evaluate.ts` → `satisfiesShared`). | Del lado miniapp: alineá tu dep con el Host Contract y republicá ([§3](#3-el-compat-gate-te-frena)). Del lado usuario: no hay nada que hacer salvo esperar una versión compatible. |
 | `host-too-old` | "Actualizá la app para usar esta miniapp." | ❌ No, permanente | El `minHostContract` del manifest (contractVersion o versión mínima de `react-native`) es más nuevo que el binario del host instalado en ese dispositivo. | El usuario necesita actualizar la app (nueva build del host). Del lado plataforma: bajá tu dependencia de la capability nueva si es evitable, o esperá el rollout del host. |

@@ -282,7 +282,7 @@ usa nada introducido después de la versión base, cae en `"0.0.0"` — cualquie
 host sirve.
 
 Esto habilita el guard **host-too-old**, que corre del lado del host móvil
-(`evaluateManifest`, en `host-runtime`) al momento de montar:
+(`evaluateManifest`, en `@dentvega/miniapp-runtime`) al momento de montar:
 
 ```ts
 const min = manifest.minHostContract;

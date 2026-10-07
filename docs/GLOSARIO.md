@@ -118,8 +118,8 @@ prop de `./Entry`. Sin el grant correspondiente, la miniapp debe degradar a
 su propia pantalla de acceso denegado. → [Integration Guide](/docs/integration-guide) §5.4
 
 **Fallback reason** — la razón tipada por la que `<MiniappHost/>` (paquete
-`host-runtime`) no pudo montar una miniapp y cayó a la pantalla "Miniapp no
-disponible" (`packages/host-runtime/src/loaderState.ts`):
+`@dentvega/miniapp-runtime`) no pudo montar una miniapp y cayó a la pantalla "Miniapp no
+disponible" (`repack-miniapps/packages/miniapp-runtime/src/loaderState.ts`):
 
 | Razón | Naturaleza | Significado |
 |---|---|---|
