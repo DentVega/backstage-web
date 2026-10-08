@@ -101,7 +101,7 @@ curl -X POST https://<tu-backstage>/api/miniapps/<id>/upload \
 > android+iOS → zip → `publish.mjs`. Causas típicas por paso:
 > | Paso que falla | Causa probable |
 > |---|---|
-> | Install deps | Falta `GITHUB_TOKEN`/permiso `read:packages` para `@dentvega/*` (no debería pasar — lo trae el scaffold), o `pnpm-lock.yaml` roto. |
+> | Install deps | `pnpm-lock.yaml` roto, o una versión de `@dentvega/*` que no existe en npm (`npm view @dentvega/<paquete> versions`). |
 > | Compat gate | Skew real; ver [§3](#3-el-compat-gate-te-frena). Si los scripts (`gen-manifest-shared.mjs`/`check-compat.mjs`) no existen todavía en tu repo, este paso se **saltea** en vez de fallar (esperá a que sincronice el template — [§5](#5-template-sync)). |
 > | Build android | Error de compilación real en tu código — mismo error que verías con `pnpm bundle:android` local. |
 > | Build iOS | **No bloquea el publish.** Es *best-effort*: si falla, el step lo loguea y sigue — tu miniapp queda publicada igual, solo en Android. |
