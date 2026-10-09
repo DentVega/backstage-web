@@ -726,7 +726,7 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 |---|---|---|
 | `BACKSTAGE_URL` | A dónde publica su CI (`publish.mjs`) | Auto-sembrado por el scaffolder al crear el repo |
 | `PUBLISH_TOKEN` | Autoriza el `POST /api/miniapps/:id/upload` | Auto-sembrado por el scaffolder al crear el repo |
-| `GITHUB_TOKEN` (automático de Actions) | Instalar `@scope/*` (públicos) + abrir el PR de `template-sync.yml` | No hace falta configurarlo — lo provee Actions; requiere el permiso "create PRs" (también auto-habilitado por el scaffolder) |
+| `GITHUB_TOKEN` (automático de Actions) | Abrir el PR de `template-sync.yml` (instalar `@scope/*` no usa token: es npm público) | No hace falta configurarlo — lo provee Actions; requiere el permiso "create PRs" (también auto-habilitado por el scaffolder) |
 
 ---
 
