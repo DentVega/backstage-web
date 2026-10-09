@@ -20,7 +20,7 @@ A **Next.js** web platform that is the control plane for a fleet of React Native
 | **Scaffolder** | "Create miniapp" → generates a brand-new git repo from a template (each miniapp is its own repo). |
 | **Distribution** | The mobile host asks *"give me `account_dashboard` compatible with `^0.1.0`"* and gets back a chunk URL + manifest to download and mount at runtime. |
 
-The only coupling between the web platform and the mobile host is a **shared, versioned type contract** (`@org/miniapp-contract`). Everything else is decoupled.
+The only coupling between the web platform and the mobile host is a **shared, versioned type contract** (`@dentvega/miniapp-contract`, en npm público). Everything else is decoupled.
 
 ## Architecture — three planes
 

@@ -17,7 +17,7 @@ URL alcanzable**, la montás así en cualquier punto del árbol:
 ```tsx
 import React, {useMemo} from 'react';
 import {View} from 'react-native';
-import type {MiniappId} from '@org/miniapp-contract';
+import type {MiniappId} from '@dentvega/miniapp-contract';
 import {MiniappHost, createScopedGrant, httpResolveClient} from '@dentvega/miniapp-runtime';
 import {repackChunkLoader} from '../chunkLoader';
 import {miniappRender} from '../miniappRender';
@@ -71,7 +71,7 @@ Solo necesita un contenedor con altura (flex o `height`).
 ### 1. Preparar la miniapp (el remote)
 
 - Repo Re.Pack que **expone `./Entry`** con la firma `MiniappEntryProps` del
-  contrato (`@org/miniapp-contract`): recibe `{ capabilities }`.
+  contrato (`@dentvega/miniapp-contract`): recibe `{ capabilities }`.
 - En su `rspack.config.mjs`, la lista `shared` **debe coincidir con la del host**
   (mismos singletons), o la miniapp usará copias propias y romperá theme/estado/caché:
   ```js
@@ -80,7 +80,7 @@ Solo necesita un contenedor con altura (flex o `height`).
     'react-native':          { singleton: true, eager: false, requiredVersion: '0.76.6' },
     '@tanstack/react-query': { singleton: true, requiredVersion: '^5.0.0' },
     '@shopify/flash-list':   { singleton: true, requiredVersion: '^1.7.0' },
-    '@org/ui-kit':           { singleton: true, eager: false, requiredVersion: '^0.1.0' },
+    '@dentvega/ui-kit':           { singleton: true, eager: false, requiredVersion: '^0.1.0' },
     // + zustand / navigation si la miniapp los usa
   }
   ```
@@ -147,7 +147,7 @@ apuntando a sus chunks:
 
 | Síntoma | Causa / fix |
 |---|---|
-| `useTheme must be used within a <ThemeProvider>` | `@org/ui-kit` no está en `shared` singleton (host **y** miniapp). |
+| `useTheme must be used within a <ThemeProvider>` | `@dentvega/ui-kit` no está en `shared` singleton (host **y** miniapp). |
 | `remoteEntryExports is undefined` / 404 al `.container.js.bundle` | El chunk no está servido en la URL del registry, o no es build estático. |
 | URL con `.javascript` al final → 404 | Usar `Script.getRemoteURL(url, {excludeExtension:true})` (ya está en el loader). |
 | `URLSearchParams.set is not implemented` | Hermes no lo implementa; el `ResolveClient` ya arma el query a mano. |
@@ -157,5 +157,5 @@ apuntando a sus chunks:
 ## Referencias
 - Loader: `apps/host/src/chunkLoader.ts` (resolver + `registerRemotes` + `loadRemote`).
 - Componente de montaje: `@dentvega/miniapp-runtime` (npm) → `MiniappHost`, `httpResolveClient`, `createScopedGrant`.
-- Contrato: `@org/miniapp-contract` (`MiniappEntryProps`, `Manifest`, `ResolveResponse`).
+- Contrato: `@dentvega/miniapp-contract` (`MiniappEntryProps`, `Manifest`, `ResolveResponse`).
 - Capabilities de sesión: `apps/host/src/session/store.ts` (`deriveCapabilities`).
