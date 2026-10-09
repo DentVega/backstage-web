@@ -158,7 +158,7 @@ miniapp: el rango semver (ej. `^18.3.0`) que la miniapp necesita de una
 shared dep. Se auto-genera como `^<versión instalada>` — nunca se escribe a
 mano ni se elige el operador.
 
-**satisfiesShared** — la función (`packages/miniapp-contract/src/shared.ts`)
+**satisfiesShared** — la función (`repack-miniapps/packages/miniapp-contract/src/shared.ts`, paquete npm `@dentvega/miniapp-contract`)
 que decide compatibilidad: usa el paquete `semver` real (`semver.satisfies`)
 para chequear si la versión concreta que provee el host cae dentro del
 `requiredRange` de cada dep del manifest. Cada dep queda `ok`, `missing`

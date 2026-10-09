@@ -282,10 +282,9 @@ Cada versión publicada puede llevar **un chunk por plataforma**:
 - `HOST_CONTRACT_TOKEN` — separado del anterior; solo autoriza `PUT
   /api/host-contract` (publicar el contrato del host).
 - `GITHUB_TOKEN` del server — necesita los scopes `repo` + `workflow` +
-  `delete_repo` + `read:packages` para poder crear repos desde el template,
-  administrar Actions (permisos + secrets), leer contenidos (drift), abrir
-  issues (capability requests), borrar repos, e instalar el paquete privado
-  del contrato en el build.
+  `delete_repo` para poder crear repos desde el template, administrar Actions
+  (permisos + secrets), leer contenidos (drift), abrir issues (capability
+  requests) y borrar repos. El contrato se instala de npm público, sin token.
 
 **Integridad de artefactos:** cada chunk publicado lleva un hash **sha256**;
 el host lo verifica antes de montar — si no coincide, es un

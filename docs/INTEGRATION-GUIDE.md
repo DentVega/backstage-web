@@ -83,7 +83,7 @@ es justamente eso.
 | Cuenta de GitHub | El login con el que vas a operar en Backstage y en tu repo de miniapp. |
 | Estar habilitado para **crear** una miniapp | Solo un **platform-admin** (login en el allowlist del control-plane) puede scaffoldear un repo nuevo. Si tu login no está habilitado, pedile a un admin que **cree el repo por vos** o que te dé de alta. |
 | Node 20+, pnpm (o npm) | Para instalar dependencias y correr los scripts del template. |
-| Acceso a paquetes privados del ecosistema (`@dentvega/miniapp-contract`, `@dentvega/ui-kit`) | El template trae un `.npmrc` que usa `${GITHUB_TOKEN}` con scope `read:packages` — nunca un token hardcodeado. |
+| Paquetes del ecosistema (`@dentvega/miniapp-contract`, `@dentvega/ui-kit`) | Están en npm público: se instalan sin token ni `.npmrc` especial. |
 | (Solo para dev local con el host) Toolchain de React Native | OpenJDK 17 para Android, Xcode+CocoaPods para iOS si también vas a correr el host en tu máquina. Normalmente **no** hace falta: podés desarrollar tu miniapp con los modos dev de la Sección 6 sin tener el repo del host clonado en la mayoría de los casos. |
 
 No necesitás:

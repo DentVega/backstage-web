@@ -147,7 +147,7 @@ Este es el `host-contract.json` publicado hoy (generado el 2026-08-03, commit
 }
 ```
 
-El tipo TypeScript (`packages/miniapp-contract/src/types.ts`, la ubiquitous
+El tipo TypeScript (`repack-miniapps/packages/miniapp-contract/src/types.ts`, paquete npm `@dentvega/miniapp-contract`, la ubiquitous
 language compartida entre host, miniapps y Backstage) es:
 
 ```ts
@@ -217,7 +217,7 @@ va a chequear.
 
 ## Cómo `satisfiesShared` decide compatibilidad
 
-La función vive en `packages/miniapp-contract/src/shared.ts` y es el
+La función vive en `repack-miniapps/packages/miniapp-contract/src/shared.ts` (paquete npm `@dentvega/miniapp-contract`) y es el
 corazón del chequeo — la usan el host (al montar, en `evaluateManifest`), el
 gate del `/upload` de Backstage, y el gate de blast-radius del host:
 

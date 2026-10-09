@@ -11,7 +11,7 @@
 > - [`docs/activar-compat-gates.md`](./activar-compat-gates.md) — encender los gates de compatibilidad de dependencias (warn → enforce). Ver **Parte E**.
 > - [`docs/rotar-publish-token.md`](./rotar-publish-token.md) — rotar el `PUBLISH_TOKEN` sin downtime. Ver **Parte E**.
 > - [`README.md`](../README.md) (este repo) y el `README.md` de `backstagereactnative` — arquitectura y stack.
-> - `backstagereactnative/packages/PUBLISHING.md` — publicar los paquetes `@scope/*` a GitHub Packages.
+> - `backstagereactnative/packages/PUBLISHING.md` — publicar `@scope/ui-kit` a npm público.
 > - `backstagereactnative/docs/mounting-miniapps.md` — montar una miniapp en cualquier punto del host.
 >
 > **Novedades desde la v1 de esta guía** (todo cubierto abajo): storage en
@@ -88,8 +88,7 @@ vercel login
 
 ## 3. Parte A — Paquetes compartidos + template
 
-Objetivo: publicar `@scope/miniapp-contract` y `@scope/ui-kit` a **GitHub
-Packages** (públicos) y dejar listo el repo `miniapp-template` (público +
+Objetivo: tener los paquetes `@scope/*` en **npm público** y dejar listo el repo `miniapp-template` (público +
 marcado como **Template repository**) con su CI reutilizable.
 
 ### 3.1 Elegir el scope y el owner
@@ -123,40 +122,30 @@ pnpm install
 > para sustituirse). Lo **literal** que el bootstrap renombra es `@dentvega` /
 > `DentVega`.
 
-### 3.2 Publicar `miniapp-contract` y `ui-kit` (repo `backstagereactnative`)
+### 3.2 Paquetes `@scope/*` en npm público
 
-Sigue `packages/PUBLISHING.md` al pie de la letra (patrón de doble consumo —
-ADR-010: en el monorepo se consumen como fuente, `publishConfig` de pnpm
-sobreescribe a `dist` al publicar):
+Todos los paquetes del scope están en **npm público**: instalarlos no requiere `.npmrc` ni
+token (ni en local, ni en la CI de las miniapps, ni en el build de Vercel). Si reusás los
+`@dentvega/*` tal cual, no tenés que publicar nada.
+
+| Paquete | Se publica desde |
+|---|---|
+| `miniapp-contract`, `miniapp-runtime`, `miniapp-storage` | `repack-miniapps/packages/*` |
+| `ui-kit` | `backstagereactnative/packages/ui-kit` — ver `packages/PUBLISHING.md` |
+
+Para publicar tu propio `ui-kit` (patrón de doble consumo — ADR-010: en el monorepo se
+consume como fuente, `publishConfig` de pnpm sobreescribe a `dist` al publicar):
 
 ```bash
 cd backstagereactnative
-
-# 1) build
 pnpm --filter @acme/ui-kit build
-pnpm --filter @acme/miniapp-contract build
-
-# 2) verificar el tarball
-pnpm --filter @acme/ui-kit pack
-pnpm --filter @acme/miniapp-contract pack
-
-# 3) publicar — requiere GITHUB_TOKEN con scope write:packages en el entorno
-pnpm --filter @acme/miniapp-contract publish --no-git-checks
+pnpm --filter @acme/ui-kit check:dist   # todo import relativo del dist con .js
+pnpm --filter @acme/ui-kit pack         # revisar el tarball
 pnpm --filter @acme/ui-kit publish --no-git-checks
 ```
 
-Ambos paquetes deben quedar **públicos** en GitHub Packages (Settings del
-paquete → Change visibility → Public). Es lo que permite que la CI de cada
-miniapp los lea con el `GITHUB_TOKEN` automático de Actions, sin secreto extra
-(ver `publish.yml` reutilizable, §3.4).
-
-El `.npmrc` de cada repo consumidor debe mapear el scope:
-```
-@acme:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-```
-(Ya está así en `backstage-web/.npmrc`, `backstagereactnative/.npmrc` y
-`miniapp-template/.npmrc` — solo cambia `@dentvega` → tu scope, como en §3.1.)
+La cuenta de npm con 2FA publica desde una terminal; si la versión queda *staged*, aprobala en
+npmjs.com → paquete → **Staged Packages**.
 
 ### 3.3 Crear el repo `miniapp-template`
 
@@ -302,7 +291,7 @@ vercel env add AUTH_GITHUB_ID
 vercel env add AUTH_GITHUB_SECRET
 vercel env add SCAFFOLD_ALLOWED_LOGINS
 vercel env add MINIAPP_TEMPLATE_REPO
-vercel env add GITHUB_TOKEN            # scopes: repo, workflow, delete_repo, read:packages (ver tabla §8)
+vercel env add GITHUB_TOKEN            # scopes: repo, workflow, delete_repo (ver tabla §8)
 vercel env add PUBLISH_TOKEN
 vercel env add BACKSTAGE_URL
 vercel env add BACKSTAGE_PUBLIC_URL
@@ -363,14 +352,13 @@ host) en [`DEPLOY.md`](../DEPLOY.md).
 git clone https://github.com/<owner>/backstagereactnative.git
 cd backstagereactnative
 pnpm install
-pnpm build:packages   # build de packages/miniapp-contract y ui-kit (el runtime viene de npm)
+pnpm build:packages   # build de ui-kit (contract y runtime vienen de npm)
 ```
 
 Layout relevante:
 ```
 apps/host/                 host RN + Re.Pack (Module Federation v2)
 packages/
-  miniapp-contract/        contrato: manifest, forma de resolve, capabilities
   ui-kit/                    primitivas de UI compartidas (ThemeProvider, tokens)
 ```
 
@@ -658,10 +646,8 @@ explícito: `node scripts/migrate-registry-per-app.mjs` (con `KV_REST_API_URL`/`
 ### 7.7 Contract package con semver real (deuda a saldar)
 
 El gate de `/upload` usa `satisfiesShared`/`checkCompatibility` de
-`@scope/miniapp-contract`. Publicá el package (§3.2) y mantené la dep de
-`backstage-web` apuntando a la última (`^0.3.0`+) para que use el semver real —
-si no, cae a una copia local. El build de Vercel instala el package privado, así
-que el `GITHUB_TOKEN` de Vercel necesita `read:packages`.
+`@dentvega/miniapp-contract` (npm público, `^0.4.1`), que usa el paquete `semver` real.
+Mantené la dep de `backstage-web` al día con la última versión del contrato.
 
 ### 7.8 Maintainers por-miniapp
 
@@ -699,7 +685,7 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth App (login) | Callback `/api/auth/callback/github` |
 | `SCAFFOLD_ALLOWED_LOGINS` | CSV de logins de GitHub autorizados a **crear** miniapps y son **platform-admins** (pueden gestionar — publish/deploy/pin/borrar/maintainers — cualquier miniapp) | Vacío = nadie puede (**fail-closed**). Case-insensitive. Gestionar una miniapp puntual también lo puede un **maintainer** de esa miniapp (admin ∪ maintainer) — ver §7.8 |
 | `MINIAPP_TEMPLATE_REPO` | Repo template a clonar, ej. `Acme/miniapp-template` | Debe estar marcado **"Template repository"** en GitHub |
-| `GITHUB_TOKEN` | PAT del server: crear repos desde el template, admin de Actions (permisos+secrets), leer contenidos (drift), crear issues (capability requests), **borrar repos**, e instalar `@scope/miniapp-contract` en el build | Scopes (classic PAT): **`repo`** + **`workflow`** + **`delete_repo`** + **`read:packages`**. `delete_repo` habilita "borrar miniapp+repo" (Parte E). `read:packages` es obligatorio o el build de Vercel se cae al instalar el package privado |
+| `GITHUB_TOKEN` | PAT del server: crear repos desde el template, admin de Actions (permisos+secrets), leer contenidos (drift), crear issues (capability requests), **borrar repos** | Scopes (classic PAT): **`repo`** + **`workflow`** + **`delete_repo`**. `delete_repo` habilita "borrar miniapp+repo" (Parte E) |
 | `PUBLISH_TOKEN` | Token de servicio que validan los endpoints `/publish` y `/upload` | Mismo valor se siembra como secret `PUBLISH_TOKEN` en cada miniapp scaffoldeada. Rotación: Parte E |
 | `PUBLISH_TOKENS_OLD` | CSV de tokens de publish viejos aún aceptados durante una rotación (dual-token, cero-downtime) | Opcional; solo durante una rotación. Ver `docs/rotar-publish-token.md` |
 | `BACKSTAGE_URL` | URL prod de este Backstage | Se siembra como secret en las miniapps nuevas (su CI publica de vuelta acá); también es el valor que debes pasar como `BACKSTAGE_URL` al buildear el host (§5.2) |
@@ -733,7 +719,6 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 | Variable | Para qué | Notas |
 |---|---|---|
 | `BACKSTAGE_URL` | URL de Backstage que el host consulta en runtime (`/api/resolve`) | Inyectada en build-time vía `DefinePlugin` (`__BACKSTAGE_URL__`) en `apps/host/rspack.config.mjs`; fallback `http://localhost:3999` |
-| `GITHUB_TOKEN` (en CI de `backstagereactnative` / al publicar paquetes) | Publicar `@scope/miniapp-contract` y `@scope/ui-kit` a GitHub Packages | Scope `write:packages` |
 
 ### Repo de cada miniapp (Actions secrets)
 
@@ -753,9 +738,8 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 | **`@module-federation/enhanced` pinneado a `0.9.0`** | No lo subas de versión junto con Re.Pack 5.2.5 (Module Federation v2) — combinación verificada; una versión distinta puede romper la carga de remotes. |
 | **Selección de storage: R2 → Blob → fs** | El storage de chunks se elige por **presencia** de env vars, en ese orden (R2 primero si están sus 5 vars, si no Blob, si no fs local). Un admin puede overridear el default y por-miniapp desde la UI (Parte E), con fallback seguro al orden por env. KV (registro) se activa igual por presencia de `KV_REST_API_*`. |
 | **R2 rechaza uploads chunked (HTTP 411)** | El adapter R2 fija `Content-Length` explícito porque el `fetch` parcheado de Next.js puede streamear el body (→ `Transfer-Encoding: chunked`) y R2 lo rechaza con 411. Ya resuelto en `lib/storage/r2.ts`; tenelo en cuenta si escribís otro adapter S3. |
-| **`GITHUB_TOKEN` de Vercel: 4 scopes** | `repo` + `workflow` + `delete_repo` + `read:packages`. Faltar `read:packages` **rompe el build** (no instala el package privado); faltar `delete_repo` rompe solo "borrar repo" (403 claro). Ojo de no marcar `delete:packages` por error (no sirve). |
+| **`GITHUB_TOKEN` de Vercel: 3 scopes** | `repo` + `workflow` + `delete_repo`. Faltar `delete_repo` rompe solo "borrar repo" (403 claro). No hace falta `read:packages`: todo `@dentvega/*` se instala de npm público. |
 | **Rotar un `PUBLISH_TOKEN` marcado "Sensitive"** | Vercel no deja leer los env vars Sensitive → no podés recuperar el token viejo para el dual-token. Hacé la rotación directa (pisar + reseed, sin publishes en el medio). Ver `docs/rotar-publish-token.md`. |
-| **Scope de paquetes debe ser público** | `@scope/miniapp-contract` y `@scope/ui-kit` deben quedar **públicos** en GitHub Packages; si no, el `GITHUB_TOKEN` automático de Actions en la CI de cada miniapp no podrá leerlos (fallaría el `pnpm install`). |
 | **Template repo debe estar marcado "Template repository"** | Sin eso, `POST /repos/{template}/generate` del scaffolder devuelve error (`GITHUB generate failed`). |
 | **`SCAFFOLD_ALLOWED_LOGINS` vacío = fail-closed** | Nadie puede crear miniapps ni disparar `deploy`/`sync-template` hasta que agregues logins. Intencional para no dejar un demo público abierto a crear repos. |
 | **Puerto 3999 en dev, no 3000** | El host móvil espera Backstage en `:3999` por convención del proyecto (`PORT=3999 pnpm dev`); el callback de la OAuth App de dev debe coincidir. |
@@ -767,8 +751,7 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 
 ## 10. Checklist final — "todo levantado"
 
-- [ ] `@scope/miniapp-contract` y `@scope/ui-kit` publicados en GitHub
-      Packages, visibilidad **pública**.
+- [ ] Paquetes `@scope/*` en npm público (o reusar los `@dentvega/*`).
 - [ ] Repo `miniapp-template` creado, **público**, marcado **"Template
       repository"**, con el rename de scope/owner aplicado en `package.json`,
       `rspack.config.mjs`, `.npmrc`, `ci.yml` e `init-template.yml`.
@@ -776,8 +759,8 @@ gente que no es platform-admin, sin ampliar `SCAFFOLD_ALLOWED_LOGINS`:
 - [ ] Backstage enlazado a Vercel (`vercel link`), con **Cloudflare R2**
       (bucket + acceso público + token S3) y **Upstash Redis** provisionados.
       Blob opcional como fallback.
-- [ ] `GITHUB_TOKEN` de Vercel con los 4 scopes: `repo`, `workflow`,
-      `delete_repo`, `read:packages`.
+- [ ] `GITHUB_TOKEN` de Vercel con los 3 scopes: `repo`, `workflow`,
+      `delete_repo`.
 - [ ] Todas las env vars de la tabla de Backstage (§8) seteadas en Vercel —
       incluyendo `BACKSTAGE_URL` + `BACKSTAGE_PUBLIC_URL` y las 5 `R2_*`.
 - [ ] `vercel deploy --prod` exitoso; `/api/seed` corrido una vez.
